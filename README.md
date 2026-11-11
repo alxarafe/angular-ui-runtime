@@ -52,6 +52,14 @@ The renderer API exports `FieldValue`, `FieldRendererContext`, `FieldRenderer` a
 
 No themes, CSS, shells, widgets or normalized backend type registry are shipped. Consumers still supply those implementations and their own theme identities. ERBAS adoption and any field outlet/widget migration remain separate work; AUR-002B is not included. See `NOTICE` for source revision, original paths, test provenance and the minimal extraction changes.
 
+## Version 1.0 target contract
+
+The [UI Runtime 1.0 contract](docs/contracts/ui-runtime-v1.md) and its
+[mandatory acceptance matrix](docs/contracts/ui-runtime-v1-acceptance.md) define
+the target functionality and release gate. They do not describe completed 0.2.0
+features. The future repository-local Angular QA testbed is a non-distributed
+fixture; it is not implemented yet.
+
 ## Technical references
 
 - [ERBAS client](https://github.com/alxarafe/erbas-client): Angular/npm conventions and Docker validation patterns.
