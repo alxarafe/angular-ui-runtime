@@ -1,0 +1,30 @@
+{
+  "name": "angular-ui-runtime-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@11.19.1",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p projects/ui-runtime/tsconfig.lib.json",
+    "test": "node --test tests/*.test.mjs",
+    "build": "node scripts/build.mjs",
+    "pack": "npm run build && node scripts/pack.mjs",
+    "check": "npm run typecheck && npm test && npm run pack && node scripts/consumer.mjs"
+  },
+  "devDependencies": {
+    "@angular/build": "22.2.6",
+    "@angular/cli": "22.2.6",
+    "@angular/compiler": "22.2.5",
+    "@angular/compiler-cli": "22.2.5",
+    "@angular/core": "22.2.5",
+    "ng-packagr": "22.2.6",
+    "rxjs": "7.8.2",
+    "tslib": "2.8.1",
+    "typescript": "6.0.2"
+  },
+  "allowScripts": {
+    "@parcel/watcher": true,
+    "esbuild": true,
+    "lmdb": true,
+    "msgpackr-extract": true
+  }
+}

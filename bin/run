@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+case "${1:-}" in test|check|pack) task="$1" ;; *) echo 'Usage: bin/run {test|check|pack}' >&2; exit 2 ;; esac
+mkdir -p "$root/artifacts"
+docker run --rm --init --user "$(id -u):$(id -g)" \
+  --env HOME=/tmp --env NG_CLI_ANALYTICS=false --env "AUR_TASK=$task" \
+  --mount "type=bind,src=$root,dst=/source,readonly" \
+  --mount "type=bind,src=$root/artifacts,dst=/artifacts" \
+  node:24.22.2-bookworm-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9 \
+  sh -eu -c '
+    mkdir /tmp/workspace
+    cp /source/package*.json /source/angular.json /source/tsconfig.json /source/README.md /source/LICENSE /tmp/workspace/
+    cp -R /source/projects /source/scripts /source/tests /tmp/workspace/
+    cd /tmp/workspace
+    npm ci --no-audit --no-fund
+    npm run "$AUR_TASK"
+  '
