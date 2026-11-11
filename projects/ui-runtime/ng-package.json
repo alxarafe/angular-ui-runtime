@@ -6,6 +6,7 @@
   },
   "assets": [
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE"
   ]
 }
