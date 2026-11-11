@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "outDir": "../out-tsc/tests",
+    "types": []
+  },
+  "angularCompilerOptions": {
+    "compilationMode": "full"
+  },
+  "include": [
+    "../projects/ui-runtime/src/**/*.ts",
+    "fixtures/**/*.ts"
+  ]
+}

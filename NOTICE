@@ -1,0 +1,20 @@
+Angular UI Runtime
+Licensed under the Apache License, Version 2.0; see LICENSE.
+
+The theme definitions, theme registry/service/resolver/providers and field renderer
+contracts were extracted from alxarafe/erbas-client (Apache-2.0):
+https://github.com/alxarafe/erbas-client/tree/cb7ca1682cdb8c6b253cf038e9daaf1898e02107
+
+Original paths:
+- app/src/app/core-fe/theme/theme-definition.ts
+- app/src/app/core-fe/theme/theme-runtime.ts
+- app/src/app/core-fe/field-types/renderer-context.ts
+
+Changes for AUR-002A: removed application-specific ThemeId entries, adapted local
+import suffixes for ESM tests, generalized a consumer-specific comment and added
+provenance headers. Runtime behavior is otherwise preserved.
+
+Theme tests are adapted from theme/theme-runtime.spec.ts at the same source
+revision, using empty test components instead of application themes and widgets.
+Exact-value contract checks draw on field-types/field-renderer-outlet.spec.ts;
+DOM/widget behavior remains in the source application and is not extracted.

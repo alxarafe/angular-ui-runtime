@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { UI_RUNTIME_VERSION } from '../projects/ui-runtime/src/public-api.ts';
+import { UI_RUNTIME_VERSION } from '../out-tsc/tests/projects/ui-runtime/src/public-api.js';
 
 const json = (path) => JSON.parse(readFileSync(path, 'utf8'));
 
