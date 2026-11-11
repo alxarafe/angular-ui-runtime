@@ -96,8 +96,12 @@ not in an implicitly widened scalar union. Missing optional fields are represent
 as absent slots, not dropped UI controls or undefined/null coercion.
 
 There is one future `ValidateField` boundary. FieldValidation has parsed presence
-for valid/pending outcomes and nonempty issues for invalid outcomes. Pending means
-locally parsed with deferred server checks; it is not confirmed validity. Aggregate
+for valid/pending outcomes and nonempty issues for invalid outcomes.
+FieldEdit.validation uses FieldValidation: valid and pending field edits require
+their parsed ValueSlot, while invalid field edits expose issues without a parsed
+success result. DocumentSnapshot.validation retains aggregate ValidationResult.
+Pending means locally parsed with deferred server checks; it is not confirmed
+validity. Aggregate
 ValidationResult uses invalid before pending before valid. Keep deferred checks per
 field so fixing a different error does not lose server-only obligations.
 

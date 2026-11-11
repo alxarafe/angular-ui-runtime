@@ -31,6 +31,10 @@ type LegacyArtifactsUnchanged = Assert<Equal<keyof ThemeArtifacts,
 type NoCapabilityObligation = Assert<Equal<Required<ProposedThemeDefinition>['components'], Partial<ThemeComponents>>>;
 type ValidHasParsedValue = Assert<Extends<Extract<FieldValidation, { state: 'valid' }>, { readonly parsed: ValueSlot }>>;
 type NoParsedInvalid = Assert<Equal<'parsed' extends keyof Extract<FieldValidation, { state: 'invalid' }> ? true : false, false>>;
+type FieldEditUsesFieldValidation = Assert<Equal<FieldEdit['validation'], FieldValidation>>;
+type ValidEditHasParsedValue = Assert<Extends<Extract<FieldEdit['validation'], { state: 'valid' }>, { readonly parsed: ValueSlot }>>;
+type PendingEditHasParsedValue = Assert<Extends<Extract<FieldEdit['validation'], { state: 'pending' }>, { readonly parsed: ValueSlot }>>;
+type InvalidEditHasNoParsedValue = Assert<Equal<'parsed' extends keyof Extract<FieldEdit['validation'], { state: 'invalid' }> ? true : false, false>>;
 
 // These fixtures compile; they are deliberately not executed or imported by tests.
 function assignments(): void {
@@ -57,6 +61,14 @@ function assignments(): void {
     },
   };
   const path: ValuePath = [{ kind: 'property', name: 'lines' }, { kind: 'row', key: 'temporary-a' }, { kind: 'property', name: 'amount' }];
+  const validEdit: FieldEdit = { ...field, input: exact, validation: { state: 'valid', parsed: exact } };
+  const pendingEdit: FieldEdit = { ...field, input: exact, validation: { state: 'pending', parsed: exact, checks: [{ path, reason: 'server-pattern' }] } };
+  // @ts-expect-error Valid field edits require their parsed value.
+  const unparsedValidEdit: FieldEdit = { ...field, validation: { state: 'valid' } };
+  // @ts-expect-error Pending field edits require their parsed value as well as deferred checks.
+  const unparsedPendingEdit: FieldEdit = { ...field, validation: { state: 'pending', checks: [{ path, reason: 'server-pattern' }] } };
+  // @ts-expect-error Invalid field edits cannot claim a successfully parsed value.
+  const parsedInvalidEdit: FieldEdit = { ...field, validation: { state: 'invalid', issues: [{ path, code: 'decimal-syntax', message: 'Enter a decimal', source: 'local' }], parsed: exact } };
   const rootError: ValidationIssue = { path: [], code: 'application:conflict', message: 'Reload required', source: 'application' };
   const menus: readonly MenuDefinition[] = [
     { id: 'work', kind: 'primary', label: 'Work', items: [] },
@@ -91,6 +103,7 @@ function assignments(): void {
   // @ts-expect-error A pending result is not a confirmed valid result.
   const pendingIsValid: Extract<FieldValidation, { state: 'valid' }> = { state: 'pending', parsed: absent, checks: [{ path, reason: 'server-pattern' }] };
   void [compatible, exact, absent, explicitNull, intermediate, nested, rootError, menus,
+    validEdit, pendingEdit, unparsedValidEdit, unparsedPendingEdit, parsedInvalidEdit,
     lossy, date, missing, booleanRange, enumeration, numericRange, unparsed,
     emptyError, wrongSource, unstablePath, incompleteSave, misplaced, pendingIsValid];
 }

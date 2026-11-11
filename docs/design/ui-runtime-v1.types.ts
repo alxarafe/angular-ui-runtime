@@ -93,7 +93,7 @@ export interface FieldEdit {
   readonly definition: FieldDefinition;
   readonly input: EditingInput;
   readonly touched: boolean;
-  readonly validation: ValidationResult;
+  readonly validation: FieldValidation;
 }
 export interface FieldValidationRequest {
   readonly definition: FieldDefinition;
