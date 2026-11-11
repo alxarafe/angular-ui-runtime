@@ -1,5 +1,9 @@
 # Angular UI Runtime
 
+![Angular](https://img.shields.io/badge/Angular-22-DD0031?logo=angular)
+[![CI](https://github.com/alxarafe/angular-ui-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/alxarafe/angular-ui-runtime/actions/workflows/ci.yml)
+![License](https://img.shields.io/badge/License-Apache%202.0-blue)
+
 `@alxarafe/ui-runtime` is an independent Angular 22 library foundation for shared UI capabilities across ERBAS and Alixar-Solucar. Version `0.1.0` establishes the build, test and npm packaging pipeline. Business components and metadata contracts are not defined yet.
 
 ## Requirements
