@@ -58,7 +58,8 @@ The [UI Runtime 1.0 contract](docs/contracts/ui-runtime-v1.md) and its
 [mandatory acceptance matrix](docs/contracts/ui-runtime-v1-acceptance.md) define
 the target functionality and release gate. They do not describe completed 0.2.0
 features. The future repository-local Angular QA testbed is a non-distributed
-fixture; it is not implemented yet.
+fixture; it is not implemented yet. The [API and internal contract design](docs/design/ui-runtime-v1-api.md)
+contains compiled, unpublished interface proposals and compatibility decisions.
 
 ## Technical references
 
