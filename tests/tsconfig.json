@@ -10,6 +10,7 @@
   },
   "include": [
     "../projects/ui-runtime/src/**/*.ts",
-    "fixtures/**/*.ts"
+    "fixtures/**/*.ts",
+    "../docs/design/**/*.ts"
   ]
 }

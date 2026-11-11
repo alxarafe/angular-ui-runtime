@@ -4,7 +4,9 @@
 [![CI](https://github.com/alxarafe/angular-ui-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/alxarafe/angular-ui-runtime/actions/workflows/ci.yml)
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue)
 
-`@alxarafe/ui-runtime` is an independent Angular 22 library foundation for shared UI capabilities across ERBAS and Alixar-Solucar. Version `0.2.0` extracts the reusable theme engine and field renderer contracts from ERBAS. Business components and metadata contracts are not defined yet.
+`@alxarafe/ui-runtime` is a general-purpose Angular UI runtime library, independent of backend technologies. ERBAS and Alixar-Solúcar are reference applications that inform its design, not limitations on its use.
+
+Implemented version `0.2.0` provides the Angular 22 theme engine and exact-value field renderer contracts extracted from ERBAS. Version `1.0` plans reusable field validation, typed menus, forms, grids and document editing state; these capabilities are specified in the contract and design documents but are not implemented yet.
 
 ## Requirements
 
@@ -58,7 +60,8 @@ The [UI Runtime 1.0 contract](docs/contracts/ui-runtime-v1.md) and its
 [mandatory acceptance matrix](docs/contracts/ui-runtime-v1-acceptance.md) define
 the target functionality and release gate. They do not describe completed 0.2.0
 features. The future repository-local Angular QA testbed is a non-distributed
-fixture; it is not implemented yet.
+fixture; it is not implemented yet. The [API and internal contract design](docs/design/ui-runtime-v1-api.md)
+contains compiled, unpublished interface proposals and compatibility decisions.
 
 ## Technical references
 
