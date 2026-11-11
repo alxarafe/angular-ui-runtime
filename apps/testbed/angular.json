@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "cli": { "analytics": false },
+  "projects": {
+    "testbed": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.json",
+            "index": "src/index.html",
+            "styles": ["src/styles.css"],
+            "outputPath": "dist",
+            "optimization": true,
+            "outputHashing": "all"
+          }
+        }
+      }
+    }
+  }
+}

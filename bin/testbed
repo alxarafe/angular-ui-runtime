@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+container="aur-testbed-preview-${UID}-$$"
+cleanup() {
+  # Stop only the container named by this invocation, including on Ctrl+C.
+  docker stop --time 2 "$container" >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+AUR_TESTBED_CONTAINER="$container" "$root/bin/run" testbed-preview &
+wait "$!"

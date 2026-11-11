@@ -4,13 +4,15 @@ Normative companion to the [functional contract](ui-runtime-v1.md). All rows are
 mandatory for 1.0.0, including every listed subcase and all seven integer ranges
 and seventeen semantic types. IDs are stable; future work may append finer-grained
 cases without renumbering these requirements. Locations marked planned need not
-exist yet. Status describes library implementation, not a test result.
+exist yet. Status describes implementation and required QA coverage, not a test result.
 
 `implemented` means present in the inspected baseline with existing coverage;
 `partial` means only some behavior exists; `missing` means no library implementation.
 Source references in the contract establish design provenance only. Existing tests
-are not proof of future suites passing. Browser, visual and cross-consumer evidence
-does not yet exist. This documentation task does not satisfy the 1.0 release gate.
+are not proof of future suites passing. Browser evidence is limited to the
+synthetic foundation in E-QA-001. Approved
+visual baselines and cross-consumer evidence do not yet exist. These checks do not
+satisfy the 1.0 release gate.
 Task-level execution of today's checks is reported with the local commit; it must
 not be interpreted as a successful 1.0 acceptance run.
 
@@ -18,13 +20,13 @@ not be interpreted as a successful 1.0 acceptance run.
 | --- | --- | --- | --- | --- | --- | --- |
 | THEME-001 | Preserve registry validation, immutable sorted snapshots and standalone bindings. | Missing default/artifact; duplicates; malformed IDs; invalid components. | unit, integration | tests/theme.test.mjs | implemented | Existing registry tests; no browser claim. |
 | THEME-002 | Resolve sparse/CSS-only overrides directly to default; unknown activation resets; providers isolate state. | Empty override; all artifacts; unknown ID; two injectors. | unit | tests/theme.test.mjs | implemented | Existing resolution/isolation tests. |
-| THEME-003 | Every effective theme covers structure, navigation, 17 fields, forms, tables and accessibility. | Partial override; missing specialized table/navigation; reference themes. | browser, visual | tests/browser/themes/ | partial | Artifact completeness probes exist; functional themes and browser evidence absent. |
-| THEME-004 | Switching theme preserves edits, errors, row identity/order, saving state and logical focus. | Dirty invalid field; focused replaced control; in-flight save. | browser | tests/browser/themes/state.spec.ts | missing | No evidence yet. |
+| THEME-003 | Every effective theme covers structure, navigation, 17 fields, forms, tables and accessibility. | Partial override; missing specialized table/navigation; reference themes. | browser, visual | tests/browser/themes/ | partial | Artifact completeness probes and synthetic shell/navigation/panel browser smoke exist (E-QA-001); full functional/reference themes remain unverified. |
+| THEME-004 | Switching theme preserves edits, errors, row identity/order, saving state and logical focus. | Dirty invalid field; focused replaced control; in-flight save. | browser | tests/browser/specs/smoke.spec.mjs; planned tests/browser/themes/state.spec.ts | missing | E-QA-001 retains fixture-owned scalar values only; no document-state/error/row/save proof. |
 | THEME-005 | Keep application identities separate; version any incompatible artifact/default obligations. | CSS-only application identity; old complete default after artifact addition. | integration, consumer | tests/contracts/theme-compatibility/ | partial | Only generic default exported today; evolution/consumer proof absent. Design/type evidence: E-DESIGN-001 only. |
 | FIELD-001 | Support all 17 types listed in contract with exact scalar semantics. | Each type; boolean/null; unsupported type; base64/enum. | unit, browser | tests/contracts/fields/; tests/browser/fields/ | partial | 17 artifact keys and scalar probes exist; widgets absent. Design/type evidence: E-DESIGN-001 only. |
-| FIELD-002 | Preserve exact integers, decimals and temporal precision through UI and emitted result. | INT64 extremes; >2^53; long decimals; seven fractional seconds; offsets. | unit, browser, consumer | tests/contracts/exact-values/; tests/browser/fields/ | partial | String emission probes exist; full lifecycle/transport proof absent. Design/type evidence: E-DESIGN-001 only. |
+| FIELD-002 | Preserve exact integers, decimals and temporal precision through UI and emitted result. | INT64 extremes; >2^53; long decimals; seven fractional seconds; offsets. | unit, browser, consumer | tests/contracts/exact-values/; tests/browser/fields/ | partial | String emission probes and exact decimal-text browser input/output exist (E-QA-001); validation, other semantic types and transport proof remain absent. Design/type evidence: E-DESIGN-001 only. |
 | FIELD-003 | Separate definition, presence/raw edit, validation and presentation; retain invalid raw input. | Absent vs null; incomplete sign/decimal; invalid BOOLEAN edit envelope. | unit, browser | tests/contracts/editing/; tests/browser/fields/ | missing | No behavioral evidence yet. Design/type evidence: E-DESIGN-001 only. |
-| FIELD-004 | Preserve context/valueChange and optional flags/choices compatibly; no edits from disabled/read-only. | Existing renderer compiles; null; additive errors; mode switch. | integration, browser | tests/contracts/renderer-compatibility/; tests/browser/fields/ | partial | Context and binding probes exist; disabled UI/compatibility evolution unverified. Design/type evidence: E-DESIGN-001 only. |
+| FIELD-004 | Preserve context/valueChange and optional flags/choices compatibly; no edits from disabled/read-only. | Existing renderer compiles; null; additive errors; mode switch. | integration, browser | tests/contracts/renderer-compatibility/; tests/browser/fields/ | partial | Context/binding probes and synthetic labelled, disabled/read-only browser controls exist (E-QA-001); compatibility evolution remains unverified. Design/type evidence: E-DESIGN-001 only. |
 | VALID-001 | Enforce exact INT8/UINT8/INT16/UINT16/INT32/UINT32/INT64 inclusive ranges from contract. | Each min/max, min−1/max+1, zero, negative unsigned, exponent/fraction. | unit, browser | tests/validation/integers/; tests/browser/fields/ | missing | ERBAS source is reference only; no library validator evidence. |
 | VALID-002 | Intersect intrinsic bounds with declared inclusive/exclusive minimum and maximum. | Equality; contradictory limits; extreme decimals; negative operands. | unit | tests/validation/bounds/ | missing | No evidence yet. |
 | VALID-003 | Validate exact decimal precision, normalized scale and positive multipleOf. | Trailing zeros; 12.3400/1000/0.0012; exponent profile; fractional divisibility; zero divisor; NaN/infinity. | unit, consumer | tests/validation/decimal/; consumer evidence | missing | No evidence yet; backend profile conformance required. |
@@ -55,16 +57,16 @@ not be interpreted as a successful 1.0 acceptance run.
 | ADAPTER-001 | Keep transport, business, auth, persistence, defaults and backend metadata outside library. | ERBAS flat PATCH vs aggregate replacement; private endpoints/types leaking exports. | integration, consumer | tests/contracts/adapter-boundary/; consumer evidence | partial | Current public API is independent; future adapter integration evidence absent. Design/type evidence: E-DESIGN-001 only. |
 | ADAPTER-002 | ERBAS integration preserves published metadata/scalars/CRUD semantics. | Immutable patch; nullable clear; absent defaults; lossless JSON; server errors. | consumer | separate ERBAS Client evidence manifest | missing | No integration executed in this task. |
 | ADAPTER-003 | Solucar/Alixar scenario edits header/ordered lines and handles optimistic version conflicts. | Add/remove/reorder; stale version retains draft; id/version success; regenerated IDs. | consumer | separate Solucar evidence manifest | missing | Alixar backend/design inspected; no library-backed proposal screen proof. |
-| VISUAL-001 | Test definition→browser→interaction→validation→emitted result for every type and complex scenario. | Invalid intermediate input; successful correction; all reference themes. | browser | tests/browser/fields/; tests/browser/forms/ | missing | Current Angular probes do not mount a browser UI. |
-| VISUAL-002 | Version screenshot baselines for every reference theme at desktop and narrow/mobile sizes. | 1280×800; 390×844; long labels; tables; overflow; errors. | visual | tests/visual/baselines/; tests/visual/ | missing | No baselines or visual suite yet. |
+| VISUAL-001 | Test definition→browser→interaction→validation→emitted result for every type and complex scenario. | Invalid intermediate input; successful correction; all reference themes. | browser | tests/browser/specs/smoke.spec.mjs; planned tests/browser/fields/ and tests/browser/forms/ | partial | E-QA-001 renders/interacts/emits through installed 0.2.0 contracts; no semantic validation, all-type or complex-form lifecycle. |
+| VISUAL-002 | Version screenshot baselines for every reference theme at desktop and narrow/mobile sizes. | 1280×800; 390×844; long labels; tables; overflow; errors. | visual | tests/visual/baselines/; tests/visual/ | missing | E-QA-001 captures synthetic themes at both sizes; no approved/version-controlled reference baselines or visual comparison suite. |
 | VISUAL-003 | Explicitly review initial baselines and actual layout; equality alone is insufficient. | Clipping/hiding/overlap; broken initial baseline; intentional scroll vs inaccessible cells. | visual | tests/visual/reviews/ | missing | No approved review evidence yet. |
-| VISUAL-004 | Verify keyboard/focus, labels/control associations and visible/announced errors. | Tabs; overflow; dialogs; focused replaced control; inactive-section errors. | browser, visual | tests/browser/accessibility/; tests/visual/ | missing | No evidence yet. |
+| VISUAL-004 | Verify keyboard/focus, labels/control associations and visible/announced errors. | Tabs; overflow; dialogs; focused replaced control; inactive-section errors. | browser, visual | tests/browser/specs/smoke.spec.mjs; planned tests/browser/accessibility/ and tests/visual/ | partial | E-QA-001 checks synthetic labels, keyboard controls, focus and viewport reachability; error accessibility and full audit remain absent. |
 | VISUAL-005 | Exercise dirty theme switching, multiple menu fallback and complex editable tables per theme. | CSS-only vs structural theme; invalid row; narrow viewport; save/discard. | browser, visual | tests/browser/scenarios/; tests/visual/ | missing | No evidence yet. |
-| PACKAGE-001 | Future apps/testbed consumes built APF via public entry only and is excluded from npm. | Source aliases/private imports; tarball development leakage; deterministic fixture data. | integration | apps/testbed/; scripts/pack.mjs; tests/package/ | missing | Testbed intentionally not created by this task. |
-| PACKAGE-002 | Testbed supports all deterministic field/menu/form/grid scenarios, browser runs and manual inspection in Docker. | Each reference theme; fixed locale/fonts/timezone; no host Node requirement. | browser, integration | apps/testbed/; bin/check; tests/browser/ | missing | No evidence yet; implementation separately authorized. |
+| PACKAGE-001 | Future apps/testbed consumes built APF via public entry only and is excluded from npm. | Source aliases/private imports; tarball development leakage; deterministic fixture data. | integration | apps/testbed/; scripts/testbed.mjs; scripts/pack.mjs; tests/testbed-boundary.test.mjs | implemented | E-QA-001: isolated installed tarball, public-import boundary test, no TS aliases, package content/development-dependency exclusions pass. |
+| PACKAGE-002 | Testbed supports all deterministic field/menu/form/grid scenarios, browser runs and manual inspection in Docker. | Each reference theme; fixed locale/fonts/timezone; no host Node requirement. | browser, integration | apps/testbed/; bin/check; tests/browser/ | partial | E-QA-001: Docker browser foundation and manual preview exist; all-type/menu/form/grid and reference-theme scenarios remain absent. |
 | PACKAGE-003 | Validate lockfile install, strict TS/Angular, production APF, exports/peers and package contents. | Bad exports; bundled Angular; missing declarations/license; dev-file leakage. | integration | bin/check; scripts/build.mjs; scripts/pack.mjs | implemented | Existing check pipeline; task execution recorded in local commit report. |
 | PACKAGE-004 | Disposable Angular consumer builds installed tarball without private source access or reference mutation. | Clean consumer install; peer resolution; missing public symbols. | consumer | scripts/consumer.mjs; tests/consumer/ | implemented | Existing disposable consumer pipeline; no application integration claim. |
-| RELEASE-001 | Single bin/check aggregates separate mandatory suites and validates cross-repository evidence. | Missing browser/visual suite or evidence fails gate; no silent skip. | integration | bin/check; planned release evidence validator | partial | Existing check covers bootstrap/theme/package/consumer only. |
+| RELEASE-001 | Single bin/check aggregates separate mandatory suites and validates cross-repository evidence. | Missing browser/visual suite or evidence fails gate; no silent skip. | integration | bin/check; planned release evidence validator | partial | Check includes bootstrap/theme/package/consumer and synthetic Chromium smoke (E-QA-001); visual regression and cross-repository evidence gates remain absent. |
 | RELEASE-002 | Require reproducible ERBAS and Solucar evidence pinned to RC tarball/hash and consumer revisions. | Stale evidence; missing commands/lockfiles/logs; build-only evidence. | consumer | planned release evidence manifest; separate consumer repositories | missing | No release integration evidence yet. |
 | RELEASE-003 | Require approved visual references; baseline/test weakening needs explicit review and justification. | Unreviewed baseline refresh; passing broken baseline; removed failure assertion. | visual, integration | tests/visual/reviews/; planned release checklist | missing | No release review evidence yet. |
 | RELEASE-004 | Release candidate precedes stable; all mandatory rows pass and blocking defects resolve before 1.0.0. | Missing requirement/evidence; open blocker; stable without RC; current check mistaken for approval. | integration, consumer | planned release checklist/evidence manifest | missing | 1.0 release gate not satisfied; no publication authorized. |
@@ -78,8 +80,9 @@ also need baseline revision and reviewer approval; consumer rows need consumer
 revision, dependency lockfiles and tested RC tarball digest. Failures and pending
 cases remain explicit. A passing unit check cannot close browser/visual/consumer
 requirements. Release review must check every row and all subcases, not merely the
-number of green suites. Future automation and evidence locations require separate
-implementation authorization; none is claimed to exist by this matrix.
+number of green suites. Automation and evidence locations beyond the explicitly
+implemented foundation
+require separate implementation authorization; planned locations remain unimplemented.
 
 ## E-DESIGN-001: architecture and compile-only evidence
 
@@ -93,3 +96,24 @@ The safe-pattern subset and theme extension policy are design decisions, not
 implemented behavior. Implementation statuses above are unchanged. No parser,
 validation engine, editing lifecycle, component binding, browser, visual or consumer
 compliance is established by these type checks. Runtime evidence gaps remain open.
+
+## E-QA-001: installed-package browser foundation
+
+[QA workflow and human-review procedure](../qa/testbed.md), `scripts/testbed.mjs`,
+`tests/testbed-boundary.test.mjs` and `tests/browser/specs/smoke.spec.mjs` establish
+only the 0.2.0 infrastructure slice. `./bin/check` builds/installs the real APF tarball,
+preserves the separate testbed dependency lock, compiles Angular and runs three
+Chromium scenarios at each of 1280×800 and 390×844. They cover registration,
+synthetic default/alternative overrides, unknown-ID fallback, scalar input/output
+retention, labels, keyboard focus/activation, viewport reachability and browser
+console/page/request failures. Package checks exclude the QA app and tooling.
+The independent disposable consumer and its lock checks remain mandatory.
+
+Results, archive digest, actual browser version and candidate screenshots are
+written under `artifacts/testbed/` by each run. The exact Playwright/image pins are
+version-controlled; screenshots are generated evidence, not approved or committed
+baselines. Both fixture themes are synthetic, including the one named default:
+**no ERBAS production/reference theme visual acceptance is established**. Human
+review is pending; no automatic approval follows from passing smoke tests. Semantic
+validation, typed menus, forms, grids, document state, all-reference-theme coverage,
+complete accessibility/visual regression and consumer integration remain open.
