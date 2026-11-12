@@ -18,7 +18,7 @@ test('QA testbed is private, has independent dependencies and no library source 
       if (specifier.startsWith('.')) {
         assert(resolve(dirname(path), specifier).startsWith(`${root}/`), `Import escapes testbed: ${specifier}`);
       } else {
-        assert(['@angular/core', '@angular/platform-browser', '@alxarafe/ui-runtime'].includes(specifier), `Nonpublic import: ${specifier}`);
+        assert(['@angular/core', '@angular/platform-browser', '@alxarafe/ui-runtime', '@alxarafe/ui-theme-default'].includes(specifier), `Nonpublic import: ${specifier}`);
       }
     }
   }

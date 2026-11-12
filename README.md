@@ -59,7 +59,7 @@ The renderer API exports `FieldValue`, `FieldRendererContext`, `FieldRenderer` a
 
 Opt-in `ThemeShellOutlet`, `ThemeNavigationOutlet` and `ThemePanelOutlet` provide independent structural composition using public navigation/intent ports and application-owned Angular projection. No consumer base classes or router are required. See the [structural composition contract](docs/contracts/theme-composition-v1.md) for bindings, named regions, view lifetime and compatibility limits.
 
-No themes, CSS, shells, widgets or normalized backend type registry are shipped. Consumers still supply those implementations and their own theme identities. ERBAS adoption and any field outlet/widget migration remain separate work; AUR-002B is not included. See `NOTICE` for source revision, original paths, test provenance and the minimal extraction changes.
+The core npm artifact ships no visual themes or field widgets. A separate experimental APF package, [`@alxarafe/ui-theme-default`](packages/themes/default/README.md), supplies the complete default theme through public ports. It requires the exact tested runtime snapshot with structural ports, not the older 0.2.0 artifact; coordinated distribution versions remain pending. See [extraction validation and comparison](docs/qa/default-theme-extraction.md). Consumer adoption and the other four themes remain separate work.
 
 ## Version 1.0 target contract
 

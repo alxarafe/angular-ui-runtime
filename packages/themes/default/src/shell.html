@@ -1,0 +1,25 @@
+<!-- SPDX-License-Identifier: Apache-2.0; adapted from ERBAS; see NOTICE. -->
+<div class="aur-default-shell">
+  <header class="aur-default-heading">
+    <ng-content select='[aur-theme-region="topbar-start"]' />
+    <ng-content select="[aur-shell-heading]" />
+    <ng-content select='[aur-theme-region="topbar-actions"]' />
+  </header>
+  <aside class="aur-default-navigation">
+    <ng-content select='[aur-theme-region="navigation-before"]' />
+    <aur-theme-navigation [items]="navigation()" (selected)="navigationSelected.emit($event)" />
+    <ng-content select='[aur-theme-region="navigation-after"]' />
+  </aside>
+  <main class="aur-default-content">
+    <ng-content select='[aur-theme-region="content-before"]' />
+    <ng-content select='[aur-theme-region="contextual-actions"]' />
+    <aur-theme-panel><ng-content select="[aur-shell-content]" /></aur-theme-panel>
+    <ng-content select='[aur-theme-region="content-after"]' />
+    <div class="aur-default-tools"><ng-content select='[aur-theme-region="floating-actions"]' /></div>
+    <div class="aur-default-unclaimed"><ng-content /></div>
+  </main>
+  <footer class="aur-default-footer">
+    <ng-content select="[aur-shell-footer]" />
+    <ng-content select='[aur-theme-region="footer"]' />
+  </footer>
+</div>

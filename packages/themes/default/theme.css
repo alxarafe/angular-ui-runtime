@@ -1,0 +1,101 @@
+/* SPDX-License-Identifier: Apache-2.0; generic ERBAS presentation adapted; see NOTICE.
+   Deliberately no body/html, consumer-resource, login, or unscoped control rules. */
+.aur-default-shell {
+  --theme-background: #f3f6fa;
+  --theme-surface: #fff;
+  --theme-text: #172c46;
+  --theme-muted: #52647b;
+  --theme-border: #dce3ed;
+  --theme-accent: #173e70;
+  --theme-on-accent: #fff;
+  --theme-link: #164e9a;
+  --theme-code: #edf2f8;
+  --theme-focus: #bb7b00;
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--theme-background);
+  color: var(--theme-text);
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  align-content: start;
+}
+.aur-default-shell, .aur-default-shell * { box-sizing: border-box; }
+.aur-default-heading {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--theme-surface);
+  border-bottom: 1px solid var(--theme-border);
+}
+.aur-default-navigation {
+  padding: 1.5rem 1rem;
+  border-right: 1px solid var(--theme-border);
+  background: var(--theme-surface);
+  min-width: 0;
+}
+.aur-default-content { min-width: 0; padding: 1.5rem 2rem; }
+.aur-default-footer { grid-column: 1 / -1; padding: 1rem 1.5rem; color: var(--theme-muted); }
+.aur-default-tools { display: flex; justify-content: flex-end; flex-wrap: wrap; margin-top: 1rem; }
+.aur-default-unclaimed { margin-top: 1rem; }
+aur-default-navigation nav { display: block; padding: 0; border: 0; background: transparent; }
+aur-default-navigation ul { list-style: none; padding: 0; margin: 0; }
+aur-default-navigation li { margin: 0.25rem 0; }
+aur-default-navigation li ul { padding-left: 0.75rem; }
+aur-default-navigation a, aur-default-navigation button, aur-default-navigation span {
+  display: block;
+  padding: 0.65rem 0.75rem;
+  overflow-wrap: anywhere;
+}
+aur-default-navigation a, aur-default-navigation button {
+  color: var(--theme-link, #164e9a);
+  border: 0;
+  border-radius: 0.35rem;
+  background: transparent;
+  text-decoration: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+aur-default-navigation a:hover, aur-default-navigation button:hover { background: var(--theme-background, #f3f6fa); }
+aur-default-navigation a[aria-current='page'] {
+  background: var(--theme-code, #edf2f8);
+  color: var(--theme-accent, #173e70);
+  font-weight: 700;
+  box-shadow: inset 3px 0 var(--theme-accent, #173e70);
+}
+aur-default-navigation span { color: var(--theme-muted, #52647b); font-weight: 650; }
+.aur-default-field { display: block; margin-block: 1.25rem; max-width: 42rem; }
+.aur-default-field label { display: block; font: inherit; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.4rem; }
+.aur-default-field input:not([type='checkbox']), .aur-default-field textarea, .aur-default-field select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.6rem;
+  border: 1px solid var(--theme-border, #dce3ed);
+  border-radius: 0.3rem;
+  font: inherit;
+  color: var(--theme-text, #172c46);
+  background: var(--theme-surface, #fff);
+  padding: 8px;
+}
+.aur-default-field input[readonly], .aur-default-field textarea[readonly] { background: transparent; }
+.aur-default-field output { overflow-wrap: anywhere; }
+.aur-default-shell :focus-visible, .aur-default-field :focus-visible, aur-default-navigation :focus-visible {
+  outline: 3px solid var(--theme-focus, #bb7b00);
+  outline-offset: 3px;
+}
+@media (max-width: 800px) {
+  .aur-default-shell { grid-template-columns: 12rem minmax(0, 1fr); }
+  .aur-default-content { padding: 1rem; }
+}
+@media (max-width: 680px) {
+  .aur-default-shell { display: block; }
+  .aur-default-navigation { border-right: 0; border-bottom: 1px solid var(--theme-border); padding: 0.5rem 1rem; }
+  .aur-default-navigation > aur-theme-navigation > aur-default-navigation > nav > aur-default-navigation-tree > ul {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+  }
+}

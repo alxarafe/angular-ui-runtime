@@ -1,0 +1,62 @@
+{
+  "manifestVersion": 1,
+  "package": "@alxarafe/ui-theme-default",
+  "version": "0.0.0-experimental.0",
+  "publisher": "Alxarafe contributors",
+  "license": "Apache-2.0",
+  "compatibility": {
+    "angular": "^22.0.0",
+    "uiRuntime": "0.2.0",
+    "runtimeSnapshotOnly": true,
+    "requiredRuntimeRevision": "23e3bf40bf4c3dbad034d3deb71b3358075f51b3",
+    "requiredCapabilities": [
+      "ThemeShellOutlet",
+      "ThemeNavigationOutlet",
+      "ThemePanelOutlet"
+    ]
+  },
+  "themes": [
+    {
+      "id": "default",
+      "name": "Default",
+      "description": "Complete independent default presentation adapted from ERBAS",
+      "cssClass": "theme-default",
+      "definitionExport": "DEFAULT_THEME",
+      "kinds": [
+        "complete",
+        "structural"
+      ],
+      "artifacts": [
+        "shell",
+        "navigation",
+        "panel",
+        "field.BOOLEAN",
+        "field.STRING",
+        "field.TEXT",
+        "field.INT8",
+        "field.UINT8",
+        "field.INT16",
+        "field.UINT16",
+        "field.INT32",
+        "field.UINT32",
+        "field.INT64",
+        "field.DECIMAL",
+        "field.UUID",
+        "field.DATE",
+        "field.TIME",
+        "field.DATETIME",
+        "field.ENUM",
+        "field.BINARY"
+      ],
+      "requiredCapabilities": [
+        "structural-composition-ports-v1"
+      ]
+    }
+  ],
+  "styles": [
+    "./theme.css"
+  ],
+  "assets": [],
+  "evidence": "./conformance.json",
+  "distribution": "private local snapshot; coordinated release versions required"
+}

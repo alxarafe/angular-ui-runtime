@@ -14,3 +14,8 @@ See [QA workflow, artifacts and human review](../../docs/qa/testbed.md).
 `/?scenario=composition` exercises synthetic structural themes through the public
 shell/navigation/panel ports, retaining application-owned content/region views.
 It neither migrates production themes nor implements 1.0 widgets.
+
+`/default-theme/` is a separately compiled fixture page that installs the actual
+independent default-theme and runtime tarballs and loads the exported theme CSS.
+It has no stylesheet dependency on the synthetic QA pages. See
+[extraction QA](../../docs/qa/default-theme-extraction.md).

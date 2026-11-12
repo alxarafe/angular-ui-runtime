@@ -1,0 +1,11 @@
+<!-- SPDX-License-Identifier: Apache-2.0; adapted from ERBAS; see NOTICE. -->
+<label [for]="context().id">{{ context().label }}</label>
+<input
+  #control
+  type="date"
+  [id]="context().id"
+  [value]="text()"
+  [disabled]="context().disabled ?? false"
+  [readOnly]="context().readOnly ?? false"
+  (input)="update(control.value)"
+/>

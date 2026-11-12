@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/alxarafe/erbas-client",
+  "revision": "8d1573c315e03a6edbc92bd7b3d41d851bd54ab9",
+  "sourceSha256": {
+    "app/src/app/core-fe/themes/default/field-renderers.ts": "e0e271370f043601f56de765e6b2372c81727edc335df2d53f492fcc0e0f30d7",
+    "app/src/app/core-fe/themes/default/boolean.html": "77e18f8cffc77865b11f46fe5703394ed42c6c40fc3e13ff21748ca7990227e9",
+    "app/src/app/core-fe/themes/default/string.html": "11e8ec297ed0e911376af108037aacd6064c84ccf321df7f8a92fd653616e572",
+    "app/src/app/core-fe/themes/default/text.html": "a590a157d2a9bdc0f294f10adcf0ee4f7c2a55381e0d818aacf7d995428cde6c",
+    "app/src/app/core-fe/themes/default/number.html": "697a34875fa4b50498b4d445341d7e9756a025dcd9ef6c738b5bd396ab1bf9c4",
+    "app/src/app/core-fe/themes/default/date.html": "e2c23c4e0e614d2593a69633f795abc7fc9178878df26203995d91ae578981ad",
+    "app/src/app/core-fe/themes/default/time.html": "0f321819d4593028d8dd29cd5bef092830e47d0d67b36171099c3faa018859cc",
+    "app/src/app/core-fe/themes/default/binary.html": "544e287addcee6da549f437d87df947d431b18271022158dd444aab850bab084",
+    "app/src/app/core-fe/themes/default/structure.ts": "8828342afea8a90e5e3b346e15e27dc369b02a9cfe003b9dc1d1ac92a21a3f46",
+    "app/src/app/core-fe/themes/default/shell.html": "4abd5413247329ecc696145b9903c0b9828ac84b30f7052d620d371d94f4aca5",
+    "app/src/app/core-fe/themes/default/navigation.html": "d1038b94c2a7c7aeb7c599f3fe67191988514455c5ce9a02727c21013fae5bd4",
+    "app/src/app/core-fe/themes/default/panel.html": "510fa1768cc968feae51226d3afa687acbf1198c4d46220c10a6a358c980a0ba",
+    "app/src/app/core-fe/themes/default/theme.css": "831035b9d8ddb278ed5985609cfe1e1df363a2845140f77f57cf8e3266b8935a",
+    "app/src/app/core-fe/themes/default/enum.html": "aa22567eca604fde92a9a30c63439e1d7d09917822ae0855d73cc5e6985b4ac8"
+  },
+  "historicalQa": "AUR-QA-002; not a build dependency"
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
-case "${1:-}" in test|check|pack|testbed-preview) task="$1" ;; *) echo 'Usage: bin/run {test|check|pack|testbed-preview}' >&2; exit 2 ;; esac
+case "${1:-}" in test|check|pack|theme-default|testbed-preview) task="$1" ;; *) echo 'Usage: bin/run {test|check|pack|theme-default|testbed-preview}' >&2; exit 2 ;; esac
 mkdir -p "$root/artifacts"
 ports=()
 if [[ "$task" == testbed-preview ]]; then
@@ -9,6 +9,8 @@ if [[ "$task" == testbed-preview ]]; then
 fi
 docker run --rm --init --user "$(id -u):$(id -g)" \
   "${ports[@]}" \
+  --env "AUR_SOURCE_COMMIT=$(git -C "$root" rev-parse HEAD)" \
+  --env "AUR_SOURCE_STATUS=$(git -C "$root" status --porcelain)" \
   --env HOME=/tmp --env NG_CLI_ANALYTICS=false --env "AUR_TASK=$task" \
   --mount "type=bind,src=$root,dst=/source,readonly" \
   --mount "type=bind,src=$root/artifacts,dst=/artifacts" \
@@ -16,7 +18,7 @@ docker run --rm --init --user "$(id -u):$(id -g)" \
   sh -eu -c '
     mkdir /tmp/workspace
     cp /source/package*.json /source/angular.json /source/tsconfig.json /source/README.md /source/LICENSE /source/NOTICE /tmp/workspace/
-    cp -R /source/projects /source/scripts /source/tests /source/docs /source/apps /tmp/workspace/
+    cp -R /source/projects /source/scripts /source/tests /source/docs /source/apps /source/packages /tmp/workspace/
     cd /tmp/workspace
     npm ci --no-audit --no-fund
     npm run "$AUR_TASK"

@@ -7,9 +7,10 @@
     "typecheck": "tsc --noEmit -p projects/ui-runtime/tsconfig.lib.json",
     "test": "ngc -p tests/tsconfig.json && node --import @angular/compiler --test tests/*.test.mjs",
     "build": "node scripts/build.mjs",
-    "pack": "npm run build && node scripts/pack.mjs",
+    "pack": "npm run build && node scripts/pack.mjs && node scripts/theme-default.mjs",
     "check": "npm run typecheck && npm test && npm run pack && node scripts/consumer.mjs && node scripts/testbed.mjs",
-    "testbed-preview": "npm run pack && node scripts/testbed.mjs && AUR_TESTBED_HOST=0.0.0.0 node tests/browser/serve.mjs"
+    "testbed-preview": "npm run pack && node scripts/testbed.mjs && AUR_TESTBED_HOST=0.0.0.0 node tests/browser/serve.mjs",
+    "theme-default": "node scripts/theme-default.mjs"
   },
   "devDependencies": {
     "@angular/build": "22.2.6",

@@ -46,3 +46,11 @@ test('consumer lock requires a newly installed runtime', () => {
   assert.throws(() => assertConsumerLockPreserved(locked, before, before), /runtime package must be installed/);
   assert.throws(() => assertConsumerLockPreserved(locked, after, after), /Runtime must be installed from the generated tarball/);
 });
+
+test('a separately packed theme is allowed only when explicitly requested and newly installed', () => {
+  const theme = 'node_modules/@alxarafe/ui-theme-default';
+  const both = { ...after, [theme]: { version: '0.0.0-experimental.0' } };
+  assert.throws(() => assertConsumerLockPreserved(locked, before, both), /Unexpected consumer dependency/);
+  assert.equal(assertConsumerLockPreserved(locked, before, both, ['@alxarafe/ui-theme-default']), 1);
+  assert.throws(() => assertConsumerLockPreserved(locked, before, after, ['@alxarafe/ui-theme-default']), /archive package must be installed/);
+});

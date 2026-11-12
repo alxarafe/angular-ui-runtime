@@ -1,0 +1,8 @@
+@import '@alxarafe/ui-theme-default/theme.css';
+
+/* Application-owned QA content, outside both distributed npm artifacts. */
+body { margin: 0; }
+.package-qa-controls { padding: 1rem; font-family: system-ui, sans-serif; }
+.package-qa-controls button { margin: 0.25rem; }
+.package-values { overflow-wrap: anywhere; white-space: pre-wrap; }
+[data-field] p { overflow-wrap: anywhere; }
