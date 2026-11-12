@@ -74,11 +74,14 @@ Console errors, uncaught page errors, failed requests and HTTP errors fail every
 test. Playwright disposes each page/context and closes its web server when the
 suite ends; Docker removes the container.
 
-An additional independent-composition scenario (`?scenario=composition`, two more
-cases) uses the public structural ports in the
-[composition contract](../contracts/theme-composition-v1.md). It checks projection
+Two independent-composition scenarios (`?scenario=composition`, four more
+cases) use the public structural ports in the
+[composition contract](../contracts/theme-composition-v1.md). They check projection
 identity, named-region relocation/catch-all, structural and panel-only replacement,
 CSS-only retention, navigation updates/intent, native links and retained-node focus.
+The focus regression checks panel-only and simultaneous shell/panel replacement,
+no duplicate focus calls, application focus selected during mounting, and destroyed
+views without logical-focus mapping.
 Components/data are synthetic. Candidate full-page captures are in
 `artifacts/testbed/composition/{desktop,mobile}/port-{default,alternate}.png`.
 
@@ -114,7 +117,7 @@ Both the QA app and browser runner have private manifests and independent lockfi
 
 ## Human visual inspection (no automatic baseline approval)
 
-1. Run `./bin/check` and confirm all twenty browser tests and earlier phases passed.
+1. Run `./bin/check` and confirm all twenty-two browser tests and earlier phases passed.
    Preserve the revision, tarball digest, image digest, actual browser version,
    results and screenshots together. Passing assertions alone are insufficient.
 2. Open all four viewport captures at 100% size and their full-page companions.
@@ -147,7 +150,7 @@ Both the QA app and browser runner have private manifests and independent lockfi
 
 The `/default-theme/` fixture also registers four actual optional APF packages.
 Ten further cases cover five themes at both viewports; see
-[optional-theme evidence, differences and focus limitations](optional-theme-extraction.md).
+[optional-theme evidence, differences and retained-node focus](optional-theme-extraction.md).
 Captures/provenance are in `artifacts/testbed/optional-themes/`. These are candidate
 references, not automatically approved visuals or completed 1.0 acceptance.
 

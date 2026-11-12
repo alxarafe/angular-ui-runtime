@@ -173,7 +173,7 @@ for (const id of Object.keys(THEMES)) test(`${id}: actual optional archives, spa
   await page.locator('#package-tool').fill('Unbound contribution edit');
   await page.evaluate(() => { window.themeDraft = document.getElementById('package-application-draft'); window.themeTool = document.getElementById('package-tool'); window.themeString = document.getElementById('STRING'); });
   const focusTransitions = [];
-  for (const next of Object.keys(THEMES)) {
+  for (const next of [...Object.keys(THEMES), 'default', 'high-contrast', 'default']) {
     const previous = await state(page);
     await page.locator('#STRING').focus();
     await page.locator(`[data-package-theme="${next}"]`).evaluate(button => button.click());
@@ -184,10 +184,8 @@ for (const id of Object.keys(THEMES)) test(`${id}: actual optional archives, spa
     const selector = (snapshot, key) => snapshot.artifacts.find(artifact => artifact.key === key).selector;
     const shellChanged = selector(previous, 'shell') !== selector(following, 'shell');
     const panelChanged = selector(previous, 'panel') !== selector(following, 'panel');
+    await expect(page.locator('#STRING')).toBeFocused();
     const retained = await page.locator('#STRING').evaluate(element => document.activeElement === element);
-    // Existing shell host restores retained-node focus; the current panel-only host does not.
-    // Record that pre-existing consumer-policy gap rather than claim a new core guarantee.
-    if (shellChanged || !panelChanged) await expect(page.locator('#STRING')).toBeFocused();
     focusTransitions.push({ from: previous.id, to: next, shellChanged, panelChanged, retained });
     await expect(page.locator('#package-application-draft')).toHaveValue('Unbound application edit');
     await expect(page.locator('#package-tool')).toHaveValue('Unbound contribution edit');
@@ -201,7 +199,7 @@ for (const id of Object.keys(THEMES)) test(`${id}: actual optional archives, spa
   const builds = JSON.parse(readFileSync('/artifacts/theme-packages-build.json', 'utf8'));
   writeFileSync(`${directory}/evidence.json`, JSON.stringify({ ...builds, theme: id, resolution, palette, nativeControls, focus, outside,
     browser: browser.version(), playwright: '1.58.2', viewport: info.project.use.viewport, errors,
-    focusTransitions, panelOnlyFocusPolicy: 'Application must restore logical focus after a panel-only replacement; core behavior is unchanged',
+    focusTransitions, panelOnlyFocusPolicy: 'Retained native node focus asserted for every transition; no logical-field mapping',
     results: 'passed all assertions', screenshots: ['viewport.png', 'full-page.png'], visualApproval: 'pending human review' }, null, 2));
   expect(errors).toEqual([]);
 });

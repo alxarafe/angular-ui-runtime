@@ -1,5 +1,5 @@
 /** Synthetic independently authored structural components; public package imports only. */
-import { Component, input, output, signal, inject } from '@angular/core';
+import { Component, ElementRef, input, output, signal, inject } from '@angular/core';
 import {
   ThemeShellOutlet, ThemeNavigationOutlet, ThemePanelOutlet, ThemeService,
   type ThemeShellComponent, type ThemeNavigationComponent, type ThemeNavigationItem,
@@ -33,7 +33,13 @@ class AlternateNavigation implements ThemeNavigationComponent {
 @Component({ selector: 'qa-port-panel', template: '<section data-testid="port-panel"><ng-content /></section>' })
 class PortPanel {}
 @Component({ selector: 'qa-port-alternate-panel', template: '<article data-testid="alternate-port-panel"><ng-content /></article>' })
-class AlternatePanel {}
+class AlternatePanel {
+  private readonly document = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement.ownerDocument;
+  ngAfterViewInit(): void {
+    // Synthetic race probe: application focus selected while a panel mounts.
+    this.document.querySelector<HTMLElement>('[data-qa-focus-on-panel-mount]')?.focus();
+  }
+}
 
 @Component({
   selector: 'qa-port-shell', imports: [ThemeNavigationOutlet, ThemePanelOutlet],

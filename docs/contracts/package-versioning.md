@@ -2,17 +2,20 @@
 
 AUR-VERSION-001 establishes distinct version contracts after the extraction in
 merged PR #11. All six packages retain `private: true`. Publication, tags and
-external distribution require separate authorization. No runtime API, renderer,
-composition port, theme identity or visual behavior changes in this task.
+external distribution require separate authorization. AUR-FOCUS-001 advances the
+runtime to alpha.2 for retained-node panel focus recovery.
+All five alpha.2 themes are metadata-only compatibility releases for that exact
+peer; visuals and overrides are unchanged. Alpha.1 remains historical provenance.
+No public API, renderer binding, composition port or theme identity changes.
 
-| Package | Initial version | Runtime peer |
+| Package | Current version | Runtime peer |
 | --- | --- | --- |
-| `@alxarafe/ui-runtime` | `0.3.0-alpha.1` | — |
-| `@alxarafe/ui-theme-default` | `0.1.0-alpha.1` | `0.3.0-alpha.1` |
-| `@alxarafe/ui-theme-alternative` | `0.1.0-alpha.1` | `0.3.0-alpha.1` |
-| `@alxarafe/ui-theme-cyberpunk` | `0.1.0-alpha.1` | `0.3.0-alpha.1` |
-| `@alxarafe/ui-theme-vintage` | `0.1.0-alpha.1` | `0.3.0-alpha.1` |
-| `@alxarafe/ui-theme-high-contrast` | `0.1.0-alpha.1` | `0.3.0-alpha.1` |
+| `@alxarafe/ui-runtime` | `0.3.0-alpha.2` | — |
+| `@alxarafe/ui-theme-default` | `0.1.0-alpha.2` | `0.3.0-alpha.2` |
+| `@alxarafe/ui-theme-alternative` | `0.1.0-alpha.2` | `0.3.0-alpha.2` |
+| `@alxarafe/ui-theme-cyberpunk` | `0.1.0-alpha.2` | `0.3.0-alpha.2` |
+| `@alxarafe/ui-theme-vintage` | `0.1.0-alpha.2` | `0.3.0-alpha.2` |
+| `@alxarafe/ui-theme-high-contrast` | `0.1.0-alpha.2` | `0.3.0-alpha.2` |
 
 Angular Core remains a `^22.0.0` peer. Tests use locked Angular 22.2.5 with the
 existing compiler/build toolchain; no additional Angular versions are certified.
@@ -31,18 +34,18 @@ resolutions and integrity values remain unchanged.
 
 Build in ephemeral Docker with `./bin/pack`. Generated archives are:
 
-- `artifacts/alxarafe-ui-runtime-0.3.0-alpha.1.tgz`
-- `artifacts/alxarafe-ui-theme-default-0.1.0-alpha.1.tgz`
-- `artifacts/alxarafe-ui-theme-alternative-0.1.0-alpha.1.tgz`
-- `artifacts/alxarafe-ui-theme-cyberpunk-0.1.0-alpha.1.tgz`
-- `artifacts/alxarafe-ui-theme-vintage-0.1.0-alpha.1.tgz`
-- `artifacts/alxarafe-ui-theme-high-contrast-0.1.0-alpha.1.tgz`
+- `artifacts/alxarafe-ui-runtime-0.3.0-alpha.2.tgz`
+- `artifacts/alxarafe-ui-theme-default-0.1.0-alpha.2.tgz`
+- `artifacts/alxarafe-ui-theme-alternative-0.1.0-alpha.2.tgz`
+- `artifacts/alxarafe-ui-theme-cyberpunk-0.1.0-alpha.2.tgz`
+- `artifacts/alxarafe-ui-theme-vintage-0.1.0-alpha.2.tgz`
+- `artifacts/alxarafe-ui-theme-high-contrast-0.1.0-alpha.2.tgz`
 
 In a compatible Angular application's own isolated package workflow, install
 runtime and Default archives together, adding only desired optional archives:
 
 ```sh
-npm install --strict-peer-deps /archives/alxarafe-ui-runtime-0.3.0-alpha.1.tgz /archives/alxarafe-ui-theme-default-0.1.0-alpha.1.tgz /archives/alxarafe-ui-theme-alternative-0.1.0-alpha.1.tgz
+npm install --strict-peer-deps /archives/alxarafe-ui-runtime-0.3.0-alpha.2.tgz /archives/alxarafe-ui-theme-default-0.1.0-alpha.2.tgz /archives/alxarafe-ui-theme-alternative-0.1.0-alpha.2.tgz
 ```
 
 Do not bypass peer failures with force or legacy peer resolution. Register through
@@ -119,6 +122,6 @@ Evidence is outside all distributable packages:
 Repeat `./bin/pack` without changing source inputs and compare the SHA-256 of
 all six metadata-derived archives for byte reproducibility. Version contracts do
 not replace archive provenance or grant visual approval. Screenshots remain
-pending human review. Panel-only replacement focus policy, full UI Runtime 1.0
+pending human review. Logical-focus mapping to replaced controls, full UI Runtime 1.0
 validation/editing/menu/form/grid capabilities, dynamic theme installation and
 consumer adoption remain outside this task.
