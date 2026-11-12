@@ -7,6 +7,10 @@ const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
 const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url, 'http://127.0.0.1');
+    if (url.pathname === '/navigation-download.txt') {
+      response.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename="navigation.txt"' }).end('Neutral navigation QA');
+      return;
+    }
     const file = resolve(root, `.${decodeURIComponent(url.pathname.endsWith('/') ? `${url.pathname}index.html` : url.pathname)}`);
     if (!file.startsWith(`${root}${sep}`)) {
       response.writeHead(403).end();

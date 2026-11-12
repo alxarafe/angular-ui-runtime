@@ -117,7 +117,7 @@ Both the QA app and browser runner have private manifests and independent lockfi
 
 ## Human visual inspection (no automatic baseline approval)
 
-1. Run `./bin/check` and confirm all twenty-two browser tests and earlier phases passed.
+1. Run `./bin/check` and confirm all thirty-four browser tests and earlier phases passed.
    Preserve the revision, tarball digest, image digest, actual browser version,
    results and screenshots together. Passing assertions alone are insufficient.
 2. Open all four viewport captures at 100% size and their full-page companions.
@@ -166,3 +166,25 @@ adapters, optimistic concurrency, all-reference-theme coverage, cross-browser/de
 coverage, complete accessibility audit or approved visual regression baselines are
 established. The [acceptance matrix](../contracts/ui-runtime-v1-acceptance.md) records
 only this foundation's verified evidence; the 1.0 release gate remains open.
+
+## Neutral navigation consumer
+
+`/default-theme/?scenario=navigation&mode=spa` is repository-only QA, compiled
+against installed public runtime/theme archives. Modes `native`, `observe`, `late`
+and `reject` exercise optional callbacks, ineffective late cancellation and
+consumer rejection. The fixture's History API policy belongs entirely to the
+consumer; no Angular Router or production route/control is added.
+
+Six scenarios per viewport (12 additional cases, 34 total) check native document
+navigation, query/fragments/external hrefs, SPA Back/Forward and Enter, modifiers,
+auxiliary/context gestures, new-tab/download, labels/order/disabled/actions and
+repeated five-theme switches without document, node, value or focus loss. The
+external HTTP destination is supplied deterministically by Playwright; runtime
+components, native events and the package engine are real. A fixture-only server
+endpoint supplies a real attachment for download verification.
+
+Inspect `artifacts/testbed/navigation/{desktop,mobile}/native-gestures.json` and
+`consumer.png` with the main results and package digests. Linux Chromium tests
+Meta as a modifier, not a physical macOS Cmd/browser/system-menu interaction.
+Check copyable URLs, keyboard behavior and actual context-menu UX manually on
+supported deployment browsers. All captures still require human approval.

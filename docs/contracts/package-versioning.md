@@ -2,20 +2,25 @@
 
 AUR-VERSION-001 establishes distinct version contracts after the extraction in
 merged PR #11. All six packages retain `private: true`. Publication, tags and
-external distribution require separate authorization. AUR-FOCUS-001 advances the
-runtime to alpha.2 for retained-node panel focus recovery.
-All five alpha.2 themes are metadata-only compatibility releases for that exact
-peer; visuals and overrides are unchanged. Alpha.1 remains historical provenance.
-No public API, renderer binding, composition port or theme identity changes.
+external distribution require separate authorization. AUR-NAVIGATION-001 adds the
+optional synchronous link-activation capability in runtime `0.3.0-alpha.3`.
+Default navigation and Default/Cyberpunk shells forward the port; their alpha.3
+releases include those nonvisual adaptations. Alternative, Vintage and High
+Contrast alpha.3 are metadata-only compatibility releases. All five retain exact
+runtime peers. Alpha.1/alpha.2 and the focus fix remain historical provenance.
+Old consumers need not supply the new callback. Old structural components remain
+usable without interception; requesting it requires validated port capability
+instead of silent loss. No renderer, theme identity, override key or focus policy
+changes. See [the link contract](theme-composition-v1.md#optional-synchronous-link-activation-alpha3).
 
 | Package | Current version | Runtime peer |
 | --- | --- | --- |
-| `@alxarafe/ui-runtime` | `0.3.0-alpha.2` | — |
-| `@alxarafe/ui-theme-default` | `0.1.0-alpha.2` | `0.3.0-alpha.2` |
-| `@alxarafe/ui-theme-alternative` | `0.1.0-alpha.2` | `0.3.0-alpha.2` |
-| `@alxarafe/ui-theme-cyberpunk` | `0.1.0-alpha.2` | `0.3.0-alpha.2` |
-| `@alxarafe/ui-theme-vintage` | `0.1.0-alpha.2` | `0.3.0-alpha.2` |
-| `@alxarafe/ui-theme-high-contrast` | `0.1.0-alpha.2` | `0.3.0-alpha.2` |
+| `@alxarafe/ui-runtime` | `0.3.0-alpha.3` | — |
+| `@alxarafe/ui-theme-default` | `0.1.0-alpha.3` | `0.3.0-alpha.3` |
+| `@alxarafe/ui-theme-alternative` | `0.1.0-alpha.3` | `0.3.0-alpha.3` |
+| `@alxarafe/ui-theme-cyberpunk` | `0.1.0-alpha.3` | `0.3.0-alpha.3` |
+| `@alxarafe/ui-theme-vintage` | `0.1.0-alpha.3` | `0.3.0-alpha.3` |
+| `@alxarafe/ui-theme-high-contrast` | `0.1.0-alpha.3` | `0.3.0-alpha.3` |
 
 Angular Core remains a `^22.0.0` peer. Tests use locked Angular 22.2.5 with the
 existing compiler/build toolchain; no additional Angular versions are certified.
@@ -34,18 +39,18 @@ resolutions and integrity values remain unchanged.
 
 Build in ephemeral Docker with `./bin/pack`. Generated archives are:
 
-- `artifacts/alxarafe-ui-runtime-0.3.0-alpha.2.tgz`
-- `artifacts/alxarafe-ui-theme-default-0.1.0-alpha.2.tgz`
-- `artifacts/alxarafe-ui-theme-alternative-0.1.0-alpha.2.tgz`
-- `artifacts/alxarafe-ui-theme-cyberpunk-0.1.0-alpha.2.tgz`
-- `artifacts/alxarafe-ui-theme-vintage-0.1.0-alpha.2.tgz`
-- `artifacts/alxarafe-ui-theme-high-contrast-0.1.0-alpha.2.tgz`
+- `artifacts/alxarafe-ui-runtime-0.3.0-alpha.3.tgz`
+- `artifacts/alxarafe-ui-theme-default-0.1.0-alpha.3.tgz`
+- `artifacts/alxarafe-ui-theme-alternative-0.1.0-alpha.3.tgz`
+- `artifacts/alxarafe-ui-theme-cyberpunk-0.1.0-alpha.3.tgz`
+- `artifacts/alxarafe-ui-theme-vintage-0.1.0-alpha.3.tgz`
+- `artifacts/alxarafe-ui-theme-high-contrast-0.1.0-alpha.3.tgz`
 
 In a compatible Angular application's own isolated package workflow, install
 runtime and Default archives together, adding only desired optional archives:
 
 ```sh
-npm install --strict-peer-deps /archives/alxarafe-ui-runtime-0.3.0-alpha.2.tgz /archives/alxarafe-ui-theme-default-0.1.0-alpha.2.tgz /archives/alxarafe-ui-theme-alternative-0.1.0-alpha.2.tgz
+npm install --strict-peer-deps /archives/alxarafe-ui-runtime-0.3.0-alpha.3.tgz /archives/alxarafe-ui-theme-default-0.1.0-alpha.3.tgz /archives/alxarafe-ui-theme-alternative-0.1.0-alpha.3.tgz
 ```
 
 Do not bypass peer failures with force or legacy peer resolution. Register through

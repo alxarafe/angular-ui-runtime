@@ -7,7 +7,7 @@
   </header>
   <aside class="aur-default-navigation">
     <ng-content select='[aur-theme-region="navigation-before"]' />
-    <aur-theme-navigation [items]="navigation()" (selected)="navigationSelected.emit($event)" />
+    <aur-theme-navigation [items]="navigation()" [linkActivation]="linkActivation()" (selected)="navigationSelected.emit($event)" />
     <ng-content select='[aur-theme-region="navigation-after"]' />
   </aside>
   <main class="aur-default-content">

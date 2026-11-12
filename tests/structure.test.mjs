@@ -8,7 +8,7 @@ import { structureSelectors } from '../out-tsc/tests/projects/ui-runtime/src/str
 import {
   ShellPortProbe, NavigationPortProbe, PanelPortProbe, MissingCatchAllProbe,
   UnsupportedSelectorProbe, MissingShellBindingsProbe, InvalidPanelProjectionProbe,
-  MissingNavigationOutputProbe,
+  MissingNavigationOutputProbe, LinkShellProbe, LinkNavigationProbe,
 } from '../out-tsc/tests/tests/fixtures/structure-components.js';
 import { DEFAULT_THEME, StructureProbe } from '../out-tsc/tests/tests/fixtures/theme-components.js';
 
@@ -22,8 +22,8 @@ test('compiled structural ports are additive to the legacy registry and twenty-k
   }]);
   assert.equal(registry.require('default').overrides.shell, StructureProbe);
   assert.equal(registry.require('independent').overrides.shell, ShellPortProbe);
-  assert.deepEqual(THEME_SHELL_BINDINGS, { navigation: 'navigation', navigationSelected: 'navigationSelected' });
-  assert.deepEqual(THEME_NAVIGATION_BINDINGS, { items: 'items', selected: 'selected' });
+  assert.deepEqual(THEME_SHELL_BINDINGS, { navigation: 'navigation', navigationSelected: 'navigationSelected', linkActivation: 'linkActivation' });
+  assert.deepEqual(THEME_NAVIGATION_BINDINGS, { items: 'items', selected: 'selected', linkActivation: 'linkActivation' });
   assert(structureSelectors(ShellPortProbe, 'shell').includes(THEME_SHELL_PROJECTION.content));
   assert.deepEqual(structureSelectors(PanelPortProbe, 'panel'), ['*']);
   assert.deepEqual(structureSelectors(NavigationPortProbe, 'navigation'), []);
@@ -37,4 +37,13 @@ test('opt-in hosts reject missing ports or projections without strengthening leg
   assert.throws(() => structureSelectors(InvalidPanelProjectionProbe, 'panel'), /projection/);
   assert.throws(() => structureSelectors(class NotCompiled {}, 'shell'), /compiled standalone/);
   assert.doesNotThrow(() => new ThemeRegistry([DEFAULT_THEME]));
+});
+
+test('legacy structural ports remain valid until link interception is explicitly requested', () => {
+  assert.doesNotThrow(() => structureSelectors(LinkShellProbe, 'shell', true));
+  assert.doesNotThrow(() => structureSelectors(LinkNavigationProbe, 'navigation', true));
+  assert.doesNotThrow(() => structureSelectors(ShellPortProbe, 'shell'));
+  assert.doesNotThrow(() => structureSelectors(NavigationPortProbe, 'navigation'));
+  assert.throws(() => structureSelectors(ShellPortProbe, 'shell', true), /shell linkActivation capability/);
+  assert.throws(() => structureSelectors(NavigationPortProbe, 'navigation', true), /navigation linkActivation capability/);
 });

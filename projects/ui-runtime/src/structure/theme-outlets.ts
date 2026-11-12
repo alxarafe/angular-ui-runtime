@@ -3,6 +3,7 @@ import {
   effect, inject, input, inputBinding, output, outputBinding,
   reflectComponentType, viewChild,
 } from '@angular/core';
+import type { ThemeLinkActivationHandler } from './link-activation.js';
 import { captureRetainedFocus } from './retained-focus.js';
 import { ThemeArtifact } from '../theme/theme-definition.js';
 import { ThemeResolver, ThemeService } from '../theme/theme-runtime.js';
@@ -15,7 +16,7 @@ const REGION_ID = /^[a-z][a-z0-9-]*$/;
 const REGION_SELECTOR = /^\[aur-theme-region=(?:"([a-z][a-z0-9-]*)"|'([a-z][a-z0-9-]*)'|([a-z][a-z0-9-]*))\]$/;
 
 /** Internal validation for opt-in hosts; legacy registry admission is unchanged. */
-export function structureSelectors(component: Type<unknown>, artifact: 'shell' | 'navigation' | 'panel'): readonly string[] {
+export function structureSelectors(component: Type<unknown>, artifact: 'shell' | 'navigation' | 'panel', requireLinkActivation = false): readonly string[] {
   const mirror = reflectComponentType(component);
   if (!mirror?.isStandalone) throw new Error('Structural ports require a compiled standalone component');
   const bindings = artifact === ThemeArtifact.Shell ? THEME_SHELL_BINDINGS : THEME_NAVIGATION_BINDINGS;
@@ -25,6 +26,8 @@ export function structureSelectors(component: Type<unknown>, artifact: 'shell' |
         !mirror.outputs.some(output => output.templateName === event))
       throw new Error(`Missing ${artifact} presentation bindings`);
   }
+  if (requireLinkActivation && !mirror.inputs.some(input => input.templateName === 'linkActivation'))
+    throw new Error(`Missing ${artifact} linkActivation capability`);
   const selectors = mirror.ngContentSelectors.map(selector => {
     const region = REGION_SELECTOR.exec(selector)?.slice(1).find(Boolean);
     return region ? `[${THEME_REGION_ATTRIBUTE}="${region}"]` : selector;
@@ -41,6 +44,12 @@ export function structureSelectors(component: Type<unknown>, artifact: 'shell' |
     throw new Error('Panel requires exactly one catch-all projection');
   }
   return selectors;
+}
+
+// Do not bind an unknown input on legacy structural components when the port is unused.
+function linkActivationBindings(component: Type<unknown>, handler: () => ThemeLinkActivationHandler | undefined) {
+  return reflectComponentType(component)!.inputs.some(input => input.templateName === 'linkActivation')
+    ? [inputBinding('linkActivation', handler)] : [];
 }
 
 interface OwnedProjection {
@@ -61,6 +70,7 @@ export class ThemeShellOutlet {
   readonly footer = input<TemplateRef<unknown>>();
   readonly regions = input<ThemeRegions>({});
   readonly navigation = input<readonly ThemeNavigationItem[]>([]);
+  readonly linkActivation = input<ThemeLinkActivationHandler>();
   readonly navigationSelected = output<ThemeNavigationSelection>();
   protected readonly theme = inject(ThemeService);
   private readonly resolver = inject(ThemeResolver);
@@ -77,7 +87,7 @@ export class ThemeShellOutlet {
       const owned = this.owned(), target = this.target();
       if (!owned || !target) return;
       const component = this.resolver.resolve(ThemeArtifact.Shell);
-      const selectors = structureSelectors(component, ThemeArtifact.Shell);
+      const selectors = structureSelectors(component, ThemeArtifact.Shell, !!this.linkActivation());
       const sources = new Map<string, TemplateRef<unknown>>();
       for (const [name, template] of [['heading', this.heading()], ['content', this.content()], ['footer', this.footer()]] as const)
         if (template) sources.set(THEME_SHELL_PROJECTION[name], template);
@@ -117,6 +127,7 @@ export class ThemeShellOutlet {
       }
       target.createComponent(component, { projectableNodes: projection, bindings: [
         inputBinding(THEME_SHELL_BINDINGS.navigation, this.navigation),
+        ...linkActivationBindings(component, this.linkActivation),
         outputBinding<ThemeNavigationSelection>(THEME_SHELL_BINDINGS.navigationSelected, value => this.navigationSelected.emit(value)),
       ] });
       this.rendered = component;
@@ -130,6 +141,7 @@ export class ThemeShellOutlet {
 @Component({ selector: 'aur-theme-navigation', template: '<ng-container #target />' })
 export class ThemeNavigationOutlet {
   readonly items = input<readonly ThemeNavigationItem[]>([]);
+  readonly linkActivation = input<ThemeLinkActivationHandler>();
   readonly selected = output<ThemeNavigationSelection>();
   private readonly target = viewChild('target', { read: ViewContainerRef });
   private readonly resolver = inject(ThemeResolver);
@@ -139,11 +151,12 @@ export class ThemeNavigationOutlet {
       const target = this.target();
       if (!target) return;
       const component = this.resolver.resolve(ThemeArtifact.Navigation);
+      structureSelectors(component, ThemeArtifact.Navigation, !!this.linkActivation());
       if (component === this.rendered) return;
-      structureSelectors(component, ThemeArtifact.Navigation);
       target.clear();
       target.createComponent(component, { bindings: [
         inputBinding(THEME_NAVIGATION_BINDINGS.items, this.items),
+        ...linkActivationBindings(component, this.linkActivation),
         outputBinding<ThemeNavigationSelection>(THEME_NAVIGATION_BINDINGS.selected, value => this.selected.emit(value)),
       ] });
       this.rendered = component;

@@ -73,6 +73,10 @@ export async function buildTheme(id, archivePath) {
       }
     }
     if (id !== 'default') assert.throws(() => new runtime.ThemeRegistry([definition]), /every artifact/);
+    if (id === 'default' || id === 'cyberpunk') {
+      for (const key of id === 'default' ? ['shell', 'navigation'] : ['shell'])
+        assert(reflectComponentType(definition.overrides[key]).inputs.some(input => input.templateName === 'linkActivation'), 'Missing link activation capability');
+    }
     if (id === 'cyberpunk') {
       const shell = reflectComponentType(definition.overrides.shell);
       assert(shell.inputs.some(input => input.templateName === 'navigation'));

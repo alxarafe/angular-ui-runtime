@@ -33,10 +33,10 @@ Import only from `@alxarafe/ui-runtime`:
 
 | Export | Contract |
 | --- | --- |
-| `ThemeNavigationItem` | Readonly `id`, `label`; optional `href`, `disabled`, `current`, ordered `children`. One application-owned tree, not the proposed multi-menu model. |
+| `ThemeNavigationItem` | Readonly `id`, `label`; optional `href`, native `target`/`download`, `disabled`, `current`, ordered `children`. One application-owned tree, not the proposed multi-menu model. |
 | `ThemeNavigationSelection` | Readonly `itemId`: intent, never an executable operation or router command. |
-| `ThemeShellComponent` | Signal `navigation` input and `navigationSelected` output carrying the above types. |
-| `ThemeNavigationComponent` | Signal `items` input and `selected` output carrying the above types. |
+| `ThemeShellComponent` | Signal `navigation` input and `navigationSelected` action output; optional `linkActivation` callback input. |
+| `ThemeNavigationComponent` | Signal `items` input and `selected` action output; optional `linkActivation` callback input. |
 | `THEME_SHELL_BINDINGS`, `THEME_NAVIGATION_BINDINGS` | Frozen public template names for those inputs/outputs. |
 | `THEME_SHELL_PROJECTION` | Frozen heading/content/footer selectors below. |
 | `THEME_REGION_ATTRIBUTE`, `ThemeRegions` | Named projection attribute; readonly name-to-`TemplateRef<unknown>` map. |
@@ -61,6 +61,7 @@ names, standalone metadata and selectors, not actual payloads or visual behavior
 <aur-theme-shell [heading]="headingTemplate" [content]="editingTemplate"
   [footer]="footerTemplate" [navigation]="authorizedNavigation"
   [regions]="{ tools: toolsTemplate, account: accountTemplate }"
+  [linkActivation]="handleLink"
   (navigationSelected)="handleApplicationIntent($event.itemId)" />
 ```
 
@@ -98,7 +99,7 @@ Example shell (imports from Angular/public UI Runtime only):
   imports: [ThemeNavigationOutlet, ThemePanelOutlet],
   template: `
     <header><ng-content select="[aur-shell-heading]" /></header>
-    <aur-theme-navigation [items]="navigation()"
+    <aur-theme-navigation [items]="navigation()" [linkActivation]="linkActivation()"
       (selected)="navigationSelected.emit($event)" />
     <main><aur-theme-panel>
       <ng-content select="[aur-shell-content]" />
@@ -111,6 +112,7 @@ Example shell (imports from Angular/public UI Runtime only):
 export class IndependentShell implements ThemeShellComponent {
   readonly navigation = input<readonly ThemeNavigationItem[]>([]);
   readonly navigationSelected = output<ThemeNavigationSelection>();
+  readonly linkActivation = input<ThemeLinkActivationHandler>();
 }
 ```
 
@@ -139,6 +141,59 @@ are unchanged and unpublished. This compatibility tree neither limits multi-menu
 design nor implements its overflow. A future optional adapter may project host
 data, without rendering a menu through two paths. Form/grid ports and optional
 library defaults are unaffected.
+
+### Optional synchronous link activation (alpha.3)
+
+`ThemeLinkActivation` exposes readonly `itemId`, the exact supplied `href`, a live
+readonly `defaultPrevented` getter, and `preventDefault()`. Configure the optional
+`[linkActivation]` input of `ThemeShellOutlet` or `ThemeNavigationOutlet` with a
+`ThemeLinkActivationHandler`. This is a callback input, **not** an Angular output:
+it provides a synchronous cancellation boundary without inspecting private output
+subscriber state or requiring an extra enable flag. It is not navigation metadata
+and is never stored on `ThemeNavigationItem`.
+
+```ts
+readonly handleLink: ThemeLinkActivationHandler = event => {
+  event.preventDefault(); // Cancel now, before any asynchronous guard/router work.
+  // The application may navigate, reject the request or await its own guard.
+  // Resolve event.itemId/event.href through application-owned policy here.
+};
+```
+
+A conforming navigation calls the public `activateThemeLink(item, $event,
+linkActivation())` exactly once on its real anchor's `(click)`. Recursive trees
+pass the callback unchanged. Shells forward their optional callback to
+`ThemeNavigationOutlet`; that outlet binds it to the resolved navigation component.
+There is no second `selected` emission for links, no event bus or router dependency.
+Default navigation and Default/Cyberpunk shells implement this forwarding; all
+five packaged themes share the same effective navigation via direct fallback.
+
+The helper dispatches only an enabled nonempty-href, cancelable, ordinary primary
+click without Ctrl/Meta/Shift/Alt (including browser-generated Enter clicks).
+Already cancelled events, non-primary clicks, context menus, downloads and
+non-self targets remain native without callback dispatch. Explicit `target` and
+`download` values become native anchor attributes; an absent download attribute
+is distinct from `download=""`. Effective base-element targets are also respected.
+No domain classification is attempted: external links are native unless an
+eligible callback explicitly cancels them. Hrefs/schemes and effective authorized
+entries remain consumer-validated data.
+
+Cancellation acts on the original DOM event only during the synchronous callback.
+After it returns, `preventDefault()` is deliberately inert, including after an
+`await`/Promise. A callback that merely observes leaves HTML behavior intact. An
+SPA consumer must cancel first, then decide whether to route or reject; the
+runtime does not run guards, manage history, call a router, force reloads or
+recover from consumer exceptions. Keep actual anchors for URLs, copying, browser
+context menus, history and assistive technology.
+
+The capability is additive: existing interfaces make the input optional, and old
+consumers/themes work when it is unused. When a callback is configured, opt-in
+hosts require the compiled `linkActivation` input before replacing their current
+component (also when a callback is added later). Missing capability throws the
+existing structural-validation error rather than silently losing interception.
+No new public diagnostic type or registry admission rule is introduced. Reflection
+cannot prove semantic forwarding; third-party packages must supply behavioral
+conformance evidence. Alpha.3 theme peers require runtime `0.3.0-alpha.3` exactly.
 
 ## View, state and focus lifetime
 
@@ -186,8 +241,9 @@ approved visual baselines or proof of all 1.0 requirements.
 
 All 20 required keys, protected complete default, one-hop resolution,
 `activate(id): boolean`, field bindings and provider isolation remain unchanged.
-No dependency, version or lockfile change is required. No complete default theme
-implementation ships, and existing 1.0 acceptance statuses remain open.
+These invariants remain intact in alpha.3. Independent Default and optional theme
+packages now exist; see [package versioning](package-versioning.md). Full 1.0
+menu/overflow and cross-consumer acceptance remain open.
 
 Before real default-theme extraction, a separate task must adapt its imports,
 replace router-specific navigation with consumer handling, project consumer-owned
