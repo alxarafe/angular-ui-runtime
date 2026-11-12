@@ -29,7 +29,7 @@ Each command runs in ephemeral containers as the host user's UID/GID. Source is 
 
 The consumer first runs `npm ci`, then installs the generated tarball with `npm install --no-save` while retaining lockfile resolution. Validation requires the consumer lockfile to remain unchanged and every initially installed dependency to retain its locked version, source and integrity; installed package manifests also confirm the versions. Only the runtime package may be added. Platform-specific optional dependencies absent after `npm ci` are not required. Any dependency drift fails the check before the public-package imports and production consumer build.
 
-The separate private `apps/testbed/` app installs the same actual tarball, preserves its own locked dependencies and builds using public exports. `./bin/check` then runs eight Playwright browser tests at 1280×800 and 390×844 against the compiled site. Screenshots, reports and package/browser metadata are written under `artifacts/testbed/`, outside the npm package. The two synthetic QA themes exercise existing bindings only; they are not production reference themes or approved visual baselines. See [browser QA and human inspection](docs/qa/testbed.md).
+The private `apps/testbed/` app installs the actual core and five theme archives, preserves its locked dependencies and builds using public exports. `./bin/check` runs twenty Playwright browser tests at 1280×800 and 390×844, covering synthetic boundary scenarios and all five packaged themes. Screenshots, reports and archive metadata are written under `artifacts/testbed/`, outside the npm packages. Captures remain pending human visual approval. See [browser QA and human inspection](docs/qa/testbed.md).
 
 The local artifact is:
 
@@ -59,7 +59,7 @@ The renderer API exports `FieldValue`, `FieldRendererContext`, `FieldRenderer` a
 
 Opt-in `ThemeShellOutlet`, `ThemeNavigationOutlet` and `ThemePanelOutlet` provide independent structural composition using public navigation/intent ports and application-owned Angular projection. No consumer base classes or router are required. See the [structural composition contract](docs/contracts/theme-composition-v1.md) for bindings, named regions, view lifetime and compatibility limits.
 
-The core npm artifact ships no visual themes or field widgets. A separate experimental APF package, [`@alxarafe/ui-theme-default`](packages/themes/default/README.md), supplies the complete default theme through public ports. It requires the exact tested runtime snapshot with structural ports, not the older 0.2.0 artifact; coordinated distribution versions remain pending. See [extraction validation and comparison](docs/qa/default-theme-extraction.md). Consumer adoption and the other four themes remain separate work.
+The core npm artifact ships no visual themes or field widgets. Five separate experimental APF packages provide the complete [`default`](packages/themes/default/README.md) and optional [`alternative`](packages/themes/alternative/README.md), [`cyberpunk`](packages/themes/cyberpunk/README.md), [`vintage`](packages/themes/vintage/README.md) and [`high-contrast`](packages/themes/high-contrast/README.md) themes. They require the tested runtime snapshot with structural ports, not the older 0.2.0 artifact; coordinated distribution versions remain pending. See [installation, extraction evidence and known limits](docs/qa/optional-theme-extraction.md). Consumer adoption and human visual approval remain separate work.
 
 ## Version 1.0 target contract
 

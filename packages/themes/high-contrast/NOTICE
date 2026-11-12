@@ -1,0 +1,13 @@
+Alxarafe independent high-contrast theme
+Licensed under Apache-2.0; see LICENSE.
+
+Adapted from alxarafe/erbas-client at 8d1573c315e03a6edbc92bd7b3d41d851bd54ab9,
+app/src/app/core-fe/themes/high-contrast/ and the catalogue in themes/themes.ts.
+PROVENANCE.json records the exact original file hashes.
+
+Changes: public runtime ports and neutral projection replace consumer classes,
+services and slot registries; selectors/styles are scoped to the active theme.
+Alternative implements its own BOOLEAN port without a default implementation
+base class. Cyberpunk's rail is in flow and native controls use a dark color
+scheme. Vintage has no components. High Contrast styles only its own panel and
+active default composition. No reference checkout or QA branch is a build input.

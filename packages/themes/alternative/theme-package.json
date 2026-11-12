@@ -1,0 +1,42 @@
+{
+  "manifestVersion": 1,
+  "package": "@alxarafe/ui-theme-alternative",
+  "version": "0.0.0-experimental.0",
+  "publisher": "Alxarafe contributors",
+  "license": "Apache-2.0",
+  "compatibility": {
+    "angular": "^22.0.0",
+    "uiRuntime": "0.2.0",
+    "runtimeSnapshotOnly": true,
+    "requiredRuntimeRevision": "23e3bf40bf4c3dbad034d3deb71b3358075f51b3",
+    "requiredCapabilities": [
+      "ThemeShellOutlet",
+      "ThemeNavigationOutlet",
+      "ThemePanelOutlet"
+    ]
+  },
+  "themes": [
+    {
+      "id": "alternative",
+      "name": "Alternative",
+      "description": "Optional alternative presentation adapted from ERBAS",
+      "cssClass": "theme-alternative",
+      "definitionExport": "ALTERNATIVE_THEME",
+      "kinds": [
+        "partial"
+      ],
+      "artifacts": [
+        "field.BOOLEAN"
+      ],
+      "requiredCapabilities": [
+        "structural-composition-ports-v1"
+      ]
+    }
+  ],
+  "styles": [
+    "./theme.css"
+  ],
+  "assets": [],
+  "evidence": "./conformance.json",
+  "distribution": "private local snapshot; coordinated release versions required"
+}

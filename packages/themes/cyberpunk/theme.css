@@ -1,0 +1,52 @@
+/* SPDX-License-Identifier: Apache-2.0; adapted from ERBAS; see NOTICE.
+   Rail is reserved grid space, then normal flow on narrow screens, never fixed. */
+aur-theme-shell.theme-cyberpunk { display: block; background: #15142b; }
+.aur-cyberpunk-shell {
+  --theme-background: #15142b;
+  --theme-surface: #242139;
+  --theme-text: #f0edf8;
+  --theme-muted: #bdb5d3;
+  --theme-border: #645b7b;
+  --theme-accent: #dbdb61;
+  --theme-on-accent: #15142b;
+  --theme-link: #b9e9ef;
+  --theme-code: #39324c;
+  --theme-focus: #f3ed6e;
+  color-scheme: dark;
+  color: var(--theme-text);
+  background: var(--theme-background);
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12rem;
+  gap: 24px;
+  max-width: 1000px;
+  min-height: 100vh;
+  padding: 48px 24px;
+  margin: 0 auto;
+  align-items: start;
+}
+.aur-cyberpunk-shell, .aur-cyberpunk-shell * { box-sizing: border-box; }
+.aur-cyberpunk-heading, .aur-cyberpunk-workspace, .aur-cyberpunk-footer { grid-column: 1; min-width: 0; }
+.aur-cyberpunk-workspace { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 24px; }
+.aur-cyberpunk-workspace main, .aur-cyberpunk-navigation { min-width: 0; }
+.aur-cyberpunk-tools {
+  grid-column: 2; grid-row: 1 / span 3;
+  display: flex; flex-direction: column; gap: 12px;
+  min-width: 0; padding: 12px; background: var(--theme-surface);
+}
+.aur-cyberpunk-tools input:not([type='checkbox']), .aur-cyberpunk-tools textarea, .aur-cyberpunk-tools select { max-width: 100%; min-width: 0; }
+.aur-cyberpunk-tools:not(:has([aur-theme-region])) { display: none; }
+.aur-cyberpunk-shell:not(:has(.aur-cyberpunk-tools [aur-theme-region])) { grid-template-columns: minmax(0, 1fr); }
+.aur-cyberpunk-panel { border-left: 2px solid var(--theme-accent, #dbdb61); padding-left: 12px; }
+.aur-cyberpunk-shell :focus-visible { outline: 3px solid var(--theme-focus); outline-offset: 3px; }
+.aur-cyberpunk-footer { color: var(--theme-muted); }
+@media (max-width: 680px) {
+  .aur-cyberpunk-shell { display: flex; flex-direction: column; padding: 24px 16px; }
+  .aur-cyberpunk-workspace { display: block; width: 100%; }
+  .aur-cyberpunk-heading { order: 0; }
+  .aur-cyberpunk-workspace { order: 1; }
+  .aur-cyberpunk-tools { order: 2; width: 100%; }
+  .aur-cyberpunk-footer { order: 3; }
+  .aur-cyberpunk-navigation { margin-bottom: 24px; }
+}

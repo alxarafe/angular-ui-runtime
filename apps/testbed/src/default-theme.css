@@ -1,4 +1,8 @@
 @import '@alxarafe/ui-theme-default/theme.css';
+@import '@alxarafe/ui-theme-alternative/theme.css';
+@import '@alxarafe/ui-theme-cyberpunk/theme.css';
+@import '@alxarafe/ui-theme-vintage/theme.css';
+@import '@alxarafe/ui-theme-high-contrast/theme.css';
 
 /* Application-owned QA content, outside both distributed npm artifacts. */
 body { margin: 0; }

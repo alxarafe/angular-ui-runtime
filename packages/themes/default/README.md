@@ -25,7 +25,7 @@ and UI Runtime stay external to its ESM bundle.
 In this repository use Docker only:
 
 ```sh
-./bin/pack            # core APF archive, then independently built/packed theme
+./bin/pack            # core APF archive, then five separately built/packed themes
 ./bin/theme-default   # theme only, using the already built runtime archive
 ./bin/check           # includes both archives, tests, installed consumers and Chromium
 ```

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+export AUR_THEME_PACKAGE="${1:-all}"
+exec "$root/bin/run" theme-pack

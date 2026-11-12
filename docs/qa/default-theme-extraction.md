@@ -1,5 +1,9 @@
 # Independent default theme extraction evidence
 
+Follow-up: [AUR-THEME-EXTRACT-002](optional-theme-extraction.md) adds four separate
+optional packages and extends the installed default testbed. The evidence/scope
+below records the original extraction, not retroactive visual approval.
+
 AUR-THEME-EXTRACT-001 extracts only the default theme. Alternative, Cyberpunk,
 Vintage and High Contrast remain in ERBAS. No consumer repository was modified.
 
