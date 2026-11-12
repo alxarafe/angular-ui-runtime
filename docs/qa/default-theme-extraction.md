@@ -1,5 +1,7 @@
 # Independent default theme extraction evidence
 
+> Historical extraction record: version coordinates and snapshot restrictions below describe the extraction task. The active private prerelease contract is now [package versioning](../contracts/package-versioning.md). Original provenance, visual findings and pending human approval remain unchanged.
+
 Follow-up: [AUR-THEME-EXTRACT-002](optional-theme-extraction.md) adds four separate
 optional packages and extends the installed default testbed. The evidence/scope
 below records the original extraction, not retroactive visual approval.

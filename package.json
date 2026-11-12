@@ -1,6 +1,6 @@
 {
   "name": "angular-ui-runtime-workspace",
-  "version": "0.2.0",
+  "version": "0.3.0-alpha.1",
   "private": true,
   "packageManager": "npm@11.19.1",
   "scripts": {
@@ -8,7 +8,7 @@
     "test": "ngc -p tests/tsconfig.json && node --import @angular/compiler --test tests/*.test.mjs",
     "build": "node scripts/build.mjs",
     "pack": "npm run build && node scripts/pack.mjs && node scripts/themes.mjs",
-    "check": "npm run typecheck && npm test && npm run pack && node scripts/consumer.mjs && node scripts/testbed.mjs",
+    "check": "npm run typecheck && npm test && npm run pack && node scripts/consumer.mjs && node scripts/package-compatibility.mjs && node scripts/testbed.mjs",
     "testbed-preview": "npm run pack && node scripts/testbed.mjs && AUR_TESTBED_HOST=0.0.0.0 node tests/browser/serve.mjs",
     "theme-default": "node scripts/theme-default.mjs",
     "theme-pack": "node scripts/themes.mjs"

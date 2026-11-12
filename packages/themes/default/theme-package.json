@@ -1,14 +1,12 @@
 {
   "manifestVersion": 1,
   "package": "@alxarafe/ui-theme-default",
-  "version": "0.0.0-experimental.0",
+  "version": "0.1.0-alpha.1",
   "publisher": "Alxarafe contributors",
   "license": "Apache-2.0",
   "compatibility": {
     "angular": "^22.0.0",
-    "uiRuntime": "0.2.0",
-    "runtimeSnapshotOnly": true,
-    "requiredRuntimeRevision": "23e3bf40bf4c3dbad034d3deb71b3358075f51b3",
+    "uiRuntime": "0.3.0-alpha.1",
     "requiredCapabilities": [
       "ThemeShellOutlet",
       "ThemeNavigationOutlet",
@@ -58,5 +56,5 @@
   ],
   "assets": [],
   "evidence": "./conformance.json",
-  "distribution": "private local snapshot; coordinated release versions required"
+  "distribution": "private prerelease; publication prohibited"
 }

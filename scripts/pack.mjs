@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { runtimePackage, archiveName } from './package-metadata.mjs';
 
 const destination = '/artifacts';
 mkdirSync(destination, { recursive: true });
 const [result] = JSON.parse(execFileSync('npm', ['pack', './dist/ui-runtime', '--json', '--pack-destination', destination], { encoding: 'utf8' }));
-assert.equal(result.name, '@alxarafe/ui-runtime');
-assert.equal(result.version, '0.2.0');
+assert.equal(result.name, runtimePackage.name);
+assert.equal(result.version, runtimePackage.version);
+assert.equal(result.filename, archiveName(runtimePackage));
 const files = result.files.map(({ path }) => path);
 for (const required of ['package.json', 'README.md', 'LICENSE', 'NOTICE']) assert(files.includes(required), `Missing ${required}`);
 assert(files.some((file) => file.endsWith('.d.ts')), 'Missing declarations');
@@ -20,6 +22,7 @@ try {
   const root = join(unpacked, 'package');
   const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
   assert.equal(pkg.type, 'module');
+  assert.equal(pkg.private, true, 'Runtime publication must remain prohibited');
   assert.equal(pkg.sideEffects, false);
   assert.equal(pkg.peerDependencies['@angular/core'], '^22.0.0');
   assert(!Object.keys(pkg.dependencies ?? {}).some((name) => name.startsWith('@angular/')), 'Angular must remain a peer');

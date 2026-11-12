@@ -1,20 +1,17 @@
 # Independent default theme (experimental)
 
-`@alxarafe/ui-theme-default@0.0.0-experimental.0` is a separate APF package,
+`@alxarafe/ui-theme-default@0.1.0-alpha.1` is a separate APF package,
 adapted from ERBAS's Apache-2.0 default presentation. It ships no application,
 backend, routing, generator or domain service. See NOTICE and PROVENANCE.json.
 
 ## Compatibility and distribution status
 
-**Private local snapshot only. Do not publish or claim support for the old 0.2.0
-runtime archive.** The tested runtime implements structural composition ports at
-revision `23e3bf40bf4c3dbad034d3deb71b3358075f51b3` (merged PR #9).
-The npm peer `0.2.0` is only the current local archive coordinate, not sufficient
-compatibility evidence. The old ERBAS-vendored/published-layout 0.2.0 artifact lacks
-these exports and is unsupported. `conformance.json` records the actual tested
-runtime archive digest. Coordinated distinct runtime/theme versions and peer
-ranges must be selected before external distribution; this package is private
-until that separately authorized decision. No npm publication is authorized.
+The exact runtime peer is `@alxarafe/ui-runtime@0.3.0-alpha.1`. Historical
+`0.2.0` archives do not satisfy it. Each theme is independently versioned;
+installation never activates it. `conformance.json` records the tested runtime
+archive digest and source identity. All packages remain `private: true` and npm
+publication is prohibited. See the repository's
+`docs/contracts/package-versioning.md` for compatibility and upgrade policy.
 
 Angular 22 is a peer; only tslib is a runtime dependency. The theme consumes the
 public `@alxarafe/ui-runtime` entry, never repository source aliases. Both Angular
@@ -41,8 +38,8 @@ tested runtime installed; generate `conformance.json` from that archive's digest
 then run `ng-packagr -p ng-package.json -c tsconfig.lib.json`. The authoritative
 reproducible toolchain/lock and evidence builder are this repository's scripts.
 
-Artifacts are `artifacts/alxarafe-ui-runtime-0.2.0.tgz` and
-`artifacts/alxarafe-ui-theme-default-0.0.0-experimental.0.tgz`. Install both into a
+Artifacts are `artifacts/alxarafe-ui-runtime-0.3.0-alpha.1.tgz` and
+`artifacts/alxarafe-ui-theme-default-0.1.0-alpha.1.tgz`. Install both into a
 compatible application using its own Docker/package workflow; include
 `@alxarafe/ui-theme-default/theme.css` once in application styles.
 
