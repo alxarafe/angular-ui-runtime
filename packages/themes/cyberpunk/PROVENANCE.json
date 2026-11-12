@@ -1,0 +1,12 @@
+{
+  "repository": "https://github.com/alxarafe/erbas-client",
+  "revision": "8d1573c315e03a6edbc92bd7b3d41d851bd54ab9",
+  "sourceSha256": {
+    "app/src/app/core-fe/themes/cyberpunk/structure.ts": "e5c867ff8f985af49f307c4852481072bc6ecb73b8e11ccb002198a1d6b403c7",
+    "app/src/app/core-fe/themes/cyberpunk/shell.html": "59b03ede803bb99ec4241803c8a1bf48d36dae2f1249b4edfb0fd8001a0c1a2f",
+    "app/src/app/core-fe/themes/cyberpunk/panel.html": "33b2b78cadd6abae4ae63170b2f7b03b8430755fe4076d53556f008d728ae00d",
+    "app/src/app/core-fe/themes/cyberpunk/theme.css": "b9cc42b4cf901ef08c45d8fab254b40ffa8370dc4536c506d206f8fba5efd613",
+    "app/src/app/core-fe/themes/themes.ts": "ff4d3ea235e5e8f4988e64acfaa20ca475c26cb8380a6020ca6a75b163225fd6"
+  },
+  "historicalQa": "AUR-QA-002; comparison only, never a build dependency"
+}

@@ -1,15 +1,22 @@
 /** Installed theme consumer; no theme or runtime private source imports. */
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, reflectComponentType, signal } from '@angular/core';
 import {
   ThemeShellOutlet, ThemeService, ThemeRegistry, ThemeResolver, ThemeArtifact, THEME_ARTIFACTS,
   type FieldValue, type ThemeDefinition, type ThemeNavigationItem,
 } from '@alxarafe/ui-runtime';
 import { DEFAULT_THEME } from '@alxarafe/ui-theme-default';
+import { ALTERNATIVE_THEME } from '@alxarafe/ui-theme-alternative';
+import { CYBERPUNK_THEME } from '@alxarafe/ui-theme-cyberpunk';
+import { VINTAGE_THEME } from '@alxarafe/ui-theme-vintage';
+import { HIGH_CONTRAST_THEME } from '@alxarafe/ui-theme-high-contrast';
 import { QaFieldOutlet } from './outlets';
 import { COMPOSITION_THEMES } from './composition';
 
+export const PACKAGED_THEMES: readonly ThemeDefinition[] = [
+  DEFAULT_THEME, ALTERNATIVE_THEME, CYBERPUNK_THEME, VINTAGE_THEME, HIGH_CONTRAST_THEME,
+];
 export const DEFAULT_PACKAGE_THEMES: readonly ThemeDefinition[] = [
-  DEFAULT_THEME,
+  ...PACKAGED_THEMES,
   { id: 'independent-structure', cssClass: 'qa-alternative', overrides: {
     [ThemeArtifact.Shell]: COMPOSITION_THEMES[1]!.overrides.shell,
   } },
@@ -28,14 +35,18 @@ const initial: Readonly<Record<string, FieldValue>> = {
   template: `
     <div class="package-qa-controls">
       <p>Installed independent default theme · captures pending human approval</p>
-      <button id="package-default" (click)="themes.activate('default')">Packaged default</button>
-      <button id="package-structural" (click)="themes.activate('independent-structure')">Independent structural override</button>
-      <button id="package-css" (click)="themes.activate('css-only')">Sparse CSS fallback</button>
-      <button id="package-unknown" (click)="themes.activate('unknown')">Unknown fallback</button>
+      <button id="package-default" (click)="activate('default')">Packaged default</button>
+      <button id="package-structural" (click)="activate('independent-structure')">Independent structural override</button>
+      <button id="package-css" (click)="activate('css-only')">Sparse CSS fallback</button>
+      <button id="package-unknown" (click)="activate('unknown')">Unknown fallback</button>
       <button (click)="mode.set('disabled')">Disable fields</button>
       <button (click)="mode.set('readonly')">Read-only fields</button>
       <button (click)="mode.set('edit')">Edit fields</button>
       <button (click)="update('BINARY', 'Zm9v')">Supply binary output</button>
+      @for (theme of packagedThemes; track theme.id) {
+        <button [attr.data-package-theme]="theme.id" (click)="activate(theme.id)">{{ theme.id }}</button>
+      }
+      <p data-testid="package-activation">Activation: {{ activation() }}</p>
       <p data-testid="package-status">{{ themes.current().id }} · {{ artifacts.length }} artifacts</p>
       <p>Application intent: <output data-testid="package-intent">{{ intent() }}</output></p>
     </div>
@@ -62,6 +73,7 @@ const initial: Readonly<Record<string, FieldValue>> = {
       <p>Precise TIME value: <output data-testid="precise-time-result">{{ preciseTime() }}</output></p>
       <label for="package-application-draft">Application-owned draft</label>
       <input id="package-application-draft" value="Unbound application state" />
+      <pre class="package-values" data-testid="package-resolution">{{ encode(resolution()) }}</pre>
       <pre class="package-values" data-testid="package-values">{{ encode(values()) }}</pre>
     </ng-template>
     <ng-template #footer><p>Application-owned footer</p></ng-template>
@@ -81,6 +93,16 @@ export class DefaultThemeTestbed {
   readonly themes = inject(ThemeService);
   readonly registry = inject(ThemeRegistry);
   readonly resolver = inject(ThemeResolver);
+  readonly packagedThemes = PACKAGED_THEMES;
+  readonly activation = signal(true);
+  readonly resolution = computed(() => {
+    const selected = this.themes.current(), fallback = this.registry.require('default');
+    return { id: selected.id, registered: this.registry.all.map(theme => theme.id), overrides: Object.keys(selected.overrides),
+      artifacts: THEME_ARTIFACTS.map(key => ({ key, selector: reflectComponentType(this.resolver.resolve(key))!.selector,
+        directFallback: this.resolver.resolve(key) === (selected.overrides[key] ?? fallback.overrides[key]),
+      })) };
+  });
+  activate(id: string): void { this.activation.set(this.themes.activate(id)); }
   readonly artifacts = THEME_ARTIFACTS;
   readonly fieldArtifacts = THEME_ARTIFACTS.filter((key): key is Extract<typeof key, `field.${string}`> => key.startsWith('field.'));
   readonly timeArtifact = ThemeArtifact.FieldTime;

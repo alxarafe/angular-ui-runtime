@@ -1,0 +1,15 @@
+/* SPDX-License-Identifier: Apache-2.0; adapted from ERBAS; see NOTICE. */
+aur-theme-shell.theme-alternative > aur-default-shell > .aur-default-shell {
+  --theme-background: #f2f7f2;
+  --theme-surface: #fffff6;
+  --theme-accent: #245b36;
+  --theme-link: #245b36;
+}
+.aur-alternative-boolean { display: block; margin-block: 1.25rem; max-width: 42rem; }
+.aur-alternative-boolean label { display: block; font: inherit; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.4rem; }
+.aur-alternative-boolean select {
+  box-sizing: border-box; width: 100%; min-width: 0; min-height: 2.6rem;
+  font: inherit; padding: 8px; border: 1px solid var(--theme-border, #dce3ed); border-radius: 0.3rem;
+  color: var(--theme-text, #172c46); background: var(--theme-surface, #fffff6);
+}
+.aur-alternative-boolean :focus-visible { outline: 3px solid var(--theme-focus, #bb7b00); outline-offset: 3px; }

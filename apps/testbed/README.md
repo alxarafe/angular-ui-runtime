@@ -19,3 +19,8 @@ It neither migrates production themes nor implements 1.0 widgets.
 independent default-theme and runtime tarballs and loads the exported theme CSS.
 It has no stylesheet dependency on the synthetic QA pages. See
 [extraction QA](../../docs/qa/default-theme-extraction.md).
+
+The same page now explicitly registers all five independently packaged themes,
+with optional override/fallback, safe layout and dark native-control evidence in
+[optional-theme QA](../../docs/qa/optional-theme-extraction.md). Human review and
+consumer panel-only focus policy remain pending.

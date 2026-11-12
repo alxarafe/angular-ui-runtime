@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
-case "${1:-}" in test|check|pack|theme-default|testbed-preview) task="$1" ;; *) echo 'Usage: bin/run {test|check|pack|theme-default|testbed-preview}' >&2; exit 2 ;; esac
+case "${1:-}" in test|check|pack|theme-default|theme-pack|testbed-preview) task="$1" ;; *) echo 'Usage: bin/run {test|check|pack|theme-default|theme-pack|testbed-preview}' >&2; exit 2 ;; esac
 mkdir -p "$root/artifacts"
+source_sha="$(cd "$root" && git ls-files --cached --others --exclude-standard -z | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f1)"
 ports=()
 if [[ "$task" == testbed-preview ]]; then
   ports=(--publish 127.0.0.1:4173:4173 --name "${AUR_TESTBED_CONTAINER:-aur-testbed-preview-$$}")
 fi
 docker run --rm --init --user "$(id -u):$(id -g)" \
   "${ports[@]}" \
+  --env "AUR_SOURCE_TREE_SHA256=$source_sha" \
   --env "AUR_SOURCE_COMMIT=$(git -C "$root" rev-parse HEAD)" \
   --env "AUR_SOURCE_STATUS=$(git -C "$root" status --porcelain)" \
+  --env "AUR_THEME_PACKAGE=${AUR_THEME_PACKAGE:-all}" \
   --env HOME=/tmp --env NG_CLI_ANALYTICS=false --env "AUR_TASK=$task" \
   --mount "type=bind,src=$root,dst=/source,readonly" \
   --mount "type=bind,src=$root/artifacts,dst=/artifacts" \
@@ -21,7 +24,7 @@ docker run --rm --init --user "$(id -u):$(id -g)" \
     cp -R /source/projects /source/scripts /source/tests /source/docs /source/apps /source/packages /tmp/workspace/
     cd /tmp/workspace
     npm ci --no-audit --no-fund
-    npm run "$AUR_TASK"
+    if [ "$AUR_TASK" = theme-pack ]; then npm run theme-pack -- "$AUR_THEME_PACKAGE"; else npm run "$AUR_TASK"; fi
   '
 if [[ "$task" == check ]]; then
   docker run --rm --init --platform linux/amd64 --shm-size=1g --user "$(id -u):$(id -g)" \

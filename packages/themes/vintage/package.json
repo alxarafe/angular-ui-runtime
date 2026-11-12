@@ -1,0 +1,23 @@
+{
+  "name": "@alxarafe/ui-theme-vintage",
+  "version": "0.0.0-experimental.0",
+  "private": true,
+  "description": "Independent optional vintage presentation; structural-ports runtime snapshot only",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": [
+    "./theme.css"
+  ],
+  "peerDependencies": {
+    "@angular/core": "^22.0.0",
+    "@alxarafe/ui-runtime": "0.2.0"
+  },
+  "dependencies": {
+    "tslib": "^2.8.1"
+  },
+  "exports": {
+    "./theme.css": "./theme.css",
+    "./theme-package.json": "./theme-package.json",
+    "./conformance.json": "./conformance.json"
+  }
+}

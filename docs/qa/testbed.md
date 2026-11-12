@@ -114,7 +114,7 @@ Both the QA app and browser runner have private manifests and independent lockfi
 
 ## Human visual inspection (no automatic baseline approval)
 
-1. Run `./bin/check` and confirm all ten browser tests and earlier phases passed.
+1. Run `./bin/check` and confirm all twenty browser tests and earlier phases passed.
    Preserve the revision, tarball digest, image digest, actual browser version,
    results and screenshots together. Passing assertions alone are insufficient.
 2. Open all four viewport captures at 100% size and their full-page companions.
@@ -145,12 +145,17 @@ Both the QA app and browser runner have private manifests and independent lockfi
 
 ## Remaining coverage
 
-The separately built `/default-theme/` fixture consumes both installed APF packages
-and the extracted default theme's CSS, isolated from the original synthetic fixture
-stylesheet. Two additional Chromium cases cover all mappings, representative native
-edits, projection, fallback and safe control reachability. See
-[extraction evidence and limits](default-theme-extraction.md). This does not extract
-the other four themes or approve reference-theme visuals.
+The `/default-theme/` fixture also registers four actual optional APF packages.
+Ten further cases cover five themes at both viewports; see
+[optional-theme evidence, differences and focus limitations](optional-theme-extraction.md).
+Captures/provenance are in `artifacts/testbed/optional-themes/`. These are candidate
+references, not automatically approved visuals or completed 1.0 acceptance.
+
+The original separately built `/default-theme/` slice added two Chromium cases
+for the default package's mappings, representative native edits, projection,
+fallback and control reachability, isolated from the synthetic fixture stylesheet.
+See [original extraction evidence](default-theme-extraction.md); the optional-theme
+follow-up above extends this page without approving any reference-theme visuals.
 
 No semantic field validation, date/UUID/decimal rules, typed multi-menu fallback,
 forms/tabs, grids/editable collections, dirty/save/discard/navigation engine, domain

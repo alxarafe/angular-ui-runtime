@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/alxarafe/erbas-client",
+  "revision": "8d1573c315e03a6edbc92bd7b3d41d851bd54ab9",
+  "sourceSha256": {
+    "app/src/app/core-fe/themes/vintage/theme.css": "f64449c186bd191fe8ba86a6457ee3274c5d95aa2a0a992f128b37a366405d3c",
+    "app/src/app/core-fe/themes/themes.ts": "ff4d3ea235e5e8f4988e64acfaa20ca475c26cb8380a6020ca6a75b163225fd6"
+  },
+  "historicalQa": "AUR-QA-002; comparison only, never a build dependency"
+}
