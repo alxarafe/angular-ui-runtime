@@ -4,3 +4,5 @@ export const UI_RUNTIME_VERSION = '0.2.0';
 export * from './theme/theme-definition.js';
 export * from './theme/theme-runtime.js';
 export * from './field-types/renderer-context.js';
+export * from './structure/theme-ports.js';
+export { ThemeShellOutlet, ThemeNavigationOutlet, ThemePanelOutlet } from './structure/theme-outlets.js';

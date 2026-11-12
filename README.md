@@ -29,7 +29,7 @@ Each command runs in ephemeral containers as the host user's UID/GID. Source is 
 
 The consumer first runs `npm ci`, then installs the generated tarball with `npm install --no-save` while retaining lockfile resolution. Validation requires the consumer lockfile to remain unchanged and every initially installed dependency to retain its locked version, source and integrity; installed package manifests also confirm the versions. Only the runtime package may be added. Platform-specific optional dependencies absent after `npm ci` are not required. Any dependency drift fails the check before the public-package imports and production consumer build.
 
-The separate private `apps/testbed/` app installs the same actual tarball, preserves its own locked dependencies and builds using public exports. `./bin/check` then runs six Playwright smoke tests at 1280×800 and 390×844 against the compiled site. Screenshots, reports and package/browser metadata are written under `artifacts/testbed/`, outside the npm package. The two synthetic QA themes exercise existing bindings only; they are not production reference themes or approved visual baselines. See [browser QA and human inspection](docs/qa/testbed.md).
+The separate private `apps/testbed/` app installs the same actual tarball, preserves its own locked dependencies and builds using public exports. `./bin/check` then runs eight Playwright browser tests at 1280×800 and 390×844 against the compiled site. Screenshots, reports and package/browser metadata are written under `artifacts/testbed/`, outside the npm package. The two synthetic QA themes exercise existing bindings only; they are not production reference themes or approved visual baselines. See [browser QA and human inspection](docs/qa/testbed.md).
 
 The local artifact is:
 
@@ -56,6 +56,8 @@ Consumers call `provideThemeRuntime(themes)` in their application providers. The
 `ThemeService.current` is a readonly signal. `activate(id)` selects a registered theme and returns `true`; an unknown ID restores `default` and returns `false`. `ThemeResolver.resolve(artifact)` uses the selected override or falls directly back to the default component. Selection stays local to each provider composition; there is no persistence or browser/HTTP dependency.
 
 The renderer API exports `FieldValue`, `FieldRendererContext`, `FieldRenderer` and `FIELD_RENDERER_BINDINGS`. Exact numeric, date, time, instant and binary values remain strings; booleans and null retain their values. Context includes identity, label, value, optional disabled/read-only flags and choices. Transport and semantic validation remain consumer responsibilities.
+
+Opt-in `ThemeShellOutlet`, `ThemeNavigationOutlet` and `ThemePanelOutlet` provide independent structural composition using public navigation/intent ports and application-owned Angular projection. No consumer base classes or router are required. See the [structural composition contract](docs/contracts/theme-composition-v1.md) for bindings, named regions, view lifetime and compatibility limits.
 
 No themes, CSS, shells, widgets or normalized backend type registry are shipped. Consumers still supply those implementations and their own theme identities. ERBAS adoption and any field outlet/widget migration remain separate work; AUR-002B is not included. See `NOTICE` for source revision, original paths, test provenance and the minimal extraction changes.
 

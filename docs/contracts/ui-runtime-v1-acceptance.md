@@ -136,3 +136,14 @@ verification must cover manifest/peer rejection, integrity/load diagnostics,
 protected-default lifecycle, active uninstall/replace, sparse omission without
 warnings, state/focus preservation and the distinct physical-removal boundaries.
 No model C loader or remote plugin architecture is implemented or selected.
+
+## E-THEME-PORTS-001: independent structural composition
+
+[Structural ports](theme-composition-v1.md), `tests/structure.test.mjs`, compiled
+type probes and `tests/browser/specs/composition.spec.mjs` cover opt-in independent
+shell/navigation/panel bindings, owned views, named-region fallback, navigation
+intent and retained-node focus in synthetic installed-package compositions. The
+original 0.2.0 disposable consumer is unchanged. This supplements THEME-001/002/005
+and ADAPTER-001 evidence; it does not close THEME-003/004, MENU, FORM, GRID, STATE or
+full VISUAL requirements. All 53 IDs, statuses and prior evidence remain unchanged;
+real theme extraction and approved visual references remain pending.

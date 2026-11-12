@@ -67,12 +67,20 @@ panel and decimal renderer; shell, navigation and other fields use default fallb
 Fixture-owned signals preserve emitted string/boolean values during replacement;
 this is not the future document editing engine.
 
-Three smoke scenarios run at each viewport (six tests): initialization/registration
+Three original smoke scenarios run at each viewport (six tests): initialization/registration
 and default bindings; override switching plus unknown-ID fallback and retained
 emitted values; keyboard activation/focus and responsive layout reachability.
 Console errors, uncaught page errors, failed requests and HTTP errors fail every
 test. Playwright disposes each page/context and closes its web server when the
 suite ends; Docker removes the container.
+
+An additional independent-composition scenario (`?scenario=composition`, two more
+cases) uses the public structural ports in the
+[composition contract](../contracts/theme-composition-v1.md). It checks projection
+identity, named-region relocation/catch-all, structural and panel-only replacement,
+CSS-only retention, navigation updates/intent, native links and retained-node focus.
+Components/data are synthetic. Candidate full-page captures are in
+`artifacts/testbed/composition/{desktop,mobile}/port-{default,alternate}.png`.
 
 Viewports are exactly 1280×800 and 390×844 at deviceScaleFactor 1. Mobile uses Chromium
 mobile/touch emulation, not a physical device. Locale en-GB, timezone UTC, light
@@ -106,7 +114,7 @@ Both the QA app and browser runner have private manifests and independent lockfi
 
 ## Human visual inspection (no automatic baseline approval)
 
-1. Run `./bin/check` and confirm all six browser tests and earlier phases passed.
+1. Run `./bin/check` and confirm all eight browser tests and earlier phases passed.
    Preserve the revision, tarball digest, image digest, actual browser version,
    results and screenshots together. Passing assertions alone are insufficient.
 2. Open all four viewport captures at 100% size and their full-page companions.
@@ -125,6 +133,8 @@ Both the QA app and browser runner have private manifests and independent lockfi
    Use browser viewport tools at both sizes, Tab/Shift+Tab/Enter, text input,
    checkbox changes and theme/fallback buttons. A local browser is only a manual
    inspection client; the reproducible automated run uses container Chromium.
+   Open `/?scenario=composition` to inspect independent ports, relocated tools,
+   catch-all projection and state/focus retention at both sizes.
 4. Record findings with reviewer identity, date, revision, browser/environment,
    image paths, defects and rationale. Initial status is **pending human review**.
    This task creates candidate captures, not approved baselines and no screenshot

@@ -6,6 +6,7 @@ import {
 } from '@alxarafe/ui-runtime';
 import { QA_THEMES } from './fixtures';
 import { QaFieldOutlet, QaStructureOutlet } from './outlets';
+import { CompositionTestbed, COMPOSITION_THEMES } from './composition';
 
 @Component({
   selector: 'qa-testbed',
@@ -65,7 +66,10 @@ class Testbed {
   readonly activation = signal(true);
   activate(id: string): void { this.activation.set(this.theme.activate(id)); }
 }
-bootstrapApplication(Testbed, { providers: provideThemeRuntime(QA_THEMES) }).catch(error => {
+const composition = new URLSearchParams(location.search).get('scenario') === 'composition';
+bootstrapApplication(composition ? CompositionTestbed : Testbed, {
+  providers: provideThemeRuntime(composition ? COMPOSITION_THEMES : QA_THEMES),
+}).catch(error => {
   console.error(error);
   throw error;
 });

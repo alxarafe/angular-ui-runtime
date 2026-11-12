@@ -35,3 +35,10 @@ footer { padding-top: 18px; line-height: 1.5; }
   .qa-panel { padding: 14px; }
   button { font-size: 14px; }
 }
+
+/* Independent composition scenario: fixture CSS, not a distributed theme. */
+aur-theme-shell { display: block; --accent: #1759a6; --tint: #edf5ff; padding: 20px; }
+aur-theme-shell.qa-alternative { --accent: #633795; --tint: #f5effc; }
+.port-columns { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; }
+aur-theme-shell p { overflow-wrap: anywhere; }
+@media (max-width: 600px) { .port-columns { grid-template-columns: minmax(0, 1fr); } }

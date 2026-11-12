@@ -1,5 +1,9 @@
 # UI Runtime 1.0 API and internal contract design
 
+Additive follow-up: [AUR-THEME-PORTS-001](../contracts/theme-composition-v1.md)
+implements independent shell/navigation/panel composition for the legacy artifact
+layer. It does not publish or redesign this document's proposed menu/form/grid API.
+
 AUR-DESIGN-001 · 2026-11-11 · Design baseline:
 `cdb830d1aab39338874d18a0e4d958b00d72f5bb` (remote main verified).
 
