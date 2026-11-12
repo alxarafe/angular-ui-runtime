@@ -146,17 +146,16 @@ Application-owned fixture controls/content differ from historical QA, so pixel
 equality is not claimed. No ERP, business resource CSS, four-theme duplication of
 default widgets or pending 1.0 forms/menus/grids/validation/editing engine is added.
 
-### Known focus limitation and pending human review
+### Historical focus limitation and pending human review
 
-The current core panel host preserves projected nodes/values on a panel-only
-replacement but does not restore their native focus. Vintage → High Contrast (and
-the reverse) can therefore lose input focus even though the same node survives.
-This pre-existing behavior is not changed by theme extraction. Tests record every
-focus transition, assert retention for shell replacements/unchanged components,
-and verify keyboard reachability and focus visibility independently. They do not
-claim automatic panel-only focus recovery. Consumer adoption needs an explicit
-logical-focus policy or a separately authorized core fix. No state-loss failure
-is hidden by this limitation; the full 1.0 acceptance gate remains open.
+At extraction time the core panel host preserved projected nodes/values on a panel-only
+replacement but did not restore their native focus. Vintage → High Contrast (and
+the reverse) could therefore lose input focus even though the same node survived.
+AUR-FOCUS-001 resolves this retained-node limitation in runtime `0.3.0-alpha.2`.
+Current browser tests explicitly assert focus for panel-only transitions, including
+Default ↔ High Contrast, and retain shell/Cyberpunk coverage. Historical extraction
+results above remain unchanged. Logical focus for intentionally replaced controls
+still belongs to the application; the full 1.0 acceptance gate remains open.
 
 Human review remains pending for all viewport/full-page images and the desktop/
 mobile rail, High Contrast visual treatment, Vintage typography, green BOOLEAN and
@@ -193,6 +192,6 @@ the digest.
 
 Remaining consumer work: install approved/versioned archives, replace internal
 theme catalogs/components, supply neutral navigation/routing intent and region
-templates, retain application-specific resource/login CSS, settle panel-only focus
+templates, retain application-specific resource/login CSS, define logical focus for replaced controls
 and run real application integration/human review. ERBAS and other consumers have
 not been modified. No push, publication, tag or deployment follows from these checks.

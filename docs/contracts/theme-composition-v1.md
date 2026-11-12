@@ -153,9 +153,18 @@ that view. Host destruction destroys all its views. This is Angular ownership,
 not durable state storage: editing, validation, dirty/save state must still live
 outside replaceable visuals. Theme-local state may be destroyed.
 
-The shell host restores native focus after rendering when the actual focused
-owned node survived and focus has not moved elsewhere. It does not map logical
-focus to a newly created navigation/field control; consumers provide that policy.
+Shell and panel hosts share an internal retained-node focus policy. They capture
+focus before replacement and restore it after Angular rendering only when that
+same application-owned node is still connected and focus is unassigned/on body.
+An already focused node requires no focus operation; a different active element
+always wins. Pending restorations for the same node are coalesced, including
+nested shell/panel replacement. Unchanged resolved components do not schedule
+restoration. Angular's after-render lifecycle skips callbacks during SSR and
+cancels callbacks when their injection context is destroyed.
+
+This preserves native focus, DOM identities and application-owned values; it does
+not recreate destroyed controls or map logical focus to a new navigation/field
+control (even one with the same ID). Consumers own that separate policy.
 No recovery from arbitrary Angular constructor/template/event failure, reload
 persistence or complete document lifecycle is promised. Pre-mount rejection and
 post-mount failure remain distinct as required by the package contract.
@@ -163,7 +172,7 @@ post-mount failure remain distinct as required by the package contract.
 ## Evidence, compatibility and remaining extraction work
 
 `./bin/test` compiles type probes and tests structural metadata/invalid-port
-rejection plus legacy admission. `./bin/check` builds/verifies APF, unchanged peers,
+rejection plus legacy admission. `./bin/check` builds/verifies APF, peer isolation,
 the unchanged legacy disposable consumer and the installed-package testbed.
 
 The `?scenario=composition` fixture runs at 1280×800 and 390×844 with synthetic data

@@ -1,8 +1,9 @@
 import {
   Component, EmbeddedViewRef, Injector, Renderer2, TemplateRef, Type, ViewContainerRef,
-  afterNextRender, effect, inject, input, inputBinding, output, outputBinding,
+  effect, inject, input, inputBinding, output, outputBinding,
   reflectComponentType, viewChild,
 } from '@angular/core';
+import { captureRetainedFocus } from './retained-focus.js';
 import { ThemeArtifact } from '../theme/theme-definition.js';
 import { ThemeResolver, ThemeService } from '../theme/theme-runtime.js';
 import {
@@ -89,10 +90,10 @@ export class ThemeShellOutlet {
         [...sources].some(([key, template]) => this.views.get(key)?.template !== template);
       if (!changed && component === this.rendered) return;
 
-      // Keep native focus only when the actual application-owned node survives.
-      const document = target.element.nativeElement.ownerDocument as Document | undefined;
-      const focused = document?.activeElement as HTMLElement | null;
-      const retainFocus = !!focused && [...this.views.values()].some(({ wrapper }) => wrapper.contains(focused));
+      const retainedRoots = [...this.views]
+        .filter(([key, entry]) => sources.get(key) === entry.template)
+        .map(([, entry]) => entry.wrapper);
+      const restoreFocus = captureRetainedFocus(target, retainedRoots, this.injector);
       target.clear();
       for (const [key, entry] of this.views) {
         if (sources.get(key) === entry.template) continue;
@@ -120,11 +121,7 @@ export class ThemeShellOutlet {
       ] });
       this.rendered = component;
       this.sourceOrder = keys;
-      if (retainFocus) afterNextRender(() => {
-        if (focused?.isConnected && typeof focused.focus === 'function' &&
-            (!document?.activeElement || document.activeElement === document.body || document.activeElement === focused))
-          focused.focus({ preventScroll: true });
-      }, { injector: this.injector });
+      restoreFocus();
     });
   }
 }
@@ -164,6 +161,7 @@ export class ThemePanelOutlet {
   private readonly owned = viewChild('owned', { read: ViewContainerRef });
   private readonly target = viewChild('target', { read: ViewContainerRef });
   private readonly resolver = inject(ThemeResolver);
+  private readonly injector = inject(Injector);
   private view?: EmbeddedViewRef<unknown>;
   private rendered?: Type<unknown>;
   constructor() {
@@ -174,9 +172,11 @@ export class ThemePanelOutlet {
       if (component === this.rendered) return;
       structureSelectors(component, ThemeArtifact.Panel);
       this.view ??= owned.createEmbeddedView(source);
+      const restoreFocus = captureRetainedFocus(target, this.view.rootNodes, this.injector);
       target.clear();
       target.createComponent(component, { projectableNodes: [this.view.rootNodes] });
       this.rendered = component;
+      restoreFocus();
     });
   }
 }
