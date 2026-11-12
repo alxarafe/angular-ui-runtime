@@ -117,3 +117,22 @@ baselines. Both fixture themes are synthetic, including the one named default:
 review is pending; no automatic approval follows from passing smoke tests. Semantic
 validation, typed menus, forms, grids, document state, all-reference-theme coverage,
 complete accessibility/visual regression and consumer integration remain open.
+
+## E-THEME-CONTRACT-001: independent theme package design
+
+[AUR-THEME-CONTRACT-001](theme-package-v1.md) specifies package metadata,
+compatibility, protected complete default, sparse fallback, requested/effective
+selection diagnostics and installation/lifecycle obligations. It distinguishes
+application bundles, independently distributed pre-start packages and future
+unknown-package runtime installation. Only existing registration/selection is
+implemented; live catalog mutation, package admission/loading and detailed results
+remain future requirements. Pre-mount rejection is distinct from post-mount Angular
+failures, for which automatic recovery is not guaranteed.
+
+This is documentary evidence for THEME-001 through THEME-005, ADAPTER-001,
+VISUAL-001 through VISUAL-005, PACKAGE-003/004 and RELEASE-005; it closes no row and
+changes none of the 53 IDs, implementation statuses or existing evidence. Future
+verification must cover manifest/peer rejection, integrity/load diagnostics,
+protected-default lifecycle, active uninstall/replace, sparse omission without
+warnings, state/focus preservation and the distinct physical-removal boundaries.
+No model C loader or remote plugin architecture is implemented or selected.
