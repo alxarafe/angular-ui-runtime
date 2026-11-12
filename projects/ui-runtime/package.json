@@ -1,6 +1,6 @@
 {
   "name": "@alxarafe/ui-runtime",
-  "version": "0.3.0-alpha.2",
+  "version": "0.3.0-alpha.3",
   "description": "Shared Angular UI runtime foundation",
   "license": "Apache-2.0",
   "repository": {

@@ -1,6 +1,6 @@
 {
   "name": "angular-ui-runtime-workspace",
-  "version": "0.3.0-alpha.2",
+  "version": "0.3.0-alpha.3",
   "private": true,
   "packageManager": "npm@11.19.1",
   "scripts": {

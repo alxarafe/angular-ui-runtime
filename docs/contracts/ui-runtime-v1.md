@@ -185,6 +185,12 @@ semantics and groups have accessible names. `ShellExtensionRegistry` stays an
 independent slot/component extension facility in consumers, not a second menu
 registry, navigation data store or implicit replacement for fallback menus.
 
+The implemented alpha.3 single-tree presentation port now supports optional
+synchronous native-link cancellation by the consumer, with no router dependency.
+See [link activation](theme-composition-v1.md#optional-synchronous-link-activation-alpha3).
+This is partial navigation-adapter evidence, not implementation of the future
+MenuDefinition, multi-menu registry, placement or overflow requirements above.
+
 ## Forms and layouts (FORM)
 
 Reuse ERBAS's useful hierarchy: form → ordered tabs → sections → groups → field

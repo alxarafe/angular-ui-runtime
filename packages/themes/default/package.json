@@ -1,6 +1,6 @@
 {
   "name": "@alxarafe/ui-theme-default",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "private": true,
   "description": "Independent default presentation theme; private prerelease",
   "license": "Apache-2.0",
@@ -10,7 +10,7 @@
   ],
   "peerDependencies": {
     "@angular/core": "^22.0.0",
-    "@alxarafe/ui-runtime": "0.3.0-alpha.2"
+    "@alxarafe/ui-runtime": "0.3.0-alpha.3"
   },
   "dependencies": {
     "tslib": "^2.8.1"

@@ -2,7 +2,7 @@
 import { Component, input, output } from '@angular/core';
 import {
   ThemeArtifact, ThemeNavigationOutlet, ThemePanelOutlet, type ThemeDefinition,
-  type ThemeShellComponent, type ThemeNavigationItem, type ThemeNavigationSelection,
+  type ThemeShellComponent, type ThemeNavigationItem, type ThemeNavigationSelection, type ThemeLinkActivationHandler,
 } from '@alxarafe/ui-runtime';
 
 @Component({ selector: 'aur-cyberpunk-panel', template: '<div class="aur-cyberpunk-panel"><div class="aur-cyberpunk-panel-content"><ng-content /></div></div>' })
@@ -11,6 +11,7 @@ export class CyberpunkPanel {}
 @Component({ selector: 'aur-cyberpunk-shell', imports: [ThemeNavigationOutlet, ThemePanelOutlet], templateUrl: './shell.html' })
 export class CyberpunkShell implements ThemeShellComponent {
   readonly navigation = input<readonly ThemeNavigationItem[]>([]);
+  readonly linkActivation = input<ThemeLinkActivationHandler>();
   readonly navigationSelected = output<ThemeNavigationSelection>();
 }
 

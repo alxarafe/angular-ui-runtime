@@ -41,7 +41,7 @@ not be interpreted as a successful 1.0 acceptance run.
 | MENU-001 | Named menus have unique identity separate from kind and placement; unlimited same-kind menus. | Zero/one/many; two primary, secondary and account menus; duplicate IDs. | unit, browser | tests/contracts/menus/; tests/browser/menus/ | missing | No behavioral evidence yet. Design/type evidence: E-DESIGN-001 only. |
 | MENU-002 | Render each valid nonempty menu/item once in input order; diagnose cycles/duplicate item IDs. | Nested children; equal labels; duplicate placement; empty menu. | unit, browser | tests/contracts/menus/; tests/browser/menus/ | missing | No evidence yet. |
 | MENU-003 | Provide labelled keyboard-accessible default/overflow for every unspecialized placement. | Many menus; unsupported placement; mobile; open/close focus restoration. | browser, visual | tests/browser/menus/; tests/visual/menus/ | missing | No evidence yet. |
-| MENU-004 | Adapters own effective authorization/routing/actions; shell extensions are separate. | Unauthorized omission by adapter; disabled action; current route; slot collision. | integration, consumer | tests/contracts/navigation-adapter/; consumer evidence | missing | ERBAS shell extensions and Solucar navigation inspected only. |
+| MENU-004 | Adapters own effective authorization/routing/actions; shell extensions are separate. | Unauthorized omission by adapter; disabled action; current route; slot collision; native/SPA link activation. | unit, integration, consumer, browser | tests/link-activation.test.mjs; tests/browser/specs/navigation.spec.mjs; planned tests/contracts/navigation-adapter/ | partial | E-NAVIGATION-001 proves optional synchronous link interception in installed APF consumers; full authorization/adapters, multi-menu and cross-consumer evidence remain pending. |
 | FORM-001 | Support simple default and ordered tabs/sections/groups/field placement/context actions. | Absent layout; duplicate placement; unknown refs; action-only containers; empty groups. | unit, browser | tests/contracts/layout/; tests/browser/forms/ | missing | ERBAS projectLayout inspected; not part of library. |
 | FORM-002 | Provide fallback for eligible unplaced fields/actions without resurrecting explicit exclusions. | Omitted required field; excluded field; unauthorized action; deterministic ordering. | unit, integration | tests/contracts/layout/ | missing | No library evidence yet. |
 | FORM-003 | Read-only/edit modes and layout changes preserve data semantics and edits. | Immutable update; tab switch; collapse; theme change; focused error reveal. | browser | tests/browser/forms/ | missing | No evidence yet. |
@@ -147,3 +147,25 @@ original 0.2.0 disposable consumer is unchanged. This supplements THEME-001/002/
 and ADAPTER-001 evidence; it does not close THEME-003/004, MENU, FORM, GRID, STATE or
 full VISUAL requirements. All 53 IDs, statuses and prior evidence remain unchanged;
 real theme extraction and approved visual references remain pending.
+
+## E-NAVIGATION-001 — Neutral native/SPA links (alpha.3)
+
+These stable subcases refine MENU-004 without renumbering the 53 mandatory IDs.
+They cover the existing single-tree port, not the future 1.0 menu engine. Evidence:
+`tests/link-activation.test.mjs`, compiled types/ports in `tests/fixtures/structure-components.ts`,
+`tests/structure.test.mjs`, and `tests/browser/specs/navigation.spec.mjs` using six
+installed APF archives in the Docker Angular testbed at both standard viewports.
+
+| Subcase | Required behavior and evidence |
+| --- | --- |
+| MENU-004-LINK-001 | No callback/observing callback leaves real href navigation native; no action emission. Query, fragment and external destinations are exercised. |
+| MENU-004-LINK-002 | Synchronous cancellation affects the DOM event; consumer-owned history/Back/Forward, Enter and rejection preserve document/edits. Late cancellation is ineffective. |
+| MENU-004-LINK-003 | Ctrl/Meta/Shift/Alt, middle/context gestures, target and download stay native with no interception or duplicate request. Linux Chromium exercises Meta; physical macOS/system-menu UX is not certified. |
+| MENU-004-LINK-004 | Current/disabled state, group hierarchy/order, labels and Tab/Shift+Tab retain native semantics; action-only entries remain distinct. |
+| MENU-004-LINK-005 | Repeated five-theme switches forward exactly one request, preserve application-owned values/DOM/focus and use no router imports. |
+| MENU-004-LINK-006 | Legacy ports remain valid without the optional callback; explicit interception requires compiled capability. Exact alpha.3 peers and isolated public APF installations are checked. |
+
+Generated captures in `artifacts/testbed/navigation/` remain pending human review.
+No approved visual baseline, complete accessibility audit, permission engine or
+real consumer-repository integration is asserted. MENU-001..003 and visual review
+requirements remain open; this evidence does not close the full MENU-004 gate.

@@ -1,12 +1,12 @@
 {
   "manifestVersion": 1,
   "package": "@alxarafe/ui-theme-cyberpunk",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "publisher": "Alxarafe contributors",
   "license": "Apache-2.0",
   "compatibility": {
     "angular": "^22.0.0",
-    "uiRuntime": "0.3.0-alpha.2",
+    "uiRuntime": "0.3.0-alpha.3",
     "requiredCapabilities": [
       "ThemeShellOutlet",
       "ThemeNavigationOutlet",
