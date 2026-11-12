@@ -7,7 +7,7 @@ const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
 const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url, 'http://127.0.0.1');
-    const file = resolve(root, `.${decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)}`);
+    const file = resolve(root, `.${decodeURIComponent(url.pathname.endsWith('/') ? `${url.pathname}index.html` : url.pathname)}`);
     if (!file.startsWith(`${root}${sep}`)) {
       response.writeHead(403).end();
       return;

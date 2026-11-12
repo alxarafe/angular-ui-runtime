@@ -13,7 +13,7 @@ const files = result.files.map(({ path }) => path);
 for (const required of ['package.json', 'README.md', 'LICENSE', 'NOTICE']) assert(files.includes(required), `Missing ${required}`);
 assert(files.some((file) => file.endsWith('.d.ts')), 'Missing declarations');
 assert(files.some((file) => file.startsWith('fesm2022/') && file.endsWith('.mjs')), 'Missing ESM bundle');
-assert(!files.some((file) => /(^|\/)(node_modules|tests|src|apps|testbed|scripts|docs|artifacts|screenshots|test-results|playwright-report)\//.test(file) || file.endsWith('.spec.ts')), 'Unexpected development files');
+assert(!files.some((file) => /(^|\/)(node_modules|tests|src|apps|packages|themes|testbed|scripts|docs|artifacts|screenshots|test-results|playwright-report)\//.test(file) || file.endsWith('.spec.ts')), 'Unexpected development files');
 const unpacked = mkdtempSync(join(resolve('node_modules'), '.aur-package-'));
 try {
   execFileSync('tar', ['-xzf', join(destination, result.filename), '-C', unpacked]);

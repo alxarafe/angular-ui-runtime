@@ -1,6 +1,8 @@
 {
   "version": 1,
-  "cli": { "analytics": false },
+  "cli": {
+    "analytics": false
+  },
   "projects": {
     "testbed": {
       "projectType": "application",
@@ -13,10 +15,23 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.json",
             "index": "src/index.html",
-            "styles": ["src/styles.css"],
+            "styles": [
+              "src/styles.css"
+            ],
             "outputPath": "dist",
             "optimization": true,
             "outputHashing": "all"
+          },
+          "configurations": {
+            "defaultTheme": {
+              "browser": "src/default-main.ts",
+              "styles": [
+                "src/default-theme.css"
+              ],
+              "outputPath": "dist-default",
+              "baseHref": "/default-theme/",
+              "tsConfig": "tsconfig.default-theme.json"
+            }
           }
         }
       }

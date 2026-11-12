@@ -1,0 +1,15 @@
+Alxarafe independent default theme
+Licensed under Apache-2.0; see LICENSE.
+
+Adapted from alxarafe/erbas-client, Apache-2.0, revision
+8d1573c315e03a6edbc92bd7b3d41d851bd54ab9:
+app/src/app/core-fe/themes/default/{field-renderers.ts,*.html,theme.css,structure.ts}
+and the default artifact mapping in core-fe/themes/themes.ts.
+PROVENANCE.json records exact original source hashes.
+
+Changes: public structural ports and neutral navigation intent replace ERBAS base
+classes, router bindings and extension services; renamed selectors; scoped generic
+CSS excludes login/resource/business rules; named regions use owned projection;
+fixed floating controls become in-flow; ENUM selection separates empty string/null;
+TIME uses exact text for precision unsupported by native time inputs. No source
+checkout or historical unmerged QA branch is required to build this package.

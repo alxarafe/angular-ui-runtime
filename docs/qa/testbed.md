@@ -114,7 +114,7 @@ Both the QA app and browser runner have private manifests and independent lockfi
 
 ## Human visual inspection (no automatic baseline approval)
 
-1. Run `./bin/check` and confirm all eight browser tests and earlier phases passed.
+1. Run `./bin/check` and confirm all ten browser tests and earlier phases passed.
    Preserve the revision, tarball digest, image digest, actual browser version,
    results and screenshots together. Passing assertions alone are insufficient.
 2. Open all four viewport captures at 100% size and their full-page companions.
@@ -144,6 +144,13 @@ Both the QA app and browser runner have private manifests and independent lockfi
    Synthetic-fixture approval still cannot approve production reference themes.
 
 ## Remaining coverage
+
+The separately built `/default-theme/` fixture consumes both installed APF packages
+and the extracted default theme's CSS, isolated from the original synthetic fixture
+stylesheet. Two additional Chromium cases cover all mappings, representative native
+edits, projection, fallback and safe control reachability. See
+[extraction evidence and limits](default-theme-extraction.md). This does not extract
+the other four themes or approve reference-theme visuals.
 
 No semantic field validation, date/UUID/decimal rules, typed multi-menu fallback,
 forms/tabs, grids/editable collections, dirty/save/discard/navigation engine, domain
