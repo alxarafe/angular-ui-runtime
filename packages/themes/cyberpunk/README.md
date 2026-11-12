@@ -1,6 +1,6 @@
 # Independent cyberpunk theme (experimental)
 
-`@alxarafe/ui-theme-cyberpunk@0.0.0-experimental.0` is a private optional APF package.
+`@alxarafe/ui-theme-cyberpunk@0.1.0-alpha.1` is a private optional APF package.
 Import `CYBERPUNK_THEME` from the public package and explicitly register it alongside
 a complete `DEFAULT_THEME` using `provideThemeRuntime`. Installation does not
 select it. Include the default CSS and this package's `theme.css` export once.
@@ -9,11 +9,12 @@ All missing artifacts resolve directly to default, never through another theme.
 The package has no dependency on the default package or any consumer code.
 
 The only non-peer dependency is tslib. Angular Core and UI Runtime are peers.
-The runtime `0.2.0` coordinate means only the local structural-ports snapshot at
-`23e3bf40bf4c3dbad034d3deb71b3358075f51b3` or a tested compatible descendant;
-the older 0.2.0 archive without these ports is unsupported. `conformance.json`
-records the exact tested archive digest. Coordinated public versions/peer ranges
-and distribution approval are still required. Do not publish this private package.
+The exact runtime peer is `@alxarafe/ui-runtime@0.3.0-alpha.1`. Historical
+`0.2.0` archives do not satisfy it. Each theme is independently versioned;
+installation never activates it. `conformance.json` records the tested runtime
+archive digest and source identity. All packages remain `private: true` and npm
+publication is prohibited. See the repository's
+`docs/contracts/package-versioning.md` for compatibility and upgrade policy.
 
 Use `./bin/theme-pack cyberpunk` from the repository root to build only this package
 against the already packed runtime; `./bin/pack` builds all five theme archives.

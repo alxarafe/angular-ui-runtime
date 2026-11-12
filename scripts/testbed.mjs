@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { THEME_IDS } from './theme-package.mjs';
+import { THEME_IDS, runtimePackage, themePackage, archivePath } from './package-metadata.mjs';
 import { assertConsumerLockPreserved } from './consumer-lock.mjs';
 
 const workspace = mkdtempSync(join(tmpdir(), 'aur-testbed-'));
@@ -12,13 +12,13 @@ const destination = '/artifacts/testbed';
 const run = (command, args) => execFileSync(command, args, { cwd: workspace, stdio: 'inherit' });
 try {
   cpSync('apps/testbed', workspace, { recursive: true });
-  const archive = readFileSync('/artifacts/alxarafe-ui-runtime-0.2.0.tgz');
+  const archive = readFileSync(archivePath(runtimePackage));
   writeFileSync(join(workspace, 'runtime.tgz'), archive);
-  const themeVersion = '0.0.0-experimental.0';
   const themeArchives = THEME_IDS.map(id => {
-    const bytes = readFileSync(`/artifacts/alxarafe-ui-theme-${id}-${themeVersion}.tgz`);
+    const metadata = themePackage(id);
+    const bytes = readFileSync(archivePath(metadata));
     writeFileSync(join(workspace, `${id}.tgz`), bytes);
-    return { id, bytes, name: `@alxarafe/ui-theme-${id}` };
+    return { id, bytes, name: metadata.name, version: metadata.version };
   });
   const lockfile = readFileSync(join(workspace, 'package-lock.json'), 'utf8');
   const locked = JSON.parse(lockfile).packages;
@@ -32,13 +32,13 @@ try {
   assert(installed.startsWith(`${workspace}/node_modules/`), 'Testbed must use an installed package, not repository sources');
   const pkg = JSON.parse(readFileSync(join(installed, 'package.json'), 'utf8'));
   assert.equal(pkg.name, '@alxarafe/ui-runtime');
-  assert.equal(pkg.version, '0.2.0');
+  assert.equal(pkg.version, runtimePackage.version);
   const themeEvidence = themeArchives.map(theme => {
     const installedPath = realpathSync(join(workspace, `node_modules/${theme.name}`));
     assert(installedPath.startsWith(`${workspace}/node_modules/`));
     const pkg = JSON.parse(readFileSync(join(installedPath, 'package.json'), 'utf8'));
     assert.equal(pkg.name, theme.name);
-    assert.equal(pkg.version, themeVersion);
+    assert.equal(pkg.version, theme.version);
     return { name: pkg.name, version: pkg.version, installedPath,
       archiveSha256: createHash('sha256').update(theme.bytes).digest('hex') };
   });

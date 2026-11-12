@@ -3,6 +3,8 @@
 Implementation follow-up: [independent structural composition ports](theme-composition-v1.md)
 adds opt-in public hosts and presentation bindings. It does not implement package
 installation/lifecycle or alter the legacy artifact/default obligations below.
+The active private package coordinates and exact prerelease peers are defined in
+[package versioning](package-versioning.md); illustrative ranges below are not release metadata.
 
 AUR-THEME-CONTRACT-001 · 2026-11-12 · Inspected runtime baseline:
 `ab1e82cb9fc5c066fabd697b4e68e1a5aceaa8cb` (latest remote main verified).

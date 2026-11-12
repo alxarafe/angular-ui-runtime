@@ -4,7 +4,7 @@ import { resolve, dirname } from 'node:path';
 import test from 'node:test';
 import { THEME_ARTIFACTS } from '../out-tsc/tests/projects/ui-runtime/src/public-api.js';
 
-test('independent default package has a complete snapshot-only manifest and no consumer imports', () => {
+test('independent default package has a complete versioned manifest and no consumer imports', () => {
   const root = resolve('packages/themes/default');
   const json = file => JSON.parse(readFileSync(`${root}/${file}`, 'utf8'));
   const pkg = json('package.json'), manifest = json('theme-package.json');
@@ -12,7 +12,10 @@ test('independent default package has a complete snapshot-only manifest and no c
   assert.equal(pkg.private, true);
   assert.deepEqual(Object.keys(pkg.dependencies), ['tslib']);
   assert.deepEqual(Object.keys(pkg.peerDependencies).sort(), ['@alxarafe/ui-runtime', '@angular/core']);
-  assert.equal(manifest.compatibility.runtimeSnapshotOnly, true);
+  assert.equal(manifest.compatibility.runtimeSnapshotOnly, undefined);
+  assert.equal(manifest.compatibility.requiredRuntimeRevision, undefined);
+  assert.equal(manifest.version, pkg.version);
+  assert.equal(manifest.compatibility.uiRuntime, pkg.peerDependencies['@alxarafe/ui-runtime']);
   assert.equal(manifest.themes[0].id, 'default');
   assert.deepEqual([...manifest.themes[0].artifacts].sort(), [...THEME_ARTIFACTS].sort());
   for (const file of readdirSync(`${root}/src`).filter(file => file.endsWith('.ts'))) {

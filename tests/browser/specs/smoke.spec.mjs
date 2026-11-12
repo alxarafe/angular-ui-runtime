@@ -1,5 +1,5 @@
 import { test as base, expect } from '@playwright/test';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 // Auto fixture catches bootstrap and interaction failures, even outside assertions.
 const test = base.extend({
@@ -32,7 +32,7 @@ async function capture(page, testInfo, theme) {
 test('initializes installed package and renders default contracts', async ({ page, browser }, testInfo) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'UI Runtime browser probes' })).toBeVisible();
-  await expect(page.getByText('Repository-local QA fixture · Package 0.2.0')).toBeVisible();
+  await expect(page.getByText(`Repository-local QA fixture · Package ${JSON.parse(readFileSync('/artifacts/testbed/build-evidence.json', 'utf8')).version}`)).toBeVisible();
   await expect(page.getByTestId('active-theme')).toHaveText('default');
   await expect(page.getByTestId('registered-themes')).toHaveText('default, qa-alternative');
   await expect(page.getByTestId('artifact-count')).toHaveText('20');

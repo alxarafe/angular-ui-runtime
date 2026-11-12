@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { runtimePackage, themePackage } from '../scripts/package-metadata.mjs';
 import { assertConsumerLockPreserved } from '../scripts/consumer-lock.mjs';
 
 const path = 'node_modules/@babel/parser';
 const entry = { version: '8.1.0', resolved: 'https://registry.npmjs.org/@babel/parser/-/parser-8.1.0.tgz', integrity: 'sha512-locked' };
 const before = { [path]: entry };
 const locked = { ...before, 'node_modules/optional-other-platform': { version: '1.0.0', optional: true } };
-const after = { ...before, 'node_modules/@alxarafe/ui-runtime': { version: '0.2.0', resolved: 'file:runtime.tgz' } };
+const after = { ...before, 'node_modules/@alxarafe/ui-runtime': { version: runtimePackage.version, resolved: 'file:runtime.tgz' } };
 
 test('consumer lock permits the tarball addition and absent platform-specific optional packages', () => {
   assert.equal(assertConsumerLockPreserved(locked, before, after), 1);
@@ -49,7 +50,7 @@ test('consumer lock requires a newly installed runtime', () => {
 
 test('a separately packed theme is allowed only when explicitly requested and newly installed', () => {
   const theme = 'node_modules/@alxarafe/ui-theme-default';
-  const both = { ...after, [theme]: { version: '0.0.0-experimental.0' } };
+  const both = { ...after, [theme]: { version: themePackage('default').version } };
   assert.throws(() => assertConsumerLockPreserved(locked, before, both), /Unexpected consumer dependency/);
   assert.equal(assertConsumerLockPreserved(locked, before, both, ['@alxarafe/ui-theme-default']), 1);
   assert.throws(() => assertConsumerLockPreserved(locked, before, after, ['@alxarafe/ui-theme-default']), /archive package must be installed/);

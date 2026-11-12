@@ -6,7 +6,7 @@
 
 `@alxarafe/ui-runtime` is a general-purpose Angular UI runtime library, independent of backend technologies. ERBAS and Alixar-Solúcar are reference applications that inform its design, not limitations on its use.
 
-Implemented version `0.2.0` provides the Angular 22 theme engine and exact-value field renderer contracts extracted from ERBAS. Version `1.0` plans reusable field validation, typed menus, forms, grids and document editing state; these capabilities are specified in the contract and design documents but are not implemented yet.
+Implemented prerelease `0.3.0-alpha.1` provides the Angular 22 theme engine and exact-value field renderer contracts extracted from ERBAS. Version `1.0` plans reusable field validation, typed menus, forms, grids and document editing state; these capabilities are specified in the contract and design documents but are not implemented yet.
 
 ## Requirements
 
@@ -34,7 +34,7 @@ The private `apps/testbed/` app installs the actual core and five theme archives
 The local artifact is:
 
 ```text
-artifacts/alxarafe-ui-runtime-0.2.0.tgz
+artifacts/alxarafe-ui-runtime-0.3.0-alpha.1.tgz
 ```
 
 Packaging does not publish to npm. Push, PR, merge, publication and deployment require separate authorization.
@@ -59,15 +59,15 @@ The renderer API exports `FieldValue`, `FieldRendererContext`, `FieldRenderer` a
 
 Opt-in `ThemeShellOutlet`, `ThemeNavigationOutlet` and `ThemePanelOutlet` provide independent structural composition using public navigation/intent ports and application-owned Angular projection. No consumer base classes or router are required. See the [structural composition contract](docs/contracts/theme-composition-v1.md) for bindings, named regions, view lifetime and compatibility limits.
 
-The core npm artifact ships no visual themes or field widgets. Five separate experimental APF packages provide the complete [`default`](packages/themes/default/README.md) and optional [`alternative`](packages/themes/alternative/README.md), [`cyberpunk`](packages/themes/cyberpunk/README.md), [`vintage`](packages/themes/vintage/README.md) and [`high-contrast`](packages/themes/high-contrast/README.md) themes. They require the tested runtime snapshot with structural ports, not the older 0.2.0 artifact; coordinated distribution versions remain pending. See [installation, extraction evidence and known limits](docs/qa/optional-theme-extraction.md). Consumer adoption and human visual approval remain separate work.
+The core npm artifact ships no visual themes or field widgets. Five separate experimental APF packages provide the complete [`default`](packages/themes/default/README.md) and optional [`alternative`](packages/themes/alternative/README.md), [`cyberpunk`](packages/themes/cyberpunk/README.md), [`vintage`](packages/themes/vintage/README.md) and [`high-contrast`](packages/themes/high-contrast/README.md) themes. Each theme is independently versioned at `0.1.0-alpha.1` with exact runtime peer `0.3.0-alpha.1`; all six packages are private and publication is prohibited. See the [version and compatibility policy](docs/contracts/package-versioning.md). See [installation, extraction evidence and known limits](docs/qa/optional-theme-extraction.md). Consumer adoption and human visual approval remain separate work.
 
 ## Version 1.0 target contract
 
 The [UI Runtime 1.0 contract](docs/contracts/ui-runtime-v1.md) and its
 [mandatory acceptance matrix](docs/contracts/ui-runtime-v1-acceptance.md) define
-the target functionality and release gate. They do not describe completed 0.2.0
+the target functionality and release gate. They do not describe completed prerelease
 features. The repository-local Angular QA testbed is a non-distributed
-fixture covering existing 0.2.0 contracts; full 1.0 coverage remains pending. The [API and internal contract design](docs/design/ui-runtime-v1-api.md)
+fixture covering existing public contracts; full 1.0 coverage remains pending. The [API and internal contract design](docs/design/ui-runtime-v1-api.md)
 contains compiled, unpublished interface proposals and compatibility decisions.
 
 ## Technical references

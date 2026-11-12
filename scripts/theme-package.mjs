@@ -8,18 +8,20 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { assertConsumerLockPreserved } from './consumer-lock.mjs';
 
-export const THEME_IDS = Object.freeze(['default', 'alternative', 'cyberpunk', 'vintage', 'high-contrast']);
+import { THEME_IDS, runtimePackage, themePackage, archiveName, archivePath as packageArchivePath } from './package-metadata.mjs';
+export { THEME_IDS } from './package-metadata.mjs';
 const OVERRIDES = { alternative: ['field.BOOLEAN'], cyberpunk: ['shell', 'panel'], vintage: [], 'high-contrast': ['panel'] };
 
 // Deliberately limited to the five reviewed packages; not a plugin discovery mechanism.
 export async function buildTheme(id, archivePath) {
   assert(THEME_IDS.includes(id), `Unknown local theme package: ${id}`);
+  const expectedPackage = themePackage(id);
   const sourceRoot = `packages/themes/${id}`;
   const sourceManifest = JSON.parse(readFileSync(`${sourceRoot}/theme-package.json`, 'utf8'));
   // Build from a copied theme and an installed runtime archive, never workspace source aliases.
   const workspace = mkdtempSync(join(tmpdir(), `aur-theme-${id}-`));
   const destination = '/artifacts';
-  const runtimeArchive = resolve(archivePath ?? `${destination}/alxarafe-ui-runtime-0.2.0.tgz`);
+  const runtimeArchive = resolve(archivePath ?? packageArchivePath(runtimePackage, destination));
   const sha = bytes => createHash('sha256').update(bytes).digest('hex');
   const run = (command, args, cwd = workspace) => execFileSync(command, args, { cwd, stdio: 'inherit' });
   try {
@@ -36,6 +38,7 @@ export async function buildTheme(id, archivePath) {
     const preserved = assertConsumerLockPreserved(locked, before, tree());
     const runtimeRoot = join(workspace, 'node_modules/@alxarafe/ui-runtime');
     const runtimePkg = JSON.parse(readFileSync(join(runtimeRoot, 'package.json'), 'utf8'));
+    assert.equal(runtimePkg.version, expectedPackage.peerDependencies[runtimePackage.name], 'Installed runtime must satisfy the exact prerelease peer');
     const runtime = await import(join(runtimeRoot, runtimePkg.exports['.'].default));
     for (const name of ['ThemeShellOutlet', 'ThemeNavigationOutlet', 'ThemePanelOutlet', 'ThemeRegistry'])
       assert(runtime[name], `Runtime archive lacks required public export ${name}; old 0.2.0 is unsupported`);
@@ -46,13 +49,12 @@ export async function buildTheme(id, archivePath) {
       task: id === 'default' ? 'AUR-THEME-EXTRACT-001' : 'AUR-THEME-EXTRACT-002', sourceCommit: process.env.AUR_SOURCE_COMMIT,
       sourceStatus: process.env.AUR_SOURCE_STATUS, sourceTreeSha256: process.env.AUR_SOURCE_TREE_SHA256, themeSourceSha256: sourceSha256,
       provenance: JSON.parse(readFileSync(`${sourceRoot}/PROVENANCE.json`, 'utf8')),
-      runtime: { name: runtimePkg.name, version: runtimePkg.version, archiveSha256: sha(readFileSync(runtimeArchive)),
-        requiredPortsRevision: '23e3bf40bf4c3dbad034d3deb71b3358075f51b3' },
+      runtime: { name: runtimePkg.name, version: runtimePkg.version, archiveSha256: sha(readFileSync(runtimeArchive)) },
       toolchainLockSha256: sha(lock), preservedDependencies: preserved,
       commands: ['./bin/test', './bin/check', `./bin/theme-pack ${id}`],
       unitEvidence: 'compiled public definition/ports checks and package-specific unit tests executed before APF packaging',
       browserEvidence: 'artifacts/testbed/optional-themes/', visualApproval: 'pending human review',
-      distribution: 'private experimental package; coordinated runtime/theme versioning required before external distribution',
+      distribution: 'private prerelease; publication prohibited',
     };
     run(join(workspace, 'node_modules/.bin/ngc'), ['-p', 'tsconfig.test.json'], themeRoot);
     const api = await import(join(themeRoot, 'out-tests/src/public-api.js'));
@@ -87,13 +89,17 @@ export async function buildTheme(id, archivePath) {
     run(join(workspace, 'node_modules/.bin/ng-packagr'), ['-p', 'ng-package.json', '-c', 'tsconfig.lib.json'], themeRoot);
     mkdirSync(destination, { recursive: true });
     const [result] = JSON.parse(execFileSync('npm', ['pack', join(workspace, 'dist'), '--json', '--pack-destination', destination], { encoding: 'utf8' }));
-    assert.equal(result.name, `@alxarafe/ui-theme-${id}`);
+    assert.equal(result.name, expectedPackage.name);
+    assert.equal(result.version, expectedPackage.version);
+    assert.equal(result.filename, archiveName(expectedPackage));
+    assert.equal(sourceManifest.version, expectedPackage.version);
+    assert.equal(sourceManifest.compatibility.uiRuntime, expectedPackage.peerDependencies[runtimePackage.name]);
     const paths = result.files.map(file => file.path);
     for (const file of ['LICENSE', 'NOTICE', 'README.md', 'PROVENANCE.json', 'theme.css', 'theme-package.json', 'conformance.json'])
       assert(paths.includes(file), `Theme package missing ${file}`);
     assert(!paths.some(path => /(^|\/)(tests|src|out-tests|node_modules|apps|scripts)\//.test(path)));
     const manifest = JSON.parse(readFileSync(join(workspace, 'dist/package.json'), 'utf8'));
-    assert.deepEqual(manifest.peerDependencies, { '@angular/core': '^22.0.0', '@alxarafe/ui-runtime': '0.2.0' });
+    assert.deepEqual(manifest.peerDependencies, expectedPackage.peerDependencies);
     assert.deepEqual(Object.keys(manifest.dependencies), ['tslib']);
     assert.equal(manifest.private, true);
     for (const condition of ['types', 'default']) assert(manifest.exports['.'][condition]);

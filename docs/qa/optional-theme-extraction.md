@@ -1,5 +1,7 @@
 # Independent optional theme packages
 
+> Historical extraction record: version coordinates and snapshot restrictions below describe the extraction task. The active private prerelease contract is now [package versioning](../contracts/package-versioning.md). Original provenance, visual findings and pending human approval remain unchanged.
+
 AUR-THEME-EXTRACT-002 starts from clean main
 `491b52d0c06d7fb5e290141c5c981ded36cabb08` (merged PR #10). No branches or
 consumer repositories are changed or removed. The immutable ERBAS reference is

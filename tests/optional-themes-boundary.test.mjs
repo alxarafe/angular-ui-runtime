@@ -12,7 +12,10 @@ for (const [id, keys] of Object.entries(expected)) test(`${id} has its own spars
   assert.equal(pkg.private, true);
   assert.deepEqual(Object.keys(pkg.dependencies), ['tslib']);
   assert.deepEqual(Object.keys(pkg.peerDependencies).sort(), ['@alxarafe/ui-runtime', '@angular/core']);
-  assert.equal(manifest.compatibility.runtimeSnapshotOnly, true);
+  assert.equal(manifest.compatibility.runtimeSnapshotOnly, undefined);
+  assert.equal(manifest.compatibility.requiredRuntimeRevision, undefined);
+  assert.equal(manifest.version, pkg.version);
+  assert.equal(manifest.compatibility.uiRuntime, pkg.peerDependencies['@alxarafe/ui-runtime']);
   assert.equal(manifest.themes[0].id, id);
   assert.deepEqual(manifest.themes[0].artifacts, keys);
   assert.equal(json('PROVENANCE.json').revision, '8d1573c315e03a6edbc92bd7b3d41d851bd54ab9');
