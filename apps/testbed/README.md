@@ -10,3 +10,7 @@ library repository source paths. The build script installs the generated APF tar
 in an isolated temporary copy before Angular compilation.
 
 See [QA workflow, artifacts and human review](../../docs/qa/testbed.md).
+
+`/?scenario=composition` exercises synthetic structural themes through the public
+shell/navigation/panel ports, retaining application-owned content/region views.
+It neither migrates production themes nor implements 1.0 widgets.
