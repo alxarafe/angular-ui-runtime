@@ -92,3 +92,74 @@ test('optional controls are not required in default and provider compositions re
     assert.throws(() => first.get(ThemeResolver).resolveControl('toggle'), /Unknown optional/);
   } finally { first.destroy(); second.destroy(); }
 });
+
+test('same identifier resolves independent instance domains and options beyond the legacy default', () => {
+  const calls = [];
+  const capability = request => {
+    calls.push(request);
+    return request.presentation?.stars === 3 ? undefined : request.domain;
+  };
+  const injector = Injector.create({ providers: provideThemeRuntime([
+    theme('default', { rating: { ...renderer(), capabilities: capability }, numeric: { ...renderer(), capabilities: request => request.domain } }),
+    theme('active', { numeric: { ...renderer(), capabilities: request => request.domain } }),
+  ], controls) });
+  try {
+    const resolver = injector.get(ThemeResolver);
+    for (const [maximum, stars, nullable] of [[5, 5, true], [10, 5, false], [10, 10, true]]) {
+      const values = Array.from({ length: maximum + 1 }, (_, index) => String(index));
+      if (nullable) values.push(null);
+      const request = { domain: { semantic: domain.semantic, values }, presentation: { stars } };
+      assert.equal(resolver.resolveControl('rating', request).control, 'rating');
+      assert(Object.isFrozen(calls.at(-1)));
+      assert(Object.isFrozen(calls.at(-1).domain.values));
+      assert(Object.isFrozen(calls.at(-1).presentation));
+    }
+    const incompatible = { domain: { semantic: domain.semantic, values: ['0', '1'] }, presentation: { stars: 3 } };
+    assert.equal(resolver.resolveControl('rating', incompatible).control, 'numeric');
+    const exact = { domain: { semantic: domain.semantic, values: [null, '0', '', '9223372036854775808'] }, presentation: { stars: 5 } };
+    resolver.resolveControl('rating', exact);
+    assert.deepEqual(calls.at(-1).domain.values, exact.domain.values);
+    injector.get(ThemeService).activate('active');
+    assert.equal(resolver.resolveControl('rating', exact).theme, 'active');
+    assert.equal(resolver.resolveControl('rating', exact).control, 'numeric');
+  } finally { injector.destroy(); }
+});
+
+test('static renderers cannot silently ignore required instance presentation options', () => {
+  const injector = Injector.create({ providers: provideThemeRuntime([theme('default', { rating: renderer() })], controls) });
+  try {
+    const resolver = injector.get(ThemeResolver);
+    assert.equal(resolver.resolveControl('rating').control, 'rating');
+    assert.equal(resolver.resolveControl('rating', { domain }).control, 'rating');
+    assert.throws(() => resolver.resolveControl('rating', { domain, presentation: { stars: 5 } }), /No compatible/);
+    assert.throws(() => resolver.resolveControl('rating', { domain: { ...domain, semantic: 'different' } }), /semantics/);
+  } finally { injector.destroy(); }
+});
+
+test('instance requests and dynamic capability results are validated before resolution', () => {
+  const injector = Injector.create({ providers: provideThemeRuntime([theme('default', {
+    rating: { ...renderer(), capabilities: () => ({ semantic: domain.semantic, values: [42] }) },
+  })], controls) });
+  try {
+    const resolver = injector.get(ThemeResolver);
+    for (const presentation of [null, [], { stars: NaN }, { stars: Infinity }, { nested: {} }, { missing: undefined }])
+      assert.throws(() => resolver.resolveControl('rating', { domain, presentation }), /presentation/);
+    assert.throws(() => resolver.resolveControl('rating', null), /request/);
+    assert.throws(() => resolver.resolveControl('rating', { domain: { ...domain, values: [] } }), /domain/);
+    assert.throws(() => resolver.resolveControl('rating'), /domain/);
+  } finally { injector.destroy(); }
+  assert.throws(() => new ThemeRegistry([theme('default', { rating: { ...renderer(), capabilities: true } })], controls), /capabilities/);
+});
+
+test('dynamic fallback requires every exact instance value including null and empty string', () => {
+  const instance = { domain: { semantic: domain.semantic, values: [null, '0', '', '9223372036854775808'] } };
+  const injector = Injector.create({ providers: provideThemeRuntime([theme('default', {
+    rating: { ...renderer(), capabilities: request => ({ ...request.domain, values: request.domain.values.filter(value => value !== null) }) },
+    numeric: { ...renderer(), capabilities: request => request.domain },
+  })], controls) });
+  try {
+    const resolver = injector.get(ThemeResolver);
+    assert.equal(resolver.resolveControl('rating', instance).control, 'numeric');
+    assert.equal(resolver.resolveControl('rating', { domain: { ...instance.domain, values: instance.domain.values.slice(1) } }).control, 'rating');
+  } finally { injector.destroy(); }
+});

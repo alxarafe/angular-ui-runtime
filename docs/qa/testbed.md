@@ -117,7 +117,7 @@ Both the QA app and browser runner have private manifests and independent lockfi
 
 ## Human visual inspection (no automatic baseline approval)
 
-1. Run `./bin/check` and confirm all forty-two browser tests and earlier phases passed.
+1. Run `./bin/check` and confirm all forty-eight browser tests and earlier phases passed.
    Preserve the revision, tarball digest, image digest, actual browser version,
    results and screenshots together. Passing assertions alone are insufficient.
 2. Open all four viewport captures at 100% size and their full-page companions.
@@ -191,9 +191,12 @@ supported deployment browsers. All captures still require human approval.
 
 ## Optional-control rating probe
 
-`/?scenario=rating` is an internal scenario, not a new main-menu demonstration.
-See the [implemented optional-control contract](../contracts/optional-controls.md)
-for scale configuration, finite-domain limits and fallback order. Eight additional
-Chromium cases cover five/ten-star representations and incompatible three-star
-fallback at both viewports, retaining exact score, null, dirty/error state and logical
-focus. Captures are in `artifacts/testbed/rating/`; human approval remains pending.
+`/?scenario=rating` remains one internal scenario with multiple independent fields
+under the same control ID. See the [optional-control contract](../contracts/optional-controls.md)
+for exact per-instance domains, presentation capabilities and fallback order.
+Fourteen Chromium cases at the two viewports (48 total including the existing
+suite) cover simultaneous scales, null/zero, nullable/nonnullable editing, pointer
+and keyboard events, blocked handlers, three-star fallback, exact large integers,
+retained fixture state and focus scoped to the active outlet. Captures are in
+`artifacts/testbed/rating/`; human approval remains pending. No forms or document
+editing engine is implemented by this QA fixture.

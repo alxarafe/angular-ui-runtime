@@ -14,7 +14,7 @@ import {
 } from './theme-definition.js';
 import { FIELD_RENDERER_BINDINGS } from '../field-types/renderer-context.js';
 
-import { OptionalControlDefinition, ControlResolution, snapshotDomain, covers } from './optional-controls.js';
+import { OptionalControlDefinition, ControlResolution, ControlRequest, snapshotRequest, snapshotDomain, covers } from './optional-controls.js';
 
 const STYLE_ID = /^[a-z][a-z0-9-]*$/;
 export class ThemeRegistry {
@@ -69,7 +69,10 @@ export class ThemeRegistry {
             !mirror.inputs.some(input => input.templateName === FIELD_RENDERER_BINDINGS.context) ||
             !mirror.outputs.some(output => output.templateName === FIELD_RENDERER_BINDINGS.valueChange))
           throw new Error('Invalid optional control renderer contract');
-        return [id, Object.freeze({ component: renderer.component, domain: snapshotDomain(renderer.domain) })];
+        if (renderer.capabilities !== undefined && typeof renderer.capabilities !== 'function')
+          throw new Error('Invalid optional control capabilities');
+        return [id, Object.freeze({ component: renderer.component, domain: snapshotDomain(renderer.domain),
+          ...(renderer.capabilities === undefined ? {} : { capabilities: renderer.capabilities }) })];
       }));
       this.themes.set(
         definition.id,
@@ -107,9 +110,11 @@ export class ThemeService {
 export class ThemeResolver {
   private readonly registry = inject(ThemeRegistry);
   private readonly service = inject(ThemeService);
-  resolveControl(id: string): ControlResolution {
+  resolveControl(id: string, instance?: ControlRequest): ControlResolution {
     const requested = this.registry.controls.find(control => control.id === id);
     if (!requested) throw new Error('Unknown optional control');
+    const request = snapshotRequest(instance === undefined ? { domain: requested.domain } : instance);
+    if (request.domain.semantic !== requested.domain.semantic) throw new Error('Incompatible control semantics');
     const ordered: string[] = [];
     const visit = (key: string): void => {
       if (ordered.includes(key)) return;
@@ -121,7 +126,12 @@ export class ThemeResolver {
       for (const key of ordered) {
         const definition = this.registry.controls.find(control => control.id === key)!;
         const renderer = theme.controls && Object.hasOwn(theme.controls, key) ? theme.controls[key] : undefined;
-        if (renderer && covers(definition.domain, requested.domain) && covers(renderer.domain, requested.domain))
+        if (!renderer || definition.domain.semantic !== request.domain.semantic ||
+            (!instance && !covers(definition.domain, request.domain))) continue;
+        const capability = renderer.capabilities
+          ? renderer.capabilities(request)
+          : Object.keys(request.presentation ?? {}).length ? undefined : renderer.domain;
+        if (capability !== undefined && covers(snapshotDomain(capability), request.domain))
           return Object.freeze({ component: renderer.component, control: key, theme: theme.id });
       }
     }

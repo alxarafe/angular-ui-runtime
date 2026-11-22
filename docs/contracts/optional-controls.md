@@ -1,68 +1,129 @@
-# Optional controls (AUR-EXTENSIBILITY-002)
+# Optional controls (AUR-EXTENSIBILITY-002, corrective revision 001)
 
-Implemented extension to the existing theme engine. The twenty `ThemeArtifact`
-identifiers, complete-default requirement and legacy `resolve()` behavior remain
-unchanged. This explicitly refines the closed registration catalogue described in
-UI Runtime 1.0 THEME: additional identifiers belong to `controls`, never `overrides`.
-The future form/menu/grid component proposal is still unimplemented and separate.
+The existing registry/resolver supports optional controls without changing the
+20 `ThemeArtifact` identifiers, complete-default rule or `resolve()` behavior.
+No optional control is required in any theme. This refines the closed registration
+catalogue in UI Runtime 1.0 THEME; the proposed form/menu/grid layer remains pending.
 
-`provideThemeRuntime(themes, definitions?)` and `new ThemeRegistry(themes,
-definitions?)` accept optional `OptionalControlDefinition` entries. Existing calls
-remain valid. Definitions contain an application-owned ID, a domain and ordered
-alternative IDs. ThemeDefinition gains an optional `controls` map of ID to
-`{ component, domain }`. No optional ID is required in any theme, including default.
-Unknown IDs, duplicate definitions, cycles, unknown alternative targets, malformed
-domains and components without compiled standalone `context`/`valueChange` bindings
-are rejected. Registration captures immutable snapshots; Angular component types
-are retained by reference. Reflection checks binding names, not event payload types.
+## Identity, field domain, presentation and capability
 
-`ThemeResolver.resolveControl(id)` returns `{ component, control, theme }`, or throws
-an explicit diagnostic when the ID is unknown or no compatible representation exists.
-It searches the requested ID followed by ordered depth-first alternatives (first
-visit wins), first in the active theme, then in default. Alternatives never inherit
-components from other non-default themes. A requested control in default therefore
-loses to a compatible alternative in the active theme.
+These are separate contracts:
 
-## Exact finite domains
+- `OptionalControlDefinition.id` identifies a control and its ordered alternatives.
+  Its `domain.semantic` is the shared meaning, not merely a primitive type. Its
+  finite `domain.values` supplies the **legacy default request**.
+- `ControlRequest.domain` is the effective domain of one field. Explicit requests
+  may contain values outside the registered legacy default, but must keep the
+  requested control's semantic token. Register once, resolve independently per field.
+- `ControlRequest.presentation` contains flat, instance-owned visual options
+  (`string | number | boolean`). Exact scores and constraints remain strings;
+  small visual counters such as star count may use numbers. Unknown or unsupported
+  options must be rejected or make the representation incompatible.
+- `OptionalControlRenderer.domain` is its static capability for requests without
+  presentation options. Optional `capabilities(request)` returns the effective
+  domain for that configuration, or `undefined` to skip that representation. A
+  static renderer cannot silently ignore nonempty presentation options.
 
-This minimal implementation supports **finite, explicitly enumerated** domains.
-`ControlDomain` has a nonempty semantic token and a nonempty unique list of
-`FieldValue` values. A token denotes shared meaning, not merely string/boolean type.
-The caller owns token governance; the engine cannot infer business semantics.
-Alternative definitions and renderer capabilities must have the same token and
-contain every requested value, including null when allowed. Equality is lexical:
-`'1'` and `'1.0'` differ. No numeric conversion, rounding or value transformation
-occurs. Exact large/fractional strings, booleans and null are retained.
+Existing `provideThemeRuntime(themes, definitions?)`, `new ThemeRegistry(themes,
+definitions?)`, theme `controls` maps and `resolveControl(id)` calls remain valid.
+The additive call `resolveControl(id, request)` uses the same registry and selection.
+`FieldRendererContext.control?: ControlRequest` optionally carries the same request
+into a renderer. Legacy renderers need no changes. The host must pass the request
+used for resolution; the resolver does not mount components or bind their inputs.
 
-Range, decimal and unbounded domain descriptors are **not implemented**. A finite
-list can express a discrete scale exactly but should not enumerate an unbounded
-numeric domain. Renderer declarations are trusted capability assertions; browser
-checks must verify their actual behavior. Resolution does not validate an editing
-value or implement field validation, error state, dirty tracking or focus handling.
-The owning host keeps that state and restores logical focus when replacing views.
+For example, with one registered `rating` control and compatible theme capabilities:
 
-## Repository-only rating probe
+```ts
+const request = (maximum: number, stars: number, nullable: boolean): ControlRequest => ({
+  domain: {
+    semantic: 'qa-discrete-rating',
+    values: [ ...(nullable ? [null] : []),
+      ...Array.from({ length: maximum + 1 }, (_, position) => String(position)) ],
+  },
+  presentation: { minimum: '0', maximum: String(maximum), step: '1', stars },
+});
+const quality = request(5, 5, true);
+const satisfaction = request(10, 5, false);
+const service = request(10, 10, true);
+resolver.resolveControl('rating', quality);
+resolver.resolveControl('rating', satisfaction);
+resolver.resolveControl('rating', service);
+// Each field passes its own request as context.control when mounting its result.
+```
 
-Open `/?scenario=rating` through `./bin/testbed`. This internal QA scenario uses
-installed APF exports, the same registry/resolver and synthetic themes. It does not
-add a user navigation entry or publish widgets. The default representation has
-five stars and half-star positions for exact string scores 0–10, step 1. Native
-range keyboard interaction supplies an accessible label, bounds and value text;
-null is announced as “No rating” and can be set with Clear rating. Disabled and
-read-only contexts suppress edits. The alternative theme supplies a numeric selector
-with the same domain, including null, rather than assuming a UINT8 semantic type.
+Here numbers build only a small finite list of visual positions; exact application
+scores never round-trip through Number. This example does not define integer ranges
+or a backend metadata vocabulary in the library.
 
-QA parameters `minimum`, `maximum` and `step` accept exact integers with positive
-step and at most 100 intervals. `stars=10` uses full-star increments for 0–10;
-`stars=3` cannot represent every requested score as whole/half stars and resolves
-to the numeric selector even in default. Invalid scale configurations diagnose
-instead of rounding. Scores outside ±1,000,000 use the exact string-valued
-selector to avoid native range precision loss. These are QA configuration conventions, not new public
-renderer context properties. The probe preserves fixture-owned value, dirty flag,
-synthetic error and logical focus; it is not a document editing engine.
+## Resolution and validation
 
-Automated engine coverage is in `tests/optional-controls.test.mjs`. Browser coverage
-is in `tests/browser/specs/rating.spec.mjs` at both configured viewports. Candidate
-captures are written to `artifacts/testbed/rating/`; passing tests do not approve
-visual baselines or establish full accessibility conformance. The future three-form
-testbed, manuals, forms, grids and document state remain pending separate increments.
+Resolution returns `{ component, control, theme }`. It visits the requested ID then
+ordered depth-first alternatives (first visit wins), first in the active theme,
+then in default. An active-theme alternative precedes the requested default renderer.
+There is no inherited non-default theme chain. Each candidate must share the semantic
+token, and its effective capability must cover **every exact field value**, including
+null where requested. Legacy calls additionally retain the original definition-domain
+coverage rule. Explicit requests use the candidate definition for semantic identity,
+not as a global restriction on all instances.
+
+Unknown IDs, duplicate identities, cycles, unknown alternatives, malformed domains,
+nonfinite/nested presentation options, invalid capability functions and missing
+compiled standalone `context`/`valueChange` bindings are diagnosed. Unknown request
+semantics and absence of a compatible representation also diagnose. A malformed
+capability result diagnoses; a valid but insufficient result is skipped. Configuration
+validators may throw a specific diagnostic; exceptions are not silently swallowed.
+
+Registration captures immutable domain/map/alternative snapshots. Each resolution
+passes a frozen request, domain, value list and presentation map to capabilities.
+Functions and Angular types remain references. Capabilities are trusted, synchronous,
+deterministic declarations: avoid mutable captured instance configuration. They must
+honor applicable editing operations, including explicit null selection when admitted.
+Reflection verifies names, not payloads or behavior; browser testing remains necessary.
+No resolution cache or global field configuration is introduced.
+
+## Exact finite domains and extension boundary
+
+Only **nonempty finite unique lists** of `FieldValue` are implemented. Null, zero
+and empty string differ; equality is lexical (`'1'` differs from `'1.0'`). No rounding,
+normalization or value transformation occurs. Semantic token governance belongs to
+the caller. The engine cannot infer business meaning from matching strings.
+
+Intervals and open domains are outside this increment. A viable future additive
+extension is a discriminated domain descriptor plus exact inclusion checking in the
+same resolver/capability boundary, retaining this finite shape and legacy calls.
+That requires a separately reviewed contract and bounded exact arithmetic; do not
+encode intervals as presentation options and claim the engine validates them.
+Current QA constructs finite integer lists before calling the public API.
+
+## Multi-instance repository QA
+
+`/?scenario=rating` remains one technical scenario using installed APF exports.
+It shows Quality (0–5 / five stars), Satisfaction (0–10 / five stars with halves),
+Service (0–10 / ten stars), an incompatible three-star request, an exact large-integer
+request and a negative-minimum/step-2 request, simultaneously under one control ID.
+No URL parameter determines their configuration. The three-star instance falls back
+to numeric without changing the others. Large integers also use string-valued numeric
+options rather than a native range. The scale helper bounds input length to 128
+characters and interval count to 100; it rejects inconsistent bounds, nonpositive or
+nondividing steps and invalid star counts. These are QA limits, not public numeric
+validation or published widgets.
+
+Stars are **visual feedback for a native range**, not clickable star buttons.
+Use the range with pointer/arrow keys; a labelled component-owned “No rating” button
+emits null when allowed. Nonnullable fields omit that operation in both representations.
+Numeric options use positional DOM tokens, preserving null, empty string and exact
+score identity without sentinel collisions. Disabled/read-only score and clear
+handlers suppress events. Range capability permits only whole/half stars and small
+exact integer scores (±1,000,000); incompatibility falls back without rounding.
+
+Each outlet scopes focus capture/restoration to its own DOM, restores only after
+replacement when focus belonged to it, and avoids stealing subsequent user focus.
+Alt+T switches the theme while leaving focus in place; clicking theme buttons leaves
+focus on the button. Values, event counters, QA dirty flags and synthetic errors are
+fixture-owned. This is not document validation, dirty reconciliation or saving.
+
+Engine/boundary tests are in `tests/optional-controls.test.mjs` and
+`tests/rating-configuration.test.mjs`; browser tests are in
+`tests/browser/specs/rating.spec.mjs` at both viewports. Captures under
+`artifacts/testbed/rating/` are candidates, pending human approval. Full accessibility
+conformance and the future three-form testbed, forms, grids and manuals remain pending.

@@ -9,4 +9,4 @@ export { ThemeShellOutlet, ThemeNavigationOutlet, ThemePanelOutlet } from './str
 
 export * from './structure/link-activation.js';
 
-export type { ControlDomain, OptionalControlDefinition, OptionalControlRenderer, ControlResolution } from './theme/optional-controls.js';
+export type { ControlDomain, ControlRequest, ControlPresentation, OptionalControlDefinition, OptionalControlRenderer, ControlResolution } from './theme/optional-controls.js';
