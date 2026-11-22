@@ -8,3 +8,5 @@ export * from './structure/theme-ports.js';
 export { ThemeShellOutlet, ThemeNavigationOutlet, ThemePanelOutlet } from './structure/theme-outlets.js';
 
 export * from './structure/link-activation.js';
+
+export type { ControlDomain, ControlRequest, ControlPresentation, OptionalControlDefinition, OptionalControlRenderer, ControlResolution } from './theme/optional-controls.js';

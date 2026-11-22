@@ -4,6 +4,7 @@
  * Source revision: cb7ca1682cdb8c6b253cf038e9daaf1898e02107
  * Modified for the reusable package; see NOTICE for provenance and changes.
  */
+import type { ControlRequest } from '../theme/optional-controls.js';
 import { InputSignal, OutputEmitterRef } from '@angular/core';
 
 // Exact numbers, dates, instants and binary values stay strings here. Transport and
@@ -16,6 +17,8 @@ export interface FieldRendererContext {
   readonly disabled?: boolean;
   readonly readOnly?: boolean;
   readonly choices?: readonly string[];
+  /** Optional instance domain/presentation used by an opt-in control host. */
+  readonly control?: ControlRequest;
 }
 export interface FieldRenderer {
   readonly context: InputSignal<FieldRendererContext>;

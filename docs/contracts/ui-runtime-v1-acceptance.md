@@ -169,3 +169,16 @@ Generated captures in `artifacts/testbed/navigation/` remain pending human revie
 No approved visual baseline, complete accessibility audit, permission engine or
 real consumer-repository integration is asserted. MENU-001..003 and visual review
 requirements remain open; this evidence does not close the full MENU-004 gate.
+
+## E-EXTENSIBILITY-002-R1 — instance-aware optional controls
+
+Corrective revision 001 supplies additive finite-domain/presentation requests in the
+existing registry/resolver, preserving twenty-key registration, legacy calls and
+active-theme alternative priority. Engine/boundary evidence is in
+`tests/optional-controls.test.mjs` and `tests/rating-configuration.test.mjs`;
+`tests/browser/specs/rating.spec.mjs` exercises simultaneous scales, explicit null,
+nonnullable fields, blocked events, pointer/keyboard interaction and scoped focus
+in installed APF QA at both viewports. See the [contract](optional-controls.md).
+This is partial THEME/FIELD compatibility evidence, not completion of field
+validation, document state, forms, grids, consumer adoption or visual acceptance.
+Captures remain pending human approval; mandatory 1.0 statuses are unchanged.

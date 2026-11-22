@@ -387,3 +387,18 @@ manifest/review tooling. None allows relaxing mandatory acceptance. Pattern gram
 saving lock policy, exact representation, error path identity and unchanged legacy
 artifact obligations are decided by this design. A future authorized task may refine
 provisional interfaces with recorded compatibility analysis before exporting them.
+
+### Implemented optional-control extension
+
+[AUR-EXTENSIBILITY-002](../contracts/optional-controls.md) implements an additive
+finite-domain control map in the existing registry/resolver. It does not implement
+or export the proposed ThemeComponents form/menu/grid layer above. Legacy twenty-key
+registration and resolution remain unchanged; optional control fallback searches
+compatible active-theme alternatives before default representations.
+
+Corrective revision 001 adds `ControlRequest` and optional renderer capabilities for
+per-instance resolution. `FieldRendererContext.control` is optional; old renderers
+and `resolveControl(id)` remain valid. A control's registered finite domain is its
+legacy default, not a universal field scale. The implemented finite-domain limits,
+capability trust boundary and future interval extension point are specified in the
+[optional-control contract](../contracts/optional-controls.md).

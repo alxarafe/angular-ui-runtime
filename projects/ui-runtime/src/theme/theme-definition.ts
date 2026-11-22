@@ -5,6 +5,7 @@
  * Modified for the reusable package; see NOTICE for provenance and changes.
  */
 import { Type } from '@angular/core';
+import { OptionalControlRenderer } from './optional-controls.js';
 import { FieldRenderer } from '../field-types/renderer-context.js';
 
 export const ThemeArtifact = {
@@ -45,4 +46,5 @@ export interface ThemeDefinition {
   readonly id: string;
   readonly cssClass: string;
   readonly overrides: Partial<ThemeArtifacts>;
+  readonly controls?: Readonly<Record<string, OptionalControlRenderer>>;
 }
