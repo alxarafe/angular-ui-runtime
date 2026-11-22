@@ -18,3 +18,19 @@ function compatibility(layout: ProposedLayout, path: ProposedPath): void {
   void [publishedLayout, publishedPath, unstable, transport];
 }
 void compatibility;
+
+import type { FormField, FormFieldDefinition } from '../../projects/ui-runtime/src/public-api.js';
+interface ExtendedLegacyField extends FormField { readonly applicationHint?: string }
+function rendererCompatibility(path: ValuePath): void {
+  const legacy: ExtendedLegacyField = { id: 'legacy', path, artifact: 'field.STRING' };
+  const optional: FormFieldDefinition = { id: 'optional', path, kind: 'control', controlId: 'rating' };
+  const fields: readonly FormFieldDefinition[] = [legacy, optional];
+  // @ts-expect-error An optional control cannot also select a base artifact.
+  const ambiguous: FormFieldDefinition = { id: 'bad', path, kind: 'control', controlId: 'rating', artifact: 'field.STRING' };
+  // @ts-expect-error A control ID requires the control discriminant.
+  const undiscriminated: FormFieldDefinition = { id: 'bad', path, controlId: 'rating' };
+  // @ts-expect-error The legacy branch cannot contain a control ID.
+  const mixedLegacy: FormFieldDefinition = { id: 'bad', path, artifact: 'field.STRING', controlId: 'rating' };
+  void [fields, ambiguous, undiscriminated, mixedLegacy];
+}
+void rendererCompatibility;

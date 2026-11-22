@@ -4,11 +4,12 @@ import {
   afterNextRender, computed, effect, inject, input, inputBinding, output, outputBinding, signal, viewChild,
 } from '@angular/core';
 import type { FieldValue, FieldRenderer, FieldRendererContext } from '../field-types/renderer-context.js';
-import { ThemeResolver, ThemeService } from '../theme/theme-runtime.js';
+import { ThemeRegistry, ThemeResolver, ThemeService } from '../theme/theme-runtime.js';
 import { captureRetainedFocus } from '../structure/retained-focus.js';
+import { resolveFormFieldRenderer } from './form-field-renderer.js';
 import { validateFormContexts } from './form-contexts.js';
 import { composeForm, formPathKey, type ComposedSection, type ComposedTab } from './compose-form.js';
-import type { ContextAction, FormDefinition, FormFieldContexts, FormField, FormFieldChange, FormLayout, FormPresentationContext, FormViewState, ValuePath } from './form-definition.js';
+import type { ContextAction, FormDefinition, FormFieldContexts, FormFieldDefinition, FormFieldChange, FormLayout, FormPresentationContext, FormViewState, ValuePath } from './form-definition.js';
 
 @Component({ selector: 'aur-form-frame', template: '<ng-template #projected><ng-content /></ng-template><ng-container #owned /><ng-container #target />' })
 class FormFrame {
@@ -53,11 +54,14 @@ class FormFrame {
 }
 @Component({ selector: 'aur-form-field', template: '<ng-container #target />', host: { '[attr.data-aur-field]': 'field().id' } })
 class FormFieldOutlet {
-  readonly field = input.required<FormField>();
+  readonly field = input.required<FormFieldDefinition>();
   readonly context = input.required<FieldRendererContext>();
   readonly readOnly = input(false);
   readonly fieldChange = output<FormFieldChange>();
-  private readonly boundContext = computed(() => ({ ...this.context(), readOnly: this.readOnly() || this.context().readOnly }));
+  private readonly registry = inject(ThemeRegistry);
+  private readonly binding = computed(() => resolveFormFieldRenderer(this.field(),
+    { ...this.context(), readOnly: this.readOnly() || this.context().readOnly }, this.registry, this.resolver));
+  private readonly boundContext = computed(() => this.binding().context);
   private readonly target = viewChild('target', { read: ViewContainerRef });
   private readonly root = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly resolver = inject(ThemeResolver);
@@ -68,7 +72,7 @@ class FormFieldOutlet {
     effect(() => {
       const target = this.target();
       if (!target) return;
-      const component = this.resolver.resolve(this.field().artifact);
+      const component = this.binding().component;
       if (component === this.rendered) return;
       const root = this.root.nativeElement, document = root.ownerDocument;
       const active = document.activeElement;
@@ -97,15 +101,9 @@ class FormFieldOutlet {
   selector: 'aur-form', imports: [FormFrame, FormFieldOutlet],
   host: { '[class]': 'theme.current().cssClass' },
   template: `
-    <aur-form-frame [context]="definition()">
+    <aur-form-frame [context]="{ id: definition().id, label: definition().label }">
       <form [attr.aria-labelledby]="domId('heading')" (submit)="$event.preventDefault()">
         <h2 [id]="domId('heading')">{{ definition().label }}</h2>
-        @if (composition().diagnostics.length) {
-          <div role="status" aria-label="Form layout diagnostics">
-            <p>Some layout references could not be placed. Eligible omitted fields remain available below.</p>
-            <ul>@for (diagnostic of composition().diagnostics; track $index) { <li>{{ diagnostic.code }}: {{ diagnostic.id ?? encode(diagnostic.path) }}</li> }</ul>
-          </div>
-        }
         <div role="group" aria-label="Form actions">
           @for (action of composition().actions; track action.id) {
             <button type="button" [disabled]="!action.enabled" (click)="dispatch(action)">{{ action.label }}</button>
@@ -197,7 +195,6 @@ export class FormComposition {
   private readonly root = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
   readonly selectedTab = computed(() => this.composition().tabs.find(tab => tab.id === this.state().selectedTab)?.id ?? this.composition().tabs[0]?.id);
-  protected readonly encode = (path: ValuePath | undefined) => JSON.stringify(path);
   protected domId(...parts: string[]): string { return 'aur-form-' + encodeURIComponent(JSON.stringify([this.definition().id, ...parts])); }
   private update(state: FormViewState): void { this.localState.set(state); this.viewStateChange.emit(state); }
   selectTab(id: string): void {

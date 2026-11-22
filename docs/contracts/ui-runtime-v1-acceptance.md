@@ -198,3 +198,21 @@ FORM-001..003 remain partial: complete validation/help/error summaries, immutabl
 adapter policy and document lifecycle acceptance are not implemented. No GRID/STATE
 requirement is closed. Captures under `artifacts/testbed/forms/` are candidates,
 not human-approved baselines or a comprehensive accessibility audit.
+
+
+## E-FORM-001-R1 — optional controls and diagnostic non-disclosure
+
+The corrective increment retains legacy form field interfaces and admits a mutually
+exclusive optional-control variant through FormFieldDefinition. Unit/type tests in
+`tests/form.test.mjs` and `tests/fixtures/form-components.ts` cover admission,
+legacy/default bindings, exact values, independent instance requests, ordered active
+alternatives and incompatible/unknown rejection. Browser tests in
+`tests/browser/specs/form.spec.mjs` cover actual packaged mounting, boolean/null and
+large exact strings, reactive domain/presentation changes, renderer/focus retention,
+blocked events and all five existing themes. Programmatic diagnostics stay frozen
+and include protected references; full DOM/attribute scans verify they are not rendered.
+
+FORM remains partial. The documented zero/one/multiple detail-collection invariants
+are future AUR-GRID-001/AUR-STATE-001 requirements, not implementation or acceptance
+of grids, editing sessions, persistence or shared saving. No new collection-placement
+API is published. Captures remain candidates pending human review.

@@ -117,7 +117,7 @@ Both the QA app and browser runner have private manifests and independent lockfi
 
 ## Human visual inspection (no automatic baseline approval)
 
-1. Run `./bin/check` and confirm all sixty browser tests and earlier phases passed.
+1. Run `./bin/check` and confirm all sixty-eight browser tests and earlier phases passed.
    Preserve the revision, tarball digest, image digest, actual browser version,
    results and screenshots together. Passing assertions alone are insufficient.
 2. Open all four viewport captures at 100% size and their full-page companions.
@@ -206,7 +206,7 @@ editing engine is implemented by this QA fixture.
 
 `/default-theme/?scenario=form` consumes the installed public `FormComposition`
 and `composeForm` API rather than copying placement/navigation logic into QA.
-Six scenarios at each viewport add twelve browser cases (60 total). They cover
+Ten form scenarios at each viewport provide twenty browser cases (68 total). They cover
 absent layouts, invalid/duplicate references, exclusions and accessible fallback,
 root/tab/section actions, empty/action-only containers, tab keyboard navigation,
 collapse, exact application-owned values, read-only event suppression, controlled
@@ -214,3 +214,15 @@ visual state, external reveal and combined frame/field focus replacement. The fi
 unchanged packaged themes and an optional QA frame use the same registry/resolver.
 Captures are in `artifacts/testbed/forms/`, pending human review. See the
 [implemented boundaries and remaining FORM/STATE/GRID work](../contracts/form-composition.md).
+
+
+AUR-FORM-001-R1 adds optional-field probes to the same form scenario via “Show optional
+fields”; the legacy fixture starts unchanged. Three score fields share the same
+optional ID with distinct domains/presentation; large exact strings and a boolean
+probe also mount through the public form host. Alt+R/Alt+D update Quality presentation/
+domain, and Alt+T changes theme without first moving focus. The registered QA themes
+reuse existing optional rating controls; no widget is published. Diagnostic evidence
+is available only through a private QA memory hook reading public composition results;
+protected IDs/paths and diagnostic codes are absent from DOM/ARIA/hidden markup.
+Full-page optional captures use `artifacts/testbed/forms/*-optional.png`. Future
+multiple detail collections remain documentation-only GRID/STATE work.

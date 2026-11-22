@@ -421,3 +421,28 @@ Published layout action references need only IDs; effective labels/enabled state
 come from the independent application-supplied action catalogue. Existing proposed
 ContextAction references remain structurally assignable. No document-state API,
 semantic validator or grid proposal is implemented by this increment.
+
+
+### AUR-FORM-001-R1: optional fields and diagnostic privacy
+
+The [form contract](../contracts/form-composition.md) now admits an additive field
+union: legacy artifact fields or discriminated optional-control fields. Selection
+and renderer context derive from one effective instance request through the existing
+registry/resolver. Legacy FormField remains an interface; composed field lists admit
+both variants. Reactive request changes may replace a renderer while retaining
+application data and scoped logical focus. No new required artifact is introduced.
+
+Placement diagnostics retain their programmatic frozen structure but are no longer
+rendered, including raw IDs, paths, excluded references and ARIA/hidden diagnostic
+content. Consumer-owned debug surfaces must likewise avoid protected DOM disclosure.
+
+Future detail composition supports zero/one/multiple independent collection identities
+and typed ValuePaths, with no first-detail convention. Collections may be placed in
+different tabs, sections or groups; columns, rows, effective permissions and editing
+capabilities may differ per collection. One logical document can supply a shared
+parent session and save operation across its collections, while independent resources
+may retain independent lifecycles. AUR-GRID-001 owns rendering/editing implementation;
+AUR-STATE-001 owns the shared state boundary. This is an invariant, not a new collection
+placement interface. Preserve an additive path/layout extension point and validate a
+concrete placement design through implementation before publishing it. Neither grids,
+collection editing, persistence nor document state is implemented by this correction.

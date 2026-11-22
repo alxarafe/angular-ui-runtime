@@ -10,15 +10,27 @@ export interface FormActionReference { readonly id: string }
 export interface FormField {
   readonly id: string;
   readonly path: ValuePath;
+  readonly kind?: 'artifact';
   readonly artifact: FieldArtifact;
+  readonly controlId?: never;
   readonly excluded?: boolean;
 }
+/** Optional-control fields retain the request exclusively in renderer context.control. */
+export interface OptionalControlFormField {
+  readonly id: string;
+  readonly path: ValuePath;
+  readonly kind: 'control';
+  readonly controlId: string;
+  readonly artifact?: never;
+  readonly excluded?: boolean;
+}
+export type FormFieldDefinition = FormField | OptionalControlFormField;
 export type FormFieldContexts = Readonly<Record<string, FieldRendererContext>>;
 /** Effective field/action catalogue. Applications perform authorization before supplying it. */
 export interface FormDefinition {
   readonly id: string;
   readonly label: string;
-  readonly fields: readonly FormField[];
+  readonly fields: readonly FormFieldDefinition[];
   readonly actions?: readonly ContextAction[];
 }
 export interface LayoutGroup { readonly id: string; readonly label?: string; readonly fields: readonly ValuePath[] }

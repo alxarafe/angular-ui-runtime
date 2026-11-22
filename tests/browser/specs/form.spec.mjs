@@ -38,10 +38,9 @@ test('absent layout renders eligible fields and effective actions with exact dat
 test('ordered placement diagnoses invalid references and exposes fallback, empty and action-only containers', async ({ page }) => {
   await ordered(page);
   await expect(form(page).getByRole('tab')).toHaveText(['General', 'Details', 'Actions only', 'Empty tab']);
-  await expect(page.getByRole('status', { name: 'Form layout diagnostics' })).toContainText('unknown-field');
-  await expect(page.getByRole('status', { name: 'Form layout diagnostics' })).toContainText('duplicate-field');
-  await expect(page.getByRole('status', { name: 'Form layout diagnostics' })).toContainText('excluded-field');
-  await expect(page.getByRole('status', { name: 'Form layout diagnostics' })).toContainText('unknown-action');
+  const codes = await page.evaluate(() => window.__aurFormQa.diagnostics().map(item => item.code));
+  expect(codes).toEqual(['unknown-field', 'excluded-field', 'duplicate-field', 'unknown-action']);
+  await expect(page.getByRole('status', { name: 'Form layout diagnostics' })).toHaveCount(0);
   await expect(page.getByLabel('Name', { exact: true })).toHaveCount(1);
   await expect(exact(page)).toHaveCount(1);
   await expect(exact(page)).toBeHidden();
@@ -162,4 +161,134 @@ test('controlled visual state and excluded reveal use neutral host boundaries', 
   await expect(page.getByTestId('form-reveal')).toHaveText('false');
   await expect(excluded).toBeFocused();
   await expect(page.getByLabel('Excluded field', { exact: true })).toHaveCount(0);
+});
+
+
+test('technical and protected diagnostic metadata remain in memory and out of all DOM surfaces', async ({ page }) => {
+  await ordered(page);
+  await expect(page.getByRole('tab', { name: 'General', exact: true })).toHaveAttribute('aria-selected', 'true');
+  const evidence = await page.evaluate(() => {
+    const diagnostics = window.__aurFormQa.diagnostics();
+    return { diagnostics, frozen: Object.isFrozen(diagnostics) && diagnostics.every(item =>
+      Object.isFrozen(item) && (!item.path || Object.isFrozen(item.path) && item.path.every(Object.isFrozen))) };
+  });
+  expect(evidence.frozen).toBe(true);
+  expect(evidence.diagnostics.find(item => item.code === 'excluded-field').path[0].name).toBe('aur-private-path-token');
+  expect(evidence.diagnostics.find(item => item.code === 'unknown-action').id).toBe('aur-private-action-token');
+  for (const theme of ['default', 'alternative', 'cyberpunk', 'vintage', 'high-contrast', 'form-frame']) {
+    await page.getByRole('button', { name: theme, exact: true }).click();
+    const markup = await page.locator('body').innerHTML();
+    for (const secret of ['aur-private-field-token', 'aur-private-path-token', 'aur-private-action-token',
+      'unknown-field', 'excluded-field', 'duplicate-field', 'unknown-action']) expect(markup).not.toContain(secret);
+  }
+  await expect(form(page).locator('xpath=ancestor::*[@data-frame-context][1]')).toHaveAttribute('data-frame-context', JSON.stringify({ id: 'composition-example', label: 'Composition example' }));
+  await expect(page.getByLabel('Name', { exact: true })).toHaveCount(1);
+  await expect(page.getByLabel('Omitted field', { exact: true })).toBeVisible();
+});
+
+test('optional fields resolve independent requests and preserve exact, boolean and null values through active alternatives', async ({ page }, info) => {
+  await page.getByRole('button', { name: 'Show optional fields', exact: true }).click();
+  const quality = page.getByLabel('Quality score', { exact: true });
+  const satisfaction = page.getByLabel('Satisfaction score', { exact: true });
+  const service = page.getByLabel('Service score', { exact: true });
+  const large = page.getByLabel('Large exact score', { exact: true });
+  await expect(quality).toHaveAttribute('max', '5');
+  await expect(satisfaction).toHaveAttribute('max', '10');
+  await expect(form(page).locator('[data-aur-field=quality] .star')).toHaveCount(5);
+  await expect(form(page).locator('[data-aur-field=satisfaction] .star')).toHaveCount(5);
+  await expect(form(page).locator('[data-aur-field=service] .star')).toHaveCount(10);
+  await expect(large).toHaveJSProperty('tagName', 'SELECT');
+  await expect(large.locator('option:checked')).toHaveText('9223372036854775808');
+  await quality.focus(); await quality.press('ArrowRight');
+  await expect(quality).toHaveValue('4');
+  await quality.press('Alt+t');
+  await expect(quality).toHaveJSProperty('tagName', 'SELECT');
+  await expect(quality).toBeFocused();
+  await expect(quality.locator('option:checked')).toHaveText('4');
+  await expect(satisfaction.locator('option:checked')).toHaveText('7');
+  await expect(service.locator('option:checked')).toHaveText('9');
+  await expect(large.locator('option:checked')).toHaveText('9223372036854775808');
+  await large.selectOption({ label: '9223372036854775817' });
+  await page.getByLabel('Optional flag', { exact: true }).check();
+  await expect(page.getByTestId('form-values')).toContainText('"flag":true');
+  await quality.selectOption({ label: 'No rating' });
+  await expect(page.getByTestId('form-values')).toContainText('"quality":null');
+  await quality.selectOption({ label: '0' });
+  await expect(page.getByTestId('form-values')).toContainText('"quality":"0"');
+  await quality.press('Alt+t');
+  await expect(quality).toBeFocused();
+  await expect(quality).toHaveValue('0');
+  await expect(page.getByTestId('form-values')).toContainText('"large":"9223372036854775817"');
+  await expect(page.getByLabel('Optional flag', { exact: true })).toBeChecked();
+  for (const id of ['alternative', 'cyberpunk', 'vintage', 'high-contrast']) {
+    await page.getByRole('button', { name: id, exact: true }).click();
+    await expect(quality).toHaveJSProperty('tagName', 'SELECT');
+    await expect(quality.locator('option:checked')).toHaveText('0');
+    await expect(large.locator('option:checked')).toHaveText('9223372036854775817');
+  }
+  await page.getByRole('button', { name: 'default', exact: true }).click();
+  const empty = page.getByRole('form', { name: 'Empty form', exact: true });
+  await empty.scrollIntoViewIfNeeded(); await expect(empty).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const capture = await page.screenshot({ path: `/artifacts/testbed/forms/${info.project.name}-optional.png`, fullPage: true });
+  expect(capture.readUInt32BE(20)).toBeGreaterThanOrEqual(await page.evaluate(() => document.documentElement.scrollHeight));
+});
+
+test('reactive optional domains and presentation change the renderer without losing data or logical focus', async ({ page }) => {
+  await page.getByRole('button', { name: 'Show optional fields', exact: true }).click();
+  const quality = page.getByLabel('Quality score', { exact: true });
+  const satisfaction = page.getByLabel('Satisfaction score', { exact: true });
+  await satisfaction.evaluate(node => { window.__satisfactionNative = node; });
+  await quality.focus(); await quality.press('ArrowRight');
+  await expect(page.getByTestId('form-event')).toContainText('"value":"4"');
+  const emitted = await page.getByTestId('form-event').textContent();
+  await quality.evaluate(node => { window.__qualityNative = node; });
+  await quality.press('Alt+d');
+  await expect(quality).toHaveAttribute('max', '10');
+  await expect(quality).toHaveValue('4');
+  await expect(quality).toBeFocused();
+  expect(await quality.evaluate(node => node === window.__qualityNative)).toBe(true);
+  await quality.press('Alt+d');
+  await expect(quality).toHaveAttribute('max', '5');
+  await quality.press('Alt+r');
+  await expect(quality).toHaveJSProperty('tagName', 'SELECT');
+  await expect(quality).toBeFocused();
+  await expect(quality.locator('option:checked')).toHaveText('4');
+  expect(await satisfaction.evaluate(node => node === window.__satisfactionNative)).toBe(true);
+  await expect(satisfaction).toHaveValue('7');
+  await expect(page.getByTestId('form-event')).toHaveText(emitted);
+  await quality.selectOption({ label: '5' });
+  await quality.press('Alt+r');
+  await expect(quality).toHaveJSProperty('tagName', 'INPUT');
+  await expect(quality).toBeFocused();
+  await expect(quality).toHaveValue('5');
+  const button = page.getByRole('button', { name: 'Toggle quality presentation', exact: true });
+  await button.click(); await expect(button).toBeFocused();
+  await expect(quality).toHaveJSProperty('tagName', 'SELECT');
+});
+
+test('optional renderers suppress blocked score/clear events in forms after request and theme changes', async ({ page }) => {
+  await page.getByRole('button', { name: 'Show optional fields', exact: true }).click();
+  const quality = page.getByLabel('Quality score', { exact: true });
+  const fieldHost = form(page).locator('[data-aur-field=quality]');
+  for (const flag of ['Toggle optional disabled', 'Toggle read-only']) {
+    await page.getByRole('button', { name: flag, exact: true }).click();
+    await expect(quality).toBeDisabled();
+    const clear = fieldHost.getByRole('button', { name: 'No rating', exact: true });
+    await expect(clear).toBeDisabled();
+    await clear.evaluate(node => node.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    await quality.evaluate(node => { node.value = '5'; node.dispatchEvent(new Event('input', { bubbles: true })); });
+    await page.getByRole('button', { name: 'Toggle quality presentation', exact: true }).click();
+    await expect(quality).toHaveJSProperty('tagName', 'SELECT');
+    await expect(quality).toBeDisabled();
+    await quality.evaluate(node => { node.value = '0'; node.dispatchEvent(new Event('change', { bubbles: true })); });
+    await page.getByRole('button', { name: 'form-frame', exact: true }).click();
+    await expect(quality).toBeDisabled();
+    await expect(page.getByTestId('form-event')).toHaveText('');
+    await expect(page.getByTestId('form-values')).toContainText('"quality":"3"');
+    await page.getByRole('button', { name: flag, exact: true }).click();
+    await page.getByRole('button', { name: 'default', exact: true }).click();
+    await page.getByRole('button', { name: 'Toggle quality presentation', exact: true }).click();
+    await expect(quality).toHaveJSProperty('tagName', 'INPUT');
+  }
 });

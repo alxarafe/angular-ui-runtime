@@ -1,13 +1,13 @@
 /** SPDX-License-Identifier: Apache-2.0 */
-import { THEME_ARTIFACTS } from '../theme/theme-definition.js';
-import type { ContextAction, FormDefinition, FormDiagnostic, FormField, FormLayout, LayoutGroup, LayoutSection, LayoutTab, ValuePath } from './form-definition.js';
+import { validateFormFieldRenderer } from './form-field-renderer.js';
+import type { ContextAction, FormDefinition, FormDiagnostic, FormFieldDefinition, FormLayout, LayoutGroup, LayoutSection, LayoutTab, ValuePath } from './form-definition.js';
 
-export interface ComposedGroup extends Omit<LayoutGroup, 'fields'> { readonly fields: readonly FormField[] }
+export interface ComposedGroup extends Omit<LayoutGroup, 'fields'> { readonly fields: readonly FormFieldDefinition[] }
 export interface ComposedSection extends Omit<LayoutSection, 'groups' | 'actions'> { readonly groups: readonly ComposedGroup[]; readonly actions: readonly ContextAction[] }
 export interface ComposedTab extends Omit<LayoutTab, 'sections' | 'actions'> { readonly sections: readonly ComposedSection[]; readonly actions: readonly ContextAction[] }
 export interface FormComposition {
   readonly tabs: readonly ComposedTab[];
-  readonly unplaced: readonly FormField[];
+  readonly unplaced: readonly FormFieldDefinition[];
   readonly actions: readonly ContextAction[];
   readonly diagnostics: readonly FormDiagnostic[];
 }
@@ -35,11 +35,11 @@ function distinct<T extends { readonly id: string }>(items: readonly T[]): void 
 export function composeForm(definition: FormDefinition, layout?: FormLayout): FormComposition {
   identity(definition.id); identity(definition.label);
   distinct(definition.fields); distinct(definition.actions ?? []);
-  const fields = new Map<string, FormField>();
+  const fields = new Map<string, FormFieldDefinition>();
   for (const field of definition.fields) {
     const key = formPathKey(field.path);
     if (fields.has(key)) throw new Error('Duplicate field path');
-    if (!field.artifact.startsWith('field.') || !THEME_ARTIFACTS.includes(field.artifact)) throw new Error('Invalid field artifact');
+    validateFormFieldRenderer(field);
     if (field.excluded !== undefined && typeof field.excluded !== 'boolean') throw new Error('Invalid field exclusion');
     fields.set(key, Object.freeze({ ...field, path: Object.freeze(field.path.map(segment => Object.freeze({ ...segment }))) }));
   }
@@ -49,7 +49,7 @@ export function composeForm(definition: FormDefinition, layout?: FormLayout): Fo
     return [action.id, Object.freeze({ ...action })] as const;
   }));
   const placed = new Set<string>(), usedActions = new Set<string>(), diagnostics: FormDiagnostic[] = [];
-  const placeFields = (paths: readonly ValuePath[]): readonly FormField[] => Object.freeze(paths.flatMap(path => {
+  const placeFields = (paths: readonly ValuePath[]): readonly FormFieldDefinition[] => Object.freeze(paths.flatMap(path => {
     const key = formPathKey(path), field = fields.get(key);
     const code = !field ? 'unknown-field' : field.excluded ? 'excluded-field' : placed.has(key) ? 'duplicate-field' : undefined;
     if (code) { diagnostics.push(Object.freeze({ code, path: Object.freeze(path.map(segment => Object.freeze({ ...segment }))) })); return []; }

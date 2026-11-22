@@ -12,7 +12,7 @@ export * from './structure/link-activation.js';
 export type { ControlDomain, ControlRequest, ControlPresentation, OptionalControlDefinition, OptionalControlRenderer, ControlResolution } from './theme/optional-controls.js';
 
 export type {
-  PathSegment, ValuePath, ContextAction, FormActionReference, FormField, FormFieldContexts, FormDefinition,
+  PathSegment, ValuePath, ContextAction, FormActionReference, FormField, OptionalControlFormField, FormFieldDefinition, FormFieldContexts, FormDefinition,
   LayoutGroup, LayoutSection, LayoutTab, FormLayout, FormDiagnostic, FormFieldChange,
   FormViewState, FormPresentationContext, FormPresentation, ThemeComponents,
 } from './form/form-definition.js';

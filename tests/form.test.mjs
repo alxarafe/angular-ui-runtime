@@ -107,3 +107,90 @@ test('renderer contexts are separate from placement definitions and validate bin
   ]) assert.throws(() => validateFormContexts(definition, invalid));
   assert.equal(composeForm(definition).unplaced.length, 2);
 });
+
+test('form renderer definitions discriminate mechanisms and reject ambiguous or malformed metadata', () => {
+  const control = { id: 'score', path: path('score'), kind: 'control', controlId: 'rating' };
+  assert.equal(composeForm({ ...definition, fields: [control] }).unplaced[0].controlId, 'rating');
+  for (const invalid of [
+    { ...control, artifact: 'field.STRING' }, { ...control, artifact: undefined }, { ...control, controlId: '' },
+    { ...control, kind: 'unknown' }, { ...control, kind: undefined },
+    { ...field('legacy'), controlId: 'rating' }, { ...field('legacy'), controlId: undefined },
+  ]) assert.throws(() => composeForm({ ...definition, fields: [invalid] }));
+  assert.equal(composeForm({ ...definition, fields: [{ ...field('legacy'), kind: 'artifact' }] }).unplaced.length, 1);
+});
+
+test('form optional binding uses independent effective requests, exact values and active ordered fallback', async () => {
+  const { resolveFormFieldRenderer } = await import('../out-tsc/tests/projects/ui-runtime/src/form/form-field-renderer.js');
+  const domain = { semantic: 'qa-form-score', values: [null, '0', '1'] };
+  const controls = [{ id: 'score', domain, alternatives: ['numeric'] }, { id: 'numeric', domain }];
+  const seen = [];
+  const dynamic = { component: FieldProbe, domain, capabilities: request => { seen.push(request); return request.presentation?.stars === 3 ? undefined : request.domain; } };
+  const numeric = { component: FieldProbe, domain, capabilities: request => { seen.push(request); return request.domain; } };
+  const injector = Injector.create({ providers: provideThemeRuntime([
+    { ...DEFAULT_THEME, controls: { score: dynamic, numeric } },
+    { id: 'active', cssClass: 'active', overrides: {}, controls: { numeric } },
+  ], controls) });
+  try {
+    const registry = injector.get(ThemeRegistry), resolver = injector.get(ThemeResolver);
+    const descriptor = { id: 'score-field', path: path('score'), kind: 'control', controlId: 'score' };
+    for (const [values, stars, value] of [
+      [[null, '0', '1', '2', '3', '4', '5'], 5, null],
+      [['0', '1', '9223372036854775808.000000001'], 10, '9223372036854775808.000000001'],
+      [[false, true], 5, false], [[null, '', '0'], 5, ''],
+    ]) {
+      const context = { id: 'native-score', label: 'Score', value, control: { domain: { semantic: domain.semantic, values }, presentation: { stars } } };
+      const binding = resolveFormFieldRenderer(descriptor, context, registry, resolver);
+      assert.equal(binding.component, FieldProbe);
+      assert.equal(binding.context.value, value);
+      assert.deepEqual(binding.context.control, seen.at(-1));
+      assert(Object.isFrozen(binding.context.control.domain.values));
+      assert.deepEqual(context.control.domain.values, values);
+    }
+    const legacyRequest = resolveFormFieldRenderer(descriptor, { id: 'score', label: 'Score', value: '1' }, registry, resolver);
+    assert.deepEqual(legacyRequest.context.control, { domain });
+    injector.get(ThemeService).activate('active');
+    const request = { domain, presentation: { stars: 5 } };
+    assert.equal(resolver.resolveControl('score', request).theme, 'active');
+    assert.equal(resolver.resolveControl('score', request).control, 'numeric');
+    const binding = resolveFormFieldRenderer(descriptor, { id: 'score', label: 'Score', value: '1', control: request }, registry, resolver);
+    assert.deepEqual(binding.context.control, seen.at(-1));
+    assert.equal(resolver.resolveControl('score', { domain, presentation: { stars: 3 } }).control, 'numeric');
+  } finally { injector.destroy(); }
+});
+
+test('form optional binding rejects unknown IDs, incompatible semantics and unrepresentable requests without artifact substitution', async () => {
+  const { resolveFormFieldRenderer } = await import('../out-tsc/tests/projects/ui-runtime/src/form/form-field-renderer.js');
+  const domain = { semantic: 'score', values: ['0', '1'] };
+  const injector = Injector.create({ providers: provideThemeRuntime([{ ...DEFAULT_THEME, controls: {
+    score: { component: FieldProbe, domain },
+  } }], [{ id: 'score', domain }]) });
+  try {
+    const registry = injector.get(ThemeRegistry), resolver = injector.get(ThemeResolver);
+    const descriptor = { id: 'score-field', path: path('score'), kind: 'control', controlId: 'score' };
+    const context = { id: 'score', label: 'Score', value: '0' };
+    for (const [field, control, pattern] of [
+      [{ ...descriptor, controlId: 'unknown' }, undefined, /Unknown optional/],
+      [descriptor, { domain: { ...domain, semantic: 'different' } }, /semantics/],
+      [descriptor, { domain: { ...domain, values: [null, '0', '1'] } }, /No compatible/],
+      [descriptor, { domain, presentation: { unsupported: true } }, /No compatible/],
+    ]) assert.throws(() => resolveFormFieldRenderer(field, { ...context, control }, registry, resolver), pattern);
+    const legacyContext = { id: 'text', label: 'Text', value: '9223372036854775807.000000001' };
+    const legacy = resolveFormFieldRenderer(field('text'), legacyContext, registry, resolver);
+    assert.equal(legacy.context, legacyContext);
+    assert.equal(legacy.component, resolver.resolve('field.STRING'));
+  } finally { injector.destroy(); }
+});
+
+test('programmatic diagnostics retain protected reference identity and frozen paths without placing it', () => {
+  const secret = 'private-path-token';
+  const hidden = { ...field('private-field-token', true), path: path(secret) };
+  const result = composeForm({ ...definition, fields: [field('visible'), hidden] }, {
+    actions: [{ id: 'private-action-token' }], tabs: [tab('tab', [section('section', [group('group', [path(secret)])])])],
+  });
+  assert.deepEqual(result.unplaced.map(field => field.id), ['visible']);
+  assert.deepEqual(result.diagnostics.map(item => item.code), ['unknown-action', 'excluded-field']);
+  assert.equal(result.diagnostics[0].id, 'private-action-token');
+  assert.equal(result.diagnostics[1].path[0].name, secret);
+  assert(Object.isFrozen(result.diagnostics));
+  assert(Object.isFrozen(result.diagnostics[1].path[0]));
+});
