@@ -10,3 +10,7 @@ body { margin: 0; }
 .package-qa-controls button { margin: 0.25rem; }
 .package-values { overflow-wrap: anywhere; white-space: pre-wrap; }
 [data-field] p { overflow-wrap: anywhere; }
+
+/* The synthetic form override reuses the shared QA field probe in this slice. */
+.qa-form-frame .qa-field { display: grid; gap: 0.4rem; margin: 0.75rem 0; }
+.qa-form-frame .qa-field input { box-sizing: border-box; width: 100%; min-width: 0; padding: 8px; font: inherit; }

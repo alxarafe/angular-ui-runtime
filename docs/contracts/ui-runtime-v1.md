@@ -208,6 +208,12 @@ changes never alter values, constraints or action semantics. Switching tabs,
 collapsing sections or changing mode/theme preserves editing state. Invalid fields
 in inactive tabs/sections get a visible summary and a focus/reveal path.
 
+AUR-FORM-001 implements the first neutral composition increment through the
+[form-composition contract](form-composition.md): separate catalogue/renderer
+contexts/layouts, deterministic placement and fallback, contextual intent, visual
+state and neutral reveal/focus. Validation/error summaries and document editing
+remain pending. This does not close the complete FORM/STATE/GRID release gate.
+
 ## Collections and editing lifecycle (GRID, STATE)
 
 Read-only/list grids display application-provided rows and navigation; they are

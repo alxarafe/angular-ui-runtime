@@ -42,9 +42,9 @@ not be interpreted as a successful 1.0 acceptance run.
 | MENU-002 | Render each valid nonempty menu/item once in input order; diagnose cycles/duplicate item IDs. | Nested children; equal labels; duplicate placement; empty menu. | unit, browser | tests/contracts/menus/; tests/browser/menus/ | missing | No evidence yet. |
 | MENU-003 | Provide labelled keyboard-accessible default/overflow for every unspecialized placement. | Many menus; unsupported placement; mobile; open/close focus restoration. | browser, visual | tests/browser/menus/; tests/visual/menus/ | missing | No evidence yet. |
 | MENU-004 | Adapters own effective authorization/routing/actions; shell extensions are separate. | Unauthorized omission by adapter; disabled action; current route; slot collision; native/SPA link activation. | unit, integration, consumer, browser | tests/link-activation.test.mjs; tests/browser/specs/navigation.spec.mjs; planned tests/contracts/navigation-adapter/ | partial | E-NAVIGATION-001 proves optional synchronous link interception in installed APF consumers; full authorization/adapters, multi-menu and cross-consumer evidence remain pending. |
-| FORM-001 | Support simple default and ordered tabs/sections/groups/field placement/context actions. | Absent layout; duplicate placement; unknown refs; action-only containers; empty groups. | unit, browser | tests/contracts/layout/; tests/browser/forms/ | missing | ERBAS projectLayout inspected; not part of library. |
-| FORM-002 | Provide fallback for eligible unplaced fields/actions without resurrecting explicit exclusions. | Omitted required field; excluded field; unauthorized action; deterministic ordering. | unit, integration | tests/contracts/layout/ | missing | No library evidence yet. |
-| FORM-003 | Read-only/edit modes and layout changes preserve data semantics and edits. | Immutable update; tab switch; collapse; theme change; focused error reveal. | browser | tests/browser/forms/ | missing | No evidence yet. |
+| FORM-001 | Support simple default and ordered tabs/sections/groups/field placement/context actions. | Absent layout; duplicate placement; unknown refs; action-only containers; empty groups. | unit, browser | tests/contracts/layout/; tests/browser/forms/ | partial | E-FORM-001 implements public neutral composition, ordered containers, actions and diagnostics; full validation-aware form acceptance remains pending. |
+| FORM-002 | Provide fallback for eligible unplaced fields/actions without resurrecting explicit exclusions. | Omitted required field; excluded field; unauthorized action; deterministic ordering. | unit, integration | tests/contracts/layout/ | partial | E-FORM-001 verifies deterministic eligible field/action fallback, exclusions and effective action policy. Full consumer acceptance remains pending. |
+| FORM-003 | Read-only/edit modes and layout changes preserve data semantics and edits. | Immutable update; tab switch; collapse; theme change; focused error reveal. | browser | tests/browser/forms/ | partial | E-FORM-001 verifies view lifetime, visual state, read-only suppression and logical focus/reveal; validation, immutable-update and document lifecycle remain pending. |
 | GRID-001 | Separate read-only lists from parent-owned editable detail collections. | Read-only cell edit attempt; empty collection; aggregate save without row CRUD. | integration, browser | tests/contracts/collections/; tests/browser/grids/ | missing | No evidence yet. |
 | GRID-002 | Add/edit/remove and declared reorder use stable temporary keys and parent state. | New unsaved rows; duplicate values; index shifts; delete then reorder; cancel. | unit, browser | tests/contracts/collections/; tests/browser/grids/ | missing | No evidence yet. |
 | GRID-003 | Field, row and aggregate errors block successful parent save and remain accessible. | Invalid nested row; removed row errors; hidden column; narrow scrolling. | browser, visual | tests/browser/grids/; tests/visual/grids/ | missing | No evidence yet. |
@@ -182,3 +182,19 @@ in installed APF QA at both viewports. See the [contract](optional-controls.md).
 This is partial THEME/FIELD compatibility evidence, not completion of field
 validation, document state, forms, grids, consumer adoption or visual acceptance.
 Captures remain pending human approval; mandatory 1.0 statuses are unchanged.
+
+## E-FORM-001 — public reusable form composition
+
+`composeForm` and `FormComposition` implement the first neutral FORM increment.
+`tests/form.test.mjs` and `tests/fixtures/form-components.ts` provide placement,
+invalid-input, path/type, renderer-context and same-registry presentation evidence.
+`tests/browser/specs/form.spec.mjs` verifies installed public APF behavior at both
+viewports, including empty/action-only containers, all action scopes, keyboard tabs,
+collapse, fallback/exclusions, read-only events, controlled visual state, reveal and
+combined frame/field focus replacement. All five existing theme packages participate
+without changes. See the [implemented contract](form-composition.md).
+
+FORM-001..003 remain partial: complete validation/help/error summaries, immutable
+adapter policy and document lifecycle acceptance are not implemented. No GRID/STATE
+requirement is closed. Captures under `artifacts/testbed/forms/` are candidates,
+not human-approved baselines or a comprehensive accessibility audit.
