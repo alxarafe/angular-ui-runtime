@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Injector } from '@angular/core';
 import { ThemeRegistry, ThemeResolver, ThemeService, provideThemeRuntime, THEME_ARTIFACTS } from '../out-tsc/tests/projects/ui-runtime/src/public-api.js';
+import { matchesNativeRangePositions } from '../out-tsc/tests/apps/testbed/src/rating-configuration.js';
 import { DEFAULT_THEME, FieldProbe, OverrideProbe, MissingInputProbe, NonStandaloneProbe } from '../out-tsc/tests/tests/fixtures/theme-components.js';
 const domain = { semantic: 'qa-rating', values: [null, '0', '1', '2', '9223372036854775807.000000001'] };
 const controls = [{ id: 'rating', domain, alternatives: ['numeric'] }, { id: 'numeric', domain }];
@@ -161,5 +162,21 @@ test('dynamic fallback requires every exact instance value including null and em
     const resolver = injector.get(ThemeResolver);
     assert.equal(resolver.resolveControl('rating', instance).control, 'numeric');
     assert.equal(resolver.resolveControl('rating', { domain: { ...instance.domain, values: instance.domain.values.slice(1) } }).control, 'rating');
+  } finally { injector.destroy(); }
+});
+
+test('sparse range positions resolve to numeric alternative, full positions retain stars', () => {
+  const selectable = ['0', '1', '2', '3', '4'];
+  const injector = Injector.create({ providers: provideThemeRuntime([theme('default', {
+    rating: { ...renderer(), capabilities: request =>
+      matchesNativeRangePositions(request.domain.values, selectable) ? request.domain : undefined },
+    numeric: { ...renderer(), capabilities: request => request.domain },
+  })], controls) });
+  try {
+    const resolver = injector.get(ThemeResolver);
+    const request = values => ({ domain: { semantic: domain.semantic, values }, presentation: { stars: 4 } });
+    assert.equal(resolver.resolveControl('rating', request(['0', '2', '4'])).control, 'numeric');
+    assert.equal(resolver.resolveControl('rating', request(selectable)).control, 'rating');
+    assert.equal(resolver.resolveControl('rating', request([null, '0', '2', '4'])).control, 'numeric');
   } finally { injector.destroy(); }
 });

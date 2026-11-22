@@ -23,3 +23,14 @@ export function ratingRequest(config: RatingConfiguration) {
     minimum: config.minimum, maximum: config.maximum, step: config.step, stars: config.stars,
   } };
 }
+
+/** Native range inputs can select every min/max/step position. Reject sparse domains. */
+export function matchesNativeRangePositions(
+  allowed: readonly (string | boolean | null)[],
+  selectable: readonly (string | null)[],
+): boolean {
+  const values = new Set(allowed);
+  const positions = new Set(selectable);
+  return values.size === allowed.length && positions.size === selectable.length &&
+    values.size === positions.size && selectable.every(value => values.has(value));
+}

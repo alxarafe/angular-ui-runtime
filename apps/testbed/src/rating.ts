@@ -4,7 +4,7 @@
 import { Component, ElementRef, effect, inject, input, output, signal, viewChild, ViewContainerRef, inputBinding, outputBinding } from '@angular/core';
 import { FieldRendererContext, FieldValue, ThemeResolver, ThemeService, OptionalControlDefinition, ThemeDefinition, ControlRequest } from '@alxarafe/ui-runtime';
 import { QA_THEMES } from './fixtures';
-import { ratingRequest, RatingConfiguration } from './rating-configuration';
+import { ratingRequest, RatingConfiguration, matchesNativeRangePositions } from './rating-configuration';
 
 function scale(request: ControlRequest) {
   const options = request.presentation ?? { minimum: '0', maximum: '10', step: '1', stars: 5 };
@@ -23,7 +23,10 @@ function numericCapability(request: ControlRequest) {
 }
 function starCapability(request: ControlRequest) {
   const configured = scale(request);
-  if (!numericCapability(request)) return undefined;
+  // Checking only that allowed values are reachable is insufficient: a native
+  // range must not offer positions that this field forbids.
+  if (!numericCapability(request) ||
+      !matchesNativeRangePositions(request.domain.values, configured.domain.values)) return undefined;
   const min = BigInt(configured.presentation.minimum), span = BigInt(configured.presentation.maximum) - min;
   const values = request.domain.values.filter(value => value === null || typeof value === 'string' &&
     BigInt(value) >= -1000000n && BigInt(value) <= 1000000n &&

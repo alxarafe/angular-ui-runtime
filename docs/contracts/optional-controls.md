@@ -115,6 +115,11 @@ Numeric options use positional DOM tokens, preserving null, empty string and exa
 score identity without sentinel collisions. Disabled/read-only score and clear
 handlers suppress events. Range capability permits only whole/half stars and small
 exact integer scores (±1,000,000); incompatibility falls back without rounding.
+A native range is compatible only if **every** browser-selectable min/max/step
+position belongs to the exact instance domain (and every allowed position is
+reachable). A sparse field domain such as `{0, 2, 4}` must fall back when the
+range step is 1, because it can also visit 1 and 3. This is tested directly in
+`tests/rating-configuration.test.mjs`; emitting guards alone are insufficient.
 
 Each outlet scopes focus capture/restoration to its own DOM, restores only after
 replacement when focus belonged to it, and avoids stealing subsequent user focus.
