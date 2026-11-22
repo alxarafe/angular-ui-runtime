@@ -331,3 +331,11 @@ manifest/reviewer workflow. These are implementation choices constrained by this
 contract, not optional acceptance requirements. Backend-specific precision/scale,
 format and equality profiles must be confirmed with consumer conformance fixtures
 before declaring parity; undocumented disagreement blocks the relevant requirement.
+
+### Optional-control compatibility refinement (AUR-EXTENSIBILITY-002)
+
+The [optional-control contract](optional-controls.md) adds optional identifiers and
+ordered compatible alternatives to the existing registry/resolver. The closed
+catalogue and complete-default rule continue to apply to the twenty base artifacts;
+optional controls do not extend that required map. Existing direct artifact fallback
+is unchanged. This does not implement the planned forms, grids or editing engine.

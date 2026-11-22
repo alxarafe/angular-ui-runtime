@@ -387,3 +387,11 @@ manifest/review tooling. None allows relaxing mandatory acceptance. Pattern gram
 saving lock policy, exact representation, error path identity and unchanged legacy
 artifact obligations are decided by this design. A future authorized task may refine
 provisional interfaces with recorded compatibility analysis before exporting them.
+
+### Implemented optional-control extension
+
+[AUR-EXTENSIBILITY-002](../contracts/optional-controls.md) implements an additive
+finite-domain control map in the existing registry/resolver. It does not implement
+or export the proposed ThemeComponents form/menu/grid layer above. Legacy twenty-key
+registration and resolution remain unchanged; optional control fallback searches
+compatible active-theme alternatives before default representations.

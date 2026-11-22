@@ -117,7 +117,7 @@ Both the QA app and browser runner have private manifests and independent lockfi
 
 ## Human visual inspection (no automatic baseline approval)
 
-1. Run `./bin/check` and confirm all thirty-four browser tests and earlier phases passed.
+1. Run `./bin/check` and confirm all forty-two browser tests and earlier phases passed.
    Preserve the revision, tarball digest, image digest, actual browser version,
    results and screenshots together. Passing assertions alone are insufficient.
 2. Open all four viewport captures at 100% size and their full-page companions.
@@ -188,3 +188,12 @@ Inspect `artifacts/testbed/navigation/{desktop,mobile}/native-gestures.json` and
 Meta as a modifier, not a physical macOS Cmd/browser/system-menu interaction.
 Check copyable URLs, keyboard behavior and actual context-menu UX manually on
 supported deployment browsers. All captures still require human approval.
+
+## Optional-control rating probe
+
+`/?scenario=rating` is an internal scenario, not a new main-menu demonstration.
+See the [implemented optional-control contract](../contracts/optional-controls.md)
+for scale configuration, finite-domain limits and fallback order. Eight additional
+Chromium cases cover five/ten-star representations and incompatible three-star
+fallback at both viewports, retaining exact score, null, dirty/error state and logical
+focus. Captures are in `artifacts/testbed/rating/`; human approval remains pending.

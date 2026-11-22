@@ -14,11 +14,31 @@ import {
 } from './theme-definition.js';
 import { FIELD_RENDERER_BINDINGS } from '../field-types/renderer-context.js';
 
+import { OptionalControlDefinition, ControlResolution, snapshotDomain, covers } from './optional-controls.js';
+
 const STYLE_ID = /^[a-z][a-z0-9-]*$/;
 export class ThemeRegistry {
   readonly all: readonly ThemeDefinition[];
   private readonly themes = new Map<string, ThemeDefinition>();
-  constructor(definitions: readonly ThemeDefinition[]) {
+  readonly controls: readonly OptionalControlDefinition[];
+  constructor(definitions: readonly ThemeDefinition[], controls: readonly OptionalControlDefinition[] = []) {
+    const ids = new Set<string>();
+    this.controls = Object.freeze(controls.map(control => {
+      if (!STYLE_ID.test(control.id) || ids.has(control.id)) throw new Error('Invalid or duplicate control identity');
+      ids.add(control.id);
+      return Object.freeze({ id: control.id, domain: snapshotDomain(control.domain),
+        alternatives: Object.freeze([...(control.alternatives ?? [])]) });
+    }));
+    const checked = new Set<string>();
+    const visit = (id: string, path: readonly string[]): void => {
+      if (path.includes(id)) throw new Error('Control alternative cycle');
+      if (checked.has(id)) return;
+      const control = this.controls.find(item => item.id === id);
+      if (!control) throw new Error('Unknown control alternative');
+      for (const next of control.alternatives ?? []) visit(next, [...path, id]);
+      checked.add(id);
+    };
+    for (const id of ids) visit(id, []);
     for (const definition of definitions) {
       if (
         !STYLE_ID.test(definition.id) ||
@@ -42,9 +62,18 @@ export class ThemeRegistry {
         )
           throw new Error('Invalid field renderer contract');
       }
+      const optional = Object.fromEntries(Object.entries(definition.controls ?? {}).map(([id, renderer]) => {
+        if (!ids.has(id)) throw new Error('Unknown optional control');
+        const mirror = typeof renderer?.component === 'function' ? reflectComponentType(renderer.component) : null;
+        if (!mirror?.isStandalone ||
+            !mirror.inputs.some(input => input.templateName === FIELD_RENDERER_BINDINGS.context) ||
+            !mirror.outputs.some(output => output.templateName === FIELD_RENDERER_BINDINGS.valueChange))
+          throw new Error('Invalid optional control renderer contract');
+        return [id, Object.freeze({ component: renderer.component, domain: snapshotDomain(renderer.domain) })];
+      }));
       this.themes.set(
         definition.id,
-        Object.freeze({ ...definition, overrides: Object.freeze(overrides) }),
+        Object.freeze({ ...definition, overrides: Object.freeze(overrides), controls: Object.freeze(optional) }),
       );
     }
     const fallback = this.themes.get(ThemeId.Default);
@@ -78,6 +107,26 @@ export class ThemeService {
 export class ThemeResolver {
   private readonly registry = inject(ThemeRegistry);
   private readonly service = inject(ThemeService);
+  resolveControl(id: string): ControlResolution {
+    const requested = this.registry.controls.find(control => control.id === id);
+    if (!requested) throw new Error('Unknown optional control');
+    const ordered: string[] = [];
+    const visit = (key: string): void => {
+      if (ordered.includes(key)) return;
+      ordered.push(key);
+      for (const next of this.registry.controls.find(control => control.id === key)!.alternatives ?? []) visit(next);
+    };
+    visit(id);
+    for (const theme of [this.service.current(), this.registry.require(ThemeId.Default)]) {
+      for (const key of ordered) {
+        const definition = this.registry.controls.find(control => control.id === key)!;
+        const renderer = theme.controls && Object.hasOwn(theme.controls, key) ? theme.controls[key] : undefined;
+        if (renderer && covers(definition.domain, requested.domain) && covers(renderer.domain, requested.domain))
+          return Object.freeze({ component: renderer.component, control: key, theme: theme.id });
+      }
+    }
+    throw new Error('No compatible optional control representation');
+  }
   resolve<K extends ThemeArtifact>(artifact: K): ThemeArtifacts[K] {
     if (!THEME_ARTIFACTS.includes(artifact)) throw new Error('Unknown theme artifact');
     const component =
@@ -88,9 +137,9 @@ export class ThemeResolver {
   }
 }
 // App-scoped providers keep selection local and make isolated test compositions easy.
-export function provideThemeRuntime(themes: readonly ThemeDefinition[]): Provider[] {
+export function provideThemeRuntime(themes: readonly ThemeDefinition[], controls: readonly OptionalControlDefinition[] = []): Provider[] {
   return [
-    { provide: ThemeRegistry, useFactory: () => new ThemeRegistry(themes) },
+    { provide: ThemeRegistry, useFactory: () => new ThemeRegistry(themes, controls) },
     ThemeService,
     ThemeResolver,
   ];

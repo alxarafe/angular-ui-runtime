@@ -1,3 +1,4 @@
+import { RatingTestbed, RATING_THEMES, RATING_CONTROLS } from './rating';
 import { Component, inject, signal } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import {
@@ -67,8 +68,9 @@ class Testbed {
   activate(id: string): void { this.activation.set(this.theme.activate(id)); }
 }
 const composition = new URLSearchParams(location.search).get('scenario') === 'composition';
-bootstrapApplication(composition ? CompositionTestbed : Testbed, {
-  providers: provideThemeRuntime(composition ? COMPOSITION_THEMES : QA_THEMES),
+const rating = new URLSearchParams(location.search).get('scenario') === 'rating';
+bootstrapApplication(rating ? RatingTestbed : composition ? CompositionTestbed : Testbed, {
+  providers: provideThemeRuntime(rating ? RATING_THEMES : composition ? COMPOSITION_THEMES : QA_THEMES, rating ? RATING_CONTROLS : []),
 }).catch(error => {
   console.error(error);
   throw error;
