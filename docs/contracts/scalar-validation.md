@@ -1,5 +1,9 @@
 # Local STRING, TEXT, BOOLEAN, ENUM and BINARY validation (AUR-VALID-004)
 
+[AUR-VALID-005](temporal-uuid-validation.md) subsequently adds the remaining four
+UUID/temporal definitions. The scalar contracts below are unchanged; patterns and
+document-wide validation remain pending.
+
 The existing framework-independent `validateField` accepts five additional public
 definitions: `StringFieldDefinition`, `TextFieldDefinition`, `BooleanFieldDefinition`,
 `EnumFieldDefinition` and `BinaryFieldDefinition`. The request union contains seven

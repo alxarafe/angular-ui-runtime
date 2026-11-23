@@ -1,5 +1,10 @@
 # UI Runtime 1.0 API and internal contract design
 
+AUR-VALID-005 implements the remaining four [UUID/temporal profiles](../contracts/temporal-uuid-validation.md)
+in `validateField`. The eleven-type definition union is now supported only under
+the published field profiles; patterns and document-wide validation remain pending.
+Temporal bounds compare exact instants/clocks while STATE equality remains lexical.
+
 AUR-VALID-004 adds [local scalar validation](../contracts/scalar-validation.md) for
 STRING, TEXT, BOOLEAN, ENUM and BINARY to the same boundary. Seven definitions are
 now implemented; temporal/UUID definitions and pattern execution remain unpublished.

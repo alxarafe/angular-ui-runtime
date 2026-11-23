@@ -2,6 +2,7 @@
 import type { PathSegment, ValuePath } from '../form/form-definition.js';
 import type { EditingInput, ValueSlot } from '../state/document-state.js';
 import { scalarLength, canonicalBase64 } from './scalar-values.js';
+import { canonicalUuid, parseTemporal, temporalDomain } from './temporal-values.js';
 import {
     integerMatch,
     numericTextLimit,
@@ -69,6 +70,35 @@ export interface BinaryFieldDefinition extends ScalarDefinition {
     readonly type: 'BINARY';
     readonly format: 'base64';
 }
+export interface UuidFieldDefinition extends ScalarDefinition {
+    readonly type: 'UUID';
+    readonly casing: 'lower' | 'either';
+}
+export type TemporalBound = IntegerBound;
+export interface TemporalConstraints {
+    readonly minimum?: TemporalBound;
+    readonly maximum?: TemporalBound;
+}
+export interface DateFieldDefinition extends ScalarDefinition {
+    readonly type: 'DATE';
+    readonly format: 'gregorian-date';
+    readonly constraints?: TemporalConstraints;
+}
+export interface TimeFieldDefinition extends ScalarDefinition {
+    readonly type: 'TIME';
+    readonly format: 'local-time';
+    /** Maximum accepted input fraction digits, not an output-normalization request. */
+    readonly fractionalDigits: number;
+    readonly constraints?: TemporalConstraints;
+}
+export interface DateTimeFieldDefinition extends ScalarDefinition {
+    readonly type: 'DATETIME';
+    readonly format: 'offset-instant';
+    /** Maximum accepted input fraction digits, from zero through seven. */
+    readonly fractionalDigits: number;
+    readonly constraints?: TemporalConstraints;
+}
+type TemporalFieldDefinition = DateFieldDefinition | TimeFieldDefinition | DateTimeFieldDefinition;
 type ScalarFieldDefinition =
     | StringFieldDefinition
     | TextFieldDefinition
@@ -93,7 +123,11 @@ export type LocalValidationCode =
     | 'maximum-length'
     | 'invalid-unicode'
     | 'enum'
-    | 'binary-format';
+    | 'binary-format'
+    | 'uuid-format'
+    | 'date-format'
+    | 'time-format'
+    | 'datetime-format';
 export type DefinitionDiagnosticCode =
     | 'definition'
     | 'capacity'
@@ -124,7 +158,12 @@ export type FieldValidationResult =
           readonly diagnostics: readonly [DefinitionDiagnostic, ...DefinitionDiagnostic[]];
       };
 export interface FieldValidationRequest {
-    readonly definition: IntegerFieldDefinition | DecimalFieldDefinition | ScalarFieldDefinition;
+    readonly definition:
+        | IntegerFieldDefinition
+        | DecimalFieldDefinition
+        | ScalarFieldDefinition
+        | UuidFieldDefinition
+        | TemporalFieldDefinition;
     readonly input: EditingInput;
     readonly path: ValuePath;
 }
@@ -391,10 +430,99 @@ function resolveScalar(definition: ScalarFieldDefinition) {
     }
     return { family: 'scalar' as const, type, minimumLength, maximumLength, choices };
 }
+function resolveUuid(definition: UuidFieldDefinition) {
+    if (
+        !shape(definition, ['type', 'required', 'nullable', 'casing']) ||
+        typeof definition.required !== 'boolean' ||
+        typeof definition.nullable !== 'boolean' ||
+        (definition.casing !== 'lower' && definition.casing !== 'either')
+    )
+        definitionError(
+            'definition',
+            'UUID requires explicit presence, nullability and lower/either casing.',
+        );
+    return { family: 'uuid' as const, type: 'UUID' as const, casing: definition.casing };
+}
+function resolveTemporal(definition: TemporalFieldDefinition) {
+    const type = definition.type;
+    if (
+        !shape(
+            definition,
+            [
+                'type',
+                'required',
+                'nullable',
+                'format',
+                ...(type === 'DATE' ? [] : ['fractionalDigits']),
+            ],
+            ['constraints'],
+        ) ||
+        typeof definition.required !== 'boolean' ||
+        typeof definition.nullable !== 'boolean'
+    )
+        definitionError(
+            'definition',
+            'A temporal definition requires explicit presence, nullability and supported profile members.',
+        );
+    const expected =
+        type === 'DATE' ? 'gregorian-date' : type === 'TIME' ? 'local-time' : 'offset-instant';
+    if (definition.format !== expected)
+        definitionError('definition', 'Unsupported temporal profile.');
+    const fractionalDigits = type === 'DATE' ? 0 : definition.fractionalDigits;
+    if (!Number.isSafeInteger(fractionalDigits) || fractionalDigits < 0)
+        definitionError('definition', 'fractionalDigits must be a nonnegative safe integer.');
+    if (fractionalDigits > 7)
+        definitionError(
+            'constraint-limit',
+            'fractionalDigits supports at most seven input digits.',
+        );
+    const constraints = definition.constraints;
+    if (constraints !== undefined && !shape(constraints, [], ['minimum', 'maximum']))
+        definitionError('constraint', 'Unsupported temporal constraints.');
+    function bound(value: unknown) {
+        if (value === undefined) return undefined;
+        if (
+            !shape(value, ['value'], ['exclusive']) ||
+            typeof value['value'] !== 'string' ||
+            (value['exclusive'] !== undefined && typeof value['exclusive'] !== 'boolean')
+        )
+            definitionError(
+                'constraint',
+                'A temporal bound requires exact text and an optional exclusive boolean.',
+            );
+        const parsed = parseTemporal(value['value'], type, fractionalDigits);
+        if (parsed === undefined)
+            definitionError('constraint', 'Temporal bound is invalid under the declared profile.');
+        return { value: parsed, exclusive: value['exclusive'] === true };
+    }
+    const minimum = bound(constraints?.['minimum']),
+        maximum = bound(constraints?.['maximum']);
+    const domain = temporalDomain(type, fractionalDigits);
+    const low = minimum ? minimum.value + (minimum.exclusive ? domain.step : 0n) : domain.minimum;
+    const high = maximum ? maximum.value - (maximum.exclusive ? domain.step : 0n) : domain.maximum;
+    if (low > high)
+        definitionError(
+            'contradictory-bounds',
+            'The temporal interval has no value at the declared precision.',
+        );
+    const code =
+        type === 'DATE'
+            ? ('date-format' as const)
+            : type === 'TIME'
+              ? ('time-format' as const)
+              : ('datetime-format' as const);
+    return { family: 'temporal' as const, type, fractionalDigits, minimum, maximum, code };
+}
 function resolve(definition: FieldValidationRequest['definition']) {
     switch (definition?.type) {
         case 'DECIMAL':
             return resolveDecimal(definition);
+        case 'UUID':
+            return resolveUuid(definition);
+        case 'DATE':
+        case 'TIME':
+        case 'DATETIME':
+            return resolveTemporal(definition);
         case 'STRING':
         case 'TEXT':
         case 'BOOLEAN':
@@ -465,6 +593,34 @@ export function validateField(request: FieldValidationRequest): FieldValidationR
     if (typeof text !== 'string') {
         issue('type', `${resolved.type} requires exact text.`);
         return invalid();
+    }
+    if (resolved.family === 'uuid') {
+        if (!canonicalUuid(text, resolved.casing))
+            issue('uuid-format', 'Use a canonical hyphenated UUID with the declared casing.');
+        return issues.length ? invalid() : valid({ kind: 'value', value: text });
+    }
+    if (resolved.family === 'temporal') {
+        const value = parseTemporal(text, resolved.type, resolved.fractionalDigits);
+        if (value === undefined) {
+            issue(
+                resolved.code,
+                'Use a valid calendar/time value within the declared temporal profile.',
+            );
+            return invalid();
+        }
+        if (
+            resolved.minimum &&
+            (value < resolved.minimum.value ||
+                (value === resolved.minimum.value && resolved.minimum.exclusive))
+        )
+            issue('minimum', 'Temporal value is below the minimum or equals an exclusive minimum.');
+        if (
+            resolved.maximum &&
+            (value > resolved.maximum.value ||
+                (value === resolved.maximum.value && resolved.maximum.exclusive))
+        )
+            issue('maximum', 'Temporal value is above the maximum or equals an exclusive maximum.');
+        return issues.length ? invalid() : valid({ kind: 'value', value: text });
     }
     if (resolved.family === 'scalar') {
         if (resolved.type === 'BINARY') {

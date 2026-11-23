@@ -159,6 +159,10 @@ and document-wide aggregation are still pending.
 without altering this model or its exact lexical equality. It does not normalize
 text, coerce booleans or install validation state on the document.
 
+[AUR-VALID-005](temporal-uuid-validation.md) compares temporal bounds as exact days,
+clocks or instants without changing STATE equality. Different lexical offsets or
+fraction spellings can remain dirty even when they satisfy the same instant bounds.
+
 `tests/state.test.mjs` covers immutable snapshots, exact equality, nested edits,
 multiple collections, multiset permutations, key stability, permissions, rejection,
 revision safety and reset. `tests/browser/specs/state.spec.mjs` covers the installed
