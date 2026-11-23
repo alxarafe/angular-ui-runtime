@@ -9,6 +9,11 @@ import {
     type EnumFieldDefinition,
     type BinaryFieldDefinition,
     type TextConstraints,
+    type UuidFieldDefinition,
+    type DateFieldDefinition,
+    type TimeFieldDefinition,
+    type DateTimeFieldDefinition,
+    type TemporalConstraints,
     type FieldValidationResult,
     type ValuePath,
 } from '../../projects/ui-runtime/src/public-api.js';
@@ -40,8 +45,44 @@ const decimal: DecimalFieldDefinition = {
     constraints: { minimum: { value: '0.01' }, multipleOf: '0.05', precision: 20, scale: 4 },
 };
 validateField({ definition: decimal, input, path });
-// @ts-expect-error unsupported semantic types are not silently unchecked
+// @ts-expect-error UUID requires an explicit casing policy
 validateField({ definition: { type: 'UUID', required: true, nullable: false }, input, path });
+const bounds: TemporalConstraints = { minimum: { value: '2026-11-23', exclusive: true } };
+const temporal: (
+    UuidFieldDefinition | DateFieldDefinition | TimeFieldDefinition | DateTimeFieldDefinition
+)[] = [
+    { type: 'UUID', required: true, nullable: false, casing: 'either' },
+    { type: 'DATE', required: true, nullable: true, format: 'gregorian-date', constraints: bounds },
+    { type: 'TIME', required: false, nullable: false, format: 'local-time', fractionalDigits: 7 },
+    {
+        type: 'DATETIME',
+        required: false,
+        nullable: true,
+        format: 'offset-instant',
+        fractionalDigits: 7,
+    },
+];
+for (const definition of temporal) validateField({ definition, input, path });
+validateField({
+    definition: {
+        type: 'DATETIME',
+        required: true,
+        nullable: false,
+        // @ts-expect-error unsupported offset profiles remain excluded
+        format: 'local-datetime',
+        fractionalDigits: 7,
+    },
+    input,
+    path,
+});
+validateField({
+    // @ts-expect-error TIME requires maximum input precision explicitly
+    definition: { type: 'TIME', required: true, nullable: false, format: 'local-time' },
+    input,
+    path,
+});
+// @ts-expect-error legacy integer names are not supported semantic types
+validateField({ definition: { type: 'INT64', required: true, nullable: false }, input, path });
 const lengths: TextConstraints = { minimumLength: 0, maximumLength: 50000 };
 const scalars: (
     | StringFieldDefinition

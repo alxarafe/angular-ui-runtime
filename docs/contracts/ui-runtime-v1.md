@@ -112,6 +112,11 @@ including Unicode scalar lengths and canonical standard Base64. Pattern-bearing
 definitions diagnose unsupported checks; VALID-009 pattern execution, temporal/UUID
 validation, backend parity and document-wide workflows remain pending.
 
+AUR-VALID-005 implements [local UUID and lossless temporal validation](temporal-uuid-validation.md).
+The explicit profiles retain lexical edits and compare temporal bounds exactly;
+TIME/DATETIME fractionalDigits is maximum input precision, not adapter output width.
+Backend/consumer parity, complete editors, patterns and document workflows remain pending.
+
 INTEGER is one semantic type. The active ARP-INTEGER-001 contract candidate supplies
 effective capacity through optional `bits` (8, 16, 32 or 64) and `signed`, alongside
 exact `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum` and `multipleOf`

@@ -41,6 +41,26 @@ const scalarDefinitions = {
     flag: { type: 'BOOLEAN', required: true, nullable: false },
     choice: { type: 'ENUM', required: true, nullable: false, choices: ['', 'OPEN', 'CLOSED'] },
     binary: { type: 'BINARY', required: true, nullable: false, format: 'base64' },
+    uuid: { type: 'UUID', required: true, nullable: false, casing: 'either' },
+    date: { type: 'DATE', required: true, nullable: false, format: 'gregorian-date' },
+    clock: {
+        type: 'TIME',
+        required: true,
+        nullable: false,
+        format: 'local-time',
+        fractionalDigits: 7,
+    },
+    instant: {
+        type: 'DATETIME',
+        required: true,
+        nullable: false,
+        format: 'offset-instant',
+        fractionalDigits: 7,
+        constraints: {
+            minimum: { value: '2026-11-23T17:00:00.1234567Z' },
+            maximum: { value: '2026-11-23T17:00:00.1234567Z' },
+        },
+    },
 } satisfies Record<string, FieldValidationRequest['definition']>;
 type ScalarId = keyof typeof scalarDefinitions;
 @Component({
@@ -55,7 +75,9 @@ type ScalarId = keyof typeof scalarDefinitions;
         }
         <p>
             BINARY uses the public TEXT renderer for editing. Raw BOOLEAN uses an explicit STRING
-            adapter; typed boolean actions do not parse text.
+            adapter; typed boolean actions do not parse text. DATE, TIME and DATETIME use public
+            STRING adapters to retain incomplete input, seven fractional digits and explicit
+            offsets.
         </p>
         <button (click)="rawBooleanDraft()">Edit raw BOOLEAN</button>
         <button (click)="typedBoolean()">Use boolean true</button>
@@ -100,6 +122,10 @@ export class ValidationTestbed {
                         flag: false,
                         choice: '',
                         binary: 'Zg==',
+                        uuid: '123e4567-e89b-12d3-a456-426614174000',
+                        date: '2024-02-29',
+                        clock: '12:30:00.1234567',
+                        instant: '2026-11-23T18:00:00.1234567+01:00',
                     }).map(([id, value]) => [
                         id,
                         {
@@ -138,6 +164,14 @@ export class ValidationTestbed {
             },
             { id: 'choice', path: [{ kind: 'property', name: 'choice' }], artifact: 'field.ENUM' },
             { id: 'binary', path: [{ kind: 'property', name: 'binary' }], artifact: 'field.TEXT' },
+            { id: 'uuid', path: [{ kind: 'property', name: 'uuid' }], artifact: 'field.UUID' },
+            { id: 'date', path: [{ kind: 'property', name: 'date' }], artifact: 'field.STRING' },
+            { id: 'clock', path: [{ kind: 'property', name: 'clock' }], artifact: 'field.STRING' },
+            {
+                id: 'instant',
+                path: [{ kind: 'property', name: 'instant' }],
+                artifact: 'field.STRING',
+            },
         ],
     }));
     fieldInput(id: ScalarId) {
@@ -226,6 +260,10 @@ export class ValidationTestbed {
                         flag: 'Boolean flag',
                         choice: 'Exact choice',
                         binary: 'Base64 draft (text adapter)',
+                        uuid: 'UUID value',
+                        date: 'Gregorian date (text adapter)',
+                        clock: 'Local time (text adapter)',
+                        instant: 'Offset instant (text adapter)',
                     }[id];
                     return [
                         id,
