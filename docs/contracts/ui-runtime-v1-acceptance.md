@@ -48,8 +48,8 @@ not be interpreted as a successful 1.0 acceptance run.
 | GRID-001 | Separate read-only lists from parent-owned editable detail collections. | Read-only cell edit attempt; empty collection; aggregate save without row CRUD. | integration, browser | tests/grid.test.mjs; tests/browser/specs/grid.spec.mjs | partial | E-GRID-001: separate hosts, empty states and suppression; aggregate saving remains STATE/application work. |
 | GRID-002 | Add/edit/remove and declared reorder use stable temporary keys and parent state. | New unsaved rows; duplicate values; index shifts; delete then reorder; cancel. | unit, browser | tests/grid.test.mjs; tests/browser/specs/grid.spec.mjs | partial | E-GRID-001: immutable keyed intents and application-owned updates; cancel/discard remains pending. |
 | GRID-003 | Field, row and aggregate errors block successful parent save and remain accessible. | Invalid nested row; removed row errors; hidden column; narrow scrolling. | browser, visual | tests/browser/specs/grid.spec.mjs; artifacts/testbed/grids/ | partial | E-GRID-001: responsive scrolling and feedback hooks only; validation, aggregate errors and successful-save blocking remain pending. |
-| STATE-001 | Original snapshot and effective edits yield independent dirty/valid state, clearing on reversion. | Revert exact value; lexical numeric equivalent; null vs absence; invalid raw edit. | unit | tests/state/document/ | missing | No behavioral evidence yet. Design/type evidence: E-DESIGN-001 only. |
-| STATE-002 | Nested add/remove/reorder participate in dirty state and restore to clean on full reversion. | Add then remove; reorder then restore; nested invalid field. | unit, browser | tests/state/collections/; tests/browser/state/ | missing | No evidence yet. |
+| STATE-001 | Original snapshot and effective edits yield independent dirty/valid state, clearing on reversion. | Revert exact value; lexical numeric equivalent; null vs absence; invalid raw edit. | unit | tests/state.test.mjs | partial | E-STATE-CORE-001: frozen accepted/current trees, derived dirty, exact numeric equality, absence/raw slots and reversion. Semantic validity and validation aggregation remain pending. |
+| STATE-002 | Nested add/remove/reorder participate in dirty state and restore to clean on full reversion. | Add then remove; reorder then restore; nested invalid field. | unit, browser | tests/state.test.mjs; tests/browser/specs/state.spec.mjs | partial | E-STATE-CORE-001: nested keyed operations, ordered sequence/unordered multiset equality, reversion and two-collection parent integration across themes. Nested validation and full lifecycle remain pending. |
 | STATE-003 | Saving guards duplicates and reconciles only acknowledged snapshot; errors retain edits. | Later edits during save; id/version-only response; regenerated row IDs; retry/conflict. | unit, integration, browser | tests/state/save/; tests/browser/state/ | missing | No behavioral evidence yet. Design/type evidence: E-DESIGN-001 only. |
 | STATE-004 | Confirm discard with cancel preserving edits and confirm restoring accepted snapshot. | Clean no prompt; dirty invalid form; nested edits; focus on cancellation. | browser | tests/browser/state/discard.spec.ts | missing | No evidence yet. |
 | STATE-005 | Protect Angular navigation and application-triggered destructive state replacement. | Back/route change; logout; refresh; record switch; cancelled programmatic action. | integration, browser | tests/browser/state/navigation.spec.ts | missing | No evidence yet. |
@@ -267,3 +267,15 @@ and feedback hooks only; validators, aggregate errors and parent-save blocking a
 pending. STATE-001..006 remain missing. Screenshot inspection is task-level QA,
 not approved/versioned visual baselines or a full accessibility audit. No external
 consumer repository or backend integration is claimed.
+
+## E-STATE-CORE-001 — immutable editing core
+
+[AUR-STATE-001-CORE](document-state.md) implements only neutral immutable document
+editing and derived dirty state. Pure unit coverage includes defensive snapshots,
+exact bounded numeric comparison, absence/raw input, nested/multiple collections,
+duplicate multiplicity, permissions, stale targets, revision safety and explicit
+in-memory reset. Installed APF browser coverage uses the public FORM/GRID components
+with one header and two collections at desktop/mobile sizes across theme changes.
+STATE-001 and STATE-002 remain partial: no semantic validation or valid-state
+aggregation exists. STATE-003 through STATE-006 remain pending. In-memory reset is
+not confirmation, navigation protection, saving or reconciliation.

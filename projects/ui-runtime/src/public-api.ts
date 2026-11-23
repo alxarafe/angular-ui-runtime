@@ -63,3 +63,23 @@ export type {
     FormCollection,
     FormCollectionContexts,
 } from './grid/grid-definition.js';
+
+export { exactNumericEqual } from './state/exact-numeric.js';
+export type { NumericSemantics } from './state/exact-numeric.js';
+export {
+    createDocumentState,
+    applyDocumentChange,
+    resetDocumentState,
+} from './state/document-state.js';
+export type {
+    ValueSlot,
+    EditingInput,
+    FieldEquality,
+    DocumentField,
+    DocumentObject,
+    DocumentRow,
+    DocumentCollection,
+    DocumentNode,
+    DocumentState,
+    DocumentChange,
+} from './state/document-state.js';

@@ -1,5 +1,12 @@
 # UI Runtime 1.0 API and internal contract design
 
+AUR-STATE-001-CORE publishes the smaller [immutable editing core](../contracts/document-state.md).
+It refines the proposed generic tree into one absent/value/raw document model with
+explicit comparison semantics and effective capabilities. Original/current snapshots,
+neutral operations and derived dirty state are implemented; proposed FieldEdit,
+validation/save state and session/lifecycle interfaces below remain unpublished.
+The core has no `valid` default and no save, reconciliation or confirmation API.
+
 AUR-GRID-001 now publishes the refined host-owned grid interfaces in
 [grid composition](../contracts/grid-composition.md). `ListGrid` and `DetailGrid`
 are independent hosts; optional theme grid components are projecting presentation

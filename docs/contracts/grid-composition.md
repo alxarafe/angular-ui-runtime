@@ -137,8 +137,8 @@ GRID-001 and GRID-002 are partially met at the full 1.0 acceptance level: presen
 and keyed editing intents are implemented; aggregate saving and cancel/discard
 require future STATE/application integration. GRID-003 remains partial: responsive
 scrolling and accessible feedback hooks exist, but field/row/aggregate validation,
-hidden-column error reveal and parent-save blocking remain pending. All STATE
-requirements remain pending. A future AUR-STATE-001 session may consume `fieldChange`
+hidden-column error reveal and parent-save blocking remain pending. The [immutable editing core](document-state.md) implements tested portions of
+STATE-001/STATE-002; validation and STATE-003–STATE-006 remain pending. A future AUR-STATE-001 session may consume `fieldChange`
 and `collectionChange` together, apply effective updates and coordinate one parent
 save/discard boundary. No independent row save or backend-generated identity policy
 is defined here.
