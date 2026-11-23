@@ -45,9 +45,9 @@ not be interpreted as a successful 1.0 acceptance run.
 | FORM-001 | Support simple default and ordered tabs/sections/groups/field placement/context actions. | Absent layout; duplicate placement; unknown refs; action-only containers; empty groups. | unit, browser | tests/contracts/layout/; tests/browser/forms/ | partial | E-FORM-001 implements public neutral composition, ordered containers, actions and diagnostics; full validation-aware form acceptance remains pending. |
 | FORM-002 | Provide fallback for eligible unplaced fields/actions without resurrecting explicit exclusions. | Omitted required field; excluded field; unauthorized action; deterministic ordering. | unit, integration | tests/contracts/layout/ | partial | E-FORM-001 verifies deterministic eligible field/action fallback, exclusions and effective action policy. Full consumer acceptance remains pending. |
 | FORM-003 | Read-only/edit modes and layout changes preserve data semantics and edits. | Immutable update; tab switch; collapse; theme change; focused error reveal. | browser | tests/browser/forms/ | partial | E-FORM-001 verifies view lifetime, visual state, read-only suppression and logical focus/reveal; validation, immutable-update and document lifecycle remain pending. |
-| GRID-001 | Separate read-only lists from parent-owned editable detail collections. | Read-only cell edit attempt; empty collection; aggregate save without row CRUD. | integration, browser | tests/contracts/collections/; tests/browser/grids/ | missing | No evidence yet. |
-| GRID-002 | Add/edit/remove and declared reorder use stable temporary keys and parent state. | New unsaved rows; duplicate values; index shifts; delete then reorder; cancel. | unit, browser | tests/contracts/collections/; tests/browser/grids/ | missing | No evidence yet. |
-| GRID-003 | Field, row and aggregate errors block successful parent save and remain accessible. | Invalid nested row; removed row errors; hidden column; narrow scrolling. | browser, visual | tests/browser/grids/; tests/visual/grids/ | missing | No evidence yet. |
+| GRID-001 | Separate read-only lists from parent-owned editable detail collections. | Read-only cell edit attempt; empty collection; aggregate save without row CRUD. | integration, browser | tests/grid.test.mjs; tests/browser/specs/grid.spec.mjs | partial | E-GRID-001: separate hosts, empty states and suppression; aggregate saving remains STATE/application work. |
+| GRID-002 | Add/edit/remove and declared reorder use stable temporary keys and parent state. | New unsaved rows; duplicate values; index shifts; delete then reorder; cancel. | unit, browser | tests/grid.test.mjs; tests/browser/specs/grid.spec.mjs | partial | E-GRID-001: immutable keyed intents and application-owned updates; cancel/discard remains pending. |
+| GRID-003 | Field, row and aggregate errors block successful parent save and remain accessible. | Invalid nested row; removed row errors; hidden column; narrow scrolling. | browser, visual | tests/browser/specs/grid.spec.mjs; artifacts/testbed/grids/ | partial | E-GRID-001: responsive scrolling and feedback hooks only; validation, aggregate errors and successful-save blocking remain pending. |
 | STATE-001 | Original snapshot and effective edits yield independent dirty/valid state, clearing on reversion. | Revert exact value; lexical numeric equivalent; null vs absence; invalid raw edit. | unit | tests/state/document/ | missing | No behavioral evidence yet. Design/type evidence: E-DESIGN-001 only. |
 | STATE-002 | Nested add/remove/reorder participate in dirty state and restore to clean on full reversion. | Add then remove; reorder then restore; nested invalid field. | unit, browser | tests/state/collections/; tests/browser/state/ | missing | No evidence yet. |
 | STATE-003 | Saving guards duplicates and reconciles only acknowledged snapshot; errors retain edits. | Later edits during save; id/version-only response; regenerated row IDs; retry/conflict. | unit, integration, browser | tests/state/save/; tests/browser/state/ | missing | No behavioral evidence yet. Design/type evidence: E-DESIGN-001 only. |
@@ -243,3 +243,27 @@ they make no numeric validation claim. `tests/form.test.mjs` proves the existing
 artifact-based form definition accepts `field.INTEGER` and rejects every obsolete
 identifier. VALID-001..002 remain missing until a separately authorized validator
 implements resolved-capacity and constraint checks with exact arithmetic.
+
+## E-GRID-001 — reusable lists and parent-owned detail intents
+
+[Grid composition](grid-composition.md) specifies the published API and exact
+boundary. Separate standalone list/detail hosts own semantic tables and accessible
+actions. Details reuse form field renderers and the existing theme resolver;
+optional `listGrid`/`detailGrid` frames preserve fourteen mandatory artifacts.
+Forms place zero/one/multiple collections by typed path, with deterministic fallback
+and protected diagnostics. A neutral header/two-collection scenario lives only in
+the existing private installed-package testbed.
+
+Unit/contract evidence: `tests/grid.test.mjs`, `tests/fixtures/grid-components.ts`.
+Consumer evidence: `tests/consumer/src/main.ts` and the disposable testbed build.
+Browser evidence: `tests/browser/specs/grid.spec.mjs`, desktop/mobile Chromium through
+`./bin/check`, including five theme packages, frame/renderer focus changes, exact
+drafts, stable keys after deletion, independent collections, fallback, synthetic
+suppression and horizontal scrolling. Captures: `artifacts/testbed/grids/`.
+
+GRID-001/002 remain partial at the full acceptance level because aggregate save
+and cancel/discard require STATE/application integration. GRID-003 has presentation
+and feedback hooks only; validators, aggregate errors and parent-save blocking are
+pending. STATE-001..006 remain missing. Screenshot inspection is task-level QA,
+not approved/versioned visual baselines or a full accessibility audit. No external
+consumer repository or backend integration is claimed.

@@ -19,6 +19,8 @@ export interface FieldRendererContext {
     readonly choices?: readonly string[];
     /** Optional instance domain/presentation used by an opt-in control host. */
     readonly control?: ControlRequest;
+    /** Application-owned accessible feedback IDs; no validation semantics. */
+    readonly describedBy?: readonly string[];
 }
 export interface FieldRenderer {
     readonly context: InputSignal<FieldRendererContext>;

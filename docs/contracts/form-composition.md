@@ -1,5 +1,13 @@
 # Reusable form composition (AUR-FORM-001)
 
+AUR-GRID-001 additively implements the collection extension described in
+[grid composition](grid-composition.md): `FormDefinition.collections`,
+`LayoutGroup.collections`, `collectionContexts` and `collectionChange`, plus
+composed/fallback collection results. Historical future-grid statements below
+describe the FORM-001 baseline and are superseded by that contract. Existing
+field/action placement and outputs remain compatible. The same projecting frame
+port now also admits optional `listGrid` and `detailGrid` presentations.
+
 Implemented first increment, not full UI Runtime 1.0 FORM/STATE/GRID acceptance.
 The public standalone `FormComposition` component (`aur-form`) and pure
 `composeForm()` function live in the core APF package. The testbed only supplies

@@ -289,8 +289,8 @@ export interface DetailGridComponent {
 export interface ThemeComponents {
   readonly menus: Type<MenusComponent>;
   readonly form: Type<FormPresentation>; // AUR-FORM-001: host-owned composition, replaceable frame only.
-  readonly listGrid: Type<ListGridComponent>;
-  readonly detailGrid: Type<DetailGridComponent>;
+  readonly listGrid: Type<FormPresentation>; // AUR-GRID-001: host-owned table and cells.
+  readonly detailGrid: Type<FormPresentation>;
 }
 export interface ProposedThemeDefinition extends ThemeDefinition {
   readonly components?: Partial<ThemeComponents>;

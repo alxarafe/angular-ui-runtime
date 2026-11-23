@@ -225,4 +225,22 @@ reuse existing optional rating controls; no widget is published. Diagnostic evid
 is available only through a private QA memory hook reading public composition results;
 protected IDs/paths and diagnostic codes are absent from DOM/ARIA/hidden markup.
 Full-page optional captures use `artifacts/testbed/forms/*-optional.png`. Future
-multiple detail collections remain documentation-only GRID/STATE work.
+multiple detail collections are now exercised by the grid scenario below; STATE
+remains future work.
+
+## Grid composition technical scenario
+
+`/default-theme/?scenario=grid` mounts public `ListGrid`, `DetailGrid` through
+`FormComposition`, a neutral header and two independently identified collections.
+The fixture alone applies immutable input updates; the runtime emits intents.
+Alt+T cycles the five packaged themes and an optional grid frame while retaining
+focus. Controls exercise empty/single/multiple lists, read-only/disabled modes and
+explicit versus fallback collection placement. Columns include exact INTEGER and
+DECIMAL, optional rating controls and disabled cells. No application backend or
+document-state engine is included.
+
+`tests/browser/specs/grid.spec.mjs` runs at desktop/mobile sizes and captures
+`artifacts/testbed/grids/{theme}-{viewport}.png`. See the
+[grid contract](../contracts/grid-composition.md) for the public API, exact-value
+guarantees, form integration, error hooks and pending acceptance. Captures are
+review candidates; no approved release baseline is claimed.
