@@ -70,6 +70,8 @@ export { validateField } from './validation/validate-field.js';
 export type {
     IntegerBound,
     IntegerFieldDefinition,
+    DecimalBound,
+    DecimalFieldDefinition,
     LocalValidationCode,
     DefinitionDiagnosticCode,
     ValidationIssue,

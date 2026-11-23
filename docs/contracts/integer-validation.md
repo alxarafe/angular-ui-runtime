@@ -2,7 +2,9 @@
 
 `validateField(request: FieldValidationRequest): FieldValidationResult` is the
 framework-independent local field validation boundary exported from
-`@alxarafe/ui-runtime`. This increment supports only `IntegerFieldDefinition`.
+`@alxarafe/ui-runtime`. AUR-VALID-001 introduced `IntegerFieldDefinition`;
+[AUR-VALID-002/003](decimal-validation.md) extends the same request boundary with
+`DecimalFieldDefinition`. This document describes INTEGER behavior, which is unchanged.
 No other semantic type, document aggregation, save readiness, transport or backend
 acceptance is implemented. Existing FORM, GRID and STATE contracts are unchanged.
 
@@ -134,8 +136,9 @@ a structural frame. Feedback text belongs to the QA application. This is focused
 field evidence, not complete form error presentation, aggregate validation or save
 blocking. No backend or external consumer conformance is claimed.
 
-DECIMAL, BOOLEAN, STRING/TEXT, ENUM, BINARY, DATE, TIME, DATETIME and UUID validation
-remain unimplemented. Pattern checks, document aggregation, deferred checks and
+DECIMAL is now covered by the [DECIMAL contract](decimal-validation.md). BOOLEAN,
+STRING/TEXT, ENUM, BINARY, DATE, TIME, DATETIME and UUID validation remain unimplemented.
+Pattern checks, document aggregation, deferred checks and
 save readiness remain subsequent increments. VALID-002/004 remain partial at the
 full acceptance level; broad definition/adapter and invalid-save requirements are
-not closed by this increment.
+not closed by AUR-VALID-001. See the DECIMAL contract for subsequent local numeric evidence.

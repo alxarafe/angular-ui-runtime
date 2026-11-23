@@ -1,7 +1,15 @@
 /** SPDX-License-Identifier: Apache-2.0 */
 import type { PathSegment, ValuePath } from '../form/form-definition.js';
 import type { EditingInput, ValueSlot } from '../state/document-state.js';
-import { integerMatch, numericTextLimit } from '../state/numeric-syntax.js';
+import {
+    integerMatch,
+    numericTextLimit,
+    parseNumeric,
+    compareNumeric,
+    numericMultipleOf,
+    numericDimensions,
+    type ExactNumeric,
+} from '../state/numeric-syntax.js';
 
 export interface IntegerBound {
     readonly value: string;
@@ -18,12 +26,30 @@ export interface IntegerFieldDefinition {
         readonly multipleOf?: string;
     };
 }
+export type DecimalBound = IntegerBound;
+export interface DecimalFieldDefinition {
+    readonly type: 'DECIMAL';
+    readonly required: boolean;
+    readonly nullable: boolean;
+    readonly allowExponent: boolean;
+    readonly constraints?: {
+        readonly minimum?: DecimalBound;
+        readonly maximum?: DecimalBound;
+        readonly multipleOf?: string;
+        readonly precision?: number;
+        readonly scale?: number;
+    };
+}
 export type LocalValidationCode =
     | 'required'
     | 'null-not-allowed'
     | 'type'
     | 'integer-syntax'
     | 'integer-range'
+    | 'decimal-syntax'
+    | 'precision'
+    | 'scale'
+    | 'work-limit'
     | 'minimum'
     | 'maximum'
     | 'multiple-of'
@@ -58,7 +84,7 @@ export type FieldValidationResult =
           readonly diagnostics: readonly [DefinitionDiagnostic, ...DefinitionDiagnostic[]];
       };
 export interface FieldValidationRequest {
-    readonly definition: IntegerFieldDefinition;
+    readonly definition: IntegerFieldDefinition | DecimalFieldDefinition;
     readonly input: EditingInput;
     readonly path: ValuePath;
 }
@@ -111,7 +137,7 @@ function constraintInteger(value: unknown): bigint {
         definitionError('constraint', 'Integer constraints require signed base-ten integer text.');
     return BigInt(value);
 }
-function resolve(definition: IntegerFieldDefinition) {
+function resolveInteger(definition: IntegerFieldDefinition) {
     if (
         !shape(definition, ['type', 'required', 'nullable'], ['capacity', 'constraints']) ||
         definition.type !== 'INTEGER' ||
@@ -182,10 +208,88 @@ function resolve(definition: IntegerFieldDefinition) {
                 );
         }
     }
-    return { intrinsicMin, intrinsicMax, min, max, divisor };
+    return { type: 'INTEGER' as const, intrinsicMin, intrinsicMax, min, max, divisor };
 }
 
-/** Pure local INTEGER validation. Never accepts a backend result or modifies editing state. */
+function resolveDecimal(definition: DecimalFieldDefinition) {
+    if (
+        !shape(definition, ['type', 'required', 'nullable', 'allowExponent'], ['constraints']) ||
+        definition.type !== 'DECIMAL' ||
+        typeof definition.required !== 'boolean' ||
+        typeof definition.nullable !== 'boolean' ||
+        typeof definition.allowExponent !== 'boolean'
+    )
+        definitionError(
+            'definition',
+            'A DECIMAL definition requires explicit presence, nullability and exponent policy.',
+        );
+    const constraints = definition.constraints;
+    if (
+        constraints !== undefined &&
+        !shape(constraints, [], ['minimum', 'maximum', 'multipleOf', 'precision', 'scale'])
+    )
+        definitionError('constraint', 'Unsupported DECIMAL constraints.');
+    function decimal(value: unknown): ExactNumeric {
+        if (typeof value !== 'string')
+            definitionError('constraint', 'DECIMAL constraints require exact text.');
+        const parsed = parseNumeric(value, definition);
+        if (!parsed.ok)
+            definitionError(
+                parsed.reason === 'limit' ? 'constraint-limit' : 'constraint',
+                'DECIMAL constraint syntax or numeric work limit is unsupported.',
+            );
+        return parsed.value;
+    }
+    function bound(value: DecimalBound | undefined) {
+        if (value === undefined) return undefined;
+        if (
+            !shape(value, ['value'], ['exclusive']) ||
+            (value.exclusive !== undefined && typeof value.exclusive !== 'boolean')
+        )
+            definitionError(
+                'constraint',
+                'A bound requires exact value text and an optional exclusive boolean.',
+            );
+        return { value: decimal(value.value), exclusive: value.exclusive === true };
+    }
+    function counter(value: number | undefined, name: string): bigint | undefined {
+        if (value === undefined) return undefined;
+        if (!Number.isSafeInteger(value) || value < 0)
+            definitionError('constraint', `${name} must be a nonnegative safe integer counter.`);
+        if (value > numericTextLimit)
+            definitionError(
+                'constraint-limit',
+                `${name} exceeds the supported counter limit of 4096.`,
+            );
+        return BigInt(value);
+    }
+    const minimum = bound(constraints?.minimum),
+        maximum = bound(constraints?.maximum);
+    if (minimum && maximum) {
+        const order = compareNumeric(minimum.value, maximum.value);
+        if (order > 0 || (order === 0 && (minimum.exclusive || maximum.exclusive)))
+            definitionError('contradictory-bounds', 'The effective DECIMAL interval is empty.');
+    }
+    const divisor =
+        constraints?.multipleOf === undefined ? undefined : decimal(constraints.multipleOf);
+    if (divisor && divisor.sign !== 1)
+        definitionError('multiple-of-definition', 'multipleOf must be a positive decimal.');
+    return {
+        type: 'DECIMAL' as const,
+        minimum,
+        maximum,
+        divisor,
+        precision: counter(constraints?.precision, 'precision'),
+        scale: counter(constraints?.scale, 'scale'),
+    };
+}
+function resolve(definition: FieldValidationRequest['definition']) {
+    return definition?.type === 'DECIMAL'
+        ? resolveDecimal(definition)
+        : resolveInteger(definition as IntegerFieldDefinition);
+}
+
+/** Pure local INTEGER/DECIMAL validation. Never modifies editing state. */
 export function validateField(request: FieldValidationRequest): FieldValidationResult {
     const path = snapshotPath(request.path);
     let resolved: ReturnType<typeof resolve>;
@@ -232,12 +336,57 @@ export function validateField(request: FieldValidationRequest): FieldValidationR
               ? input.value
               : undefined;
     if (typeof text !== 'string') {
-        issue('type', 'INTEGER requires exact text.');
+        issue('type', `${resolved.type} requires exact text.`);
         return invalid();
     }
     if (text.length > numericTextLimit) {
-        issue('input-limit', 'Integer input exceeds 4096 characters.');
+        issue(
+            'input-limit',
+            resolved.type === 'INTEGER'
+                ? 'Integer input exceeds 4096 characters.'
+                : 'Decimal input exceeds 4096 characters.',
+        );
         return invalid();
+    }
+    if (resolved.type === 'DECIMAL') {
+        const parsed = parseNumeric(text, request.definition);
+        if (!parsed.ok) {
+            issue(
+                parsed.reason === 'limit' ? 'input-limit' : 'decimal-syntax',
+                parsed.reason === 'limit'
+                    ? 'Decimal exponent exceeds the supported work limit.'
+                    : 'Use decimal text with integer digits and complete fractional/exponent parts under the declared exponent policy.',
+            );
+            return invalid();
+        }
+        const value = parsed.value;
+        const { minimum, maximum, divisor, precision, scale } = resolved;
+        if (minimum) {
+            const order = compareNumeric(value, minimum.value);
+            if (order < 0 || (order === 0 && minimum.exclusive))
+                issue('minimum', 'Decimal is below the minimum or equals an exclusive minimum.');
+        }
+        if (maximum) {
+            const order = compareNumeric(value, maximum.value);
+            if (order > 0 || (order === 0 && maximum.exclusive))
+                issue('maximum', 'Decimal is above the maximum or equals an exclusive maximum.');
+        }
+        const dimensions = numericDimensions(value);
+        if (precision !== undefined && dimensions.precision > precision)
+            issue('precision', 'Decimal exceeds the declared normalized precision.');
+        if (scale !== undefined && dimensions.scale > scale)
+            issue('scale', 'Decimal exceeds the declared normalized scale.');
+        if (divisor) {
+            const multiple = numericMultipleOf(value, divisor);
+            if (multiple === undefined)
+                issue(
+                    'work-limit',
+                    'Decimal divisibility exceeds the supported arithmetic work limit.',
+                );
+            else if (!multiple)
+                issue('multiple-of', 'Decimal must be an exact multiple of the declared divisor.');
+        }
+        return issues.length ? invalid() : valid({ kind: 'value', value: text });
     }
     if (!integerMatch(text)) {
         issue(

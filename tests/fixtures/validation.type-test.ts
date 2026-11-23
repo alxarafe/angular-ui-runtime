@@ -2,6 +2,7 @@ import {
     validateField,
     type EditingInput,
     type IntegerFieldDefinition,
+    type DecimalFieldDefinition,
     type FieldValidationResult,
     type ValuePath,
 } from '../../projects/ui-runtime/src/public-api.js';
@@ -23,8 +24,18 @@ if (result.state === 'valid') {
     // @ts-expect-error invalid values have no parsed fallback
     result.parsed;
 }
-// @ts-expect-error DECIMAL is not implemented by this boundary
+// @ts-expect-error DECIMAL requires an explicit exponent policy
 validateField({ definition: { type: 'DECIMAL', required: true, nullable: false }, input, path });
+const decimal: DecimalFieldDefinition = {
+    type: 'DECIMAL',
+    required: false,
+    nullable: true,
+    allowExponent: true,
+    constraints: { minimum: { value: '0.01' }, multipleOf: '0.05', precision: 20, scale: 4 },
+};
+validateField({ definition: decimal, input, path });
+// @ts-expect-error unsupported semantic types are not silently unchecked
+validateField({ definition: { type: 'BOOLEAN', required: true, nullable: false }, input, path });
 const partial: IntegerFieldDefinition = {
     type: 'INTEGER',
     required: true,

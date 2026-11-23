@@ -28,8 +28,8 @@ not be interpreted as a successful 1.0 acceptance run.
 | FIELD-003 | Separate definition, presence/raw edit, validation and presentation; retain invalid raw input. | Absent vs null; incomplete sign/decimal; invalid BOOLEAN edit envelope. | unit, browser | tests/contracts/editing/; tests/browser/fields/ | missing | No behavioral evidence yet. Design/type evidence: E-DESIGN-001 only. |
 | FIELD-004 | Preserve context/valueChange and optional flags/choices compatibly; no edits from disabled/read-only. | Existing renderer compiles; null; additive errors; mode switch. | integration, browser | tests/contracts/renderer-compatibility/; tests/browser/fields/ | partial | Context/binding probes and synthetic labelled, disabled/read-only browser controls exist (E-QA-001); compatibility evolution remains unverified. Design/type evidence: E-DESIGN-001 only. |
 | VALID-001 | Enforce exact INTEGER ranges from effective `(bits, signed)` capacity intersected with declared inclusive/exclusive bounds. | 8/16/32/64 signed and unsigned min/max, min−1/max+1, zero, negative unsigned, unsigned 64 maximum, above safe integer, exponent/fraction. | unit, browser | tests/validation.test.mjs; tests/fixtures/validation.type-test.ts; tests/browser/specs/validation.spec.mjs | implemented | E-VALID-001: tested local INTEGER subcases, complete capacity pairs, exact grammar/arithmetic, bounds and correction. No dictionary inference or backend parity claim. |
-| VALID-002 | Intersect intrinsic bounds with declared inclusive/exclusive minimum and maximum. | Equality; contradictory limits; extreme decimals; negative operands. | unit | tests/validation.test.mjs | partial | E-VALID-001 covers INTEGER only; DECIMAL and broader numeric profiles remain pending. |
-| VALID-003 | Validate exact decimal precision, normalized scale and positive multipleOf. | Trailing zeros; 12.3400/1000/0.0012; exponent profile; fractional divisibility; zero divisor; NaN/infinity. | unit, consumer | tests/validation/decimal/; consumer evidence | missing | No evidence yet; backend profile conformance required. |
+| VALID-002 | Intersect intrinsic bounds with declared inclusive/exclusive minimum and maximum. | Equality; contradictory limits; extreme decimals; negative operands. | unit | tests/validation.test.mjs; tests/decimal-validation.test.mjs | implemented | E-VALID-001 and E-VALID-DECIMAL-001 cover local INTEGER capacity intersections and exact DECIMAL intervals, including exclusive equality, contradictory bounds, negative fractions and wide exponents. External backend/profile parity remains open. |
+| VALID-003 | Validate exact decimal precision, normalized scale and positive multipleOf. | Trailing zeros; 12.3400/1000/0.0012; exponent profile; fractional divisibility; zero divisor; NaN/infinity. | unit, consumer | tests/decimal-validation.test.mjs; tests/browser/specs/validation.spec.mjs; external consumer evidence pending | implemented | E-VALID-DECIMAL-001 demonstrates exact local precision/scale, grammar and fractional divisibility with bounded arithmetic. Backend profile and external consumer conformance remain open; installed APF builds do not establish parity. |
 | VALID-004 | Required checks presence independently of nullability and nonblank. | Absent/default; explicit null; empty/whitespace; all flag combinations; update omission. | unit, consumer | tests/validation.test.mjs; consumer evidence pending | partial | E-VALID-001 covers all required/nullable combinations for INTEGER. Empty/whitespace are present but fail INTEGER syntax. Defaults, omission and external consumer conformance remain pending. |
 | VALID-005 | Length counts Unicode scalar values with no implicit trim/normalization. | Min/max ±1; astral char=1; combining sequence=2; isolated surrogate rejected. | unit, consumer | tests/validation/text/; consumer evidence | missing | ERBAS Array.from is source reference, not library evidence. |
 | VALID-006 | Validate BOOLEAN, exact enum membership and base64 profile. | String true; numeric boolean; undeclared/empty enum; malformed base64/null. | unit, browser | tests/validation/scalars/; tests/browser/fields/ | missing | No evidence yet. |
@@ -294,3 +294,17 @@ feedback, capacity overflow and correction across the five themes plus a structu
 frame at desktop/mobile sizes. Local success is not backend acceptance. No external
 consumer parity, DECIMAL, aggregate validation, hidden-error workflow or save blocking
 is claimed. VALID-003/005–009 remain pending; VALID-002/004/010/011 remain partial.
+
+## E-VALID-DECIMAL-001 — exact local DECIMAL validation
+
+[AUR-VALID-002/003](decimal-validation.md) extends the existing validation boundary,
+preserving INTEGER interfaces, diagnostics, presence/nullability and STATE equality.
+Independent unit examples cover normalized dimensions, signs/zeros, inclusive and
+exclusive intervals, malformed definitions, work limits and exact fractional
+divisibility. Fixed-seed generated rational arithmetic provides 256 additional
+comparison/divisibility cases. Installed-APF desktop/mobile evidence demonstrates
+exact values above 2^53, incomplete drafts, scale/multipleOf feedback, corrections,
+theme persistence and dirty/valid independence. Existing INTEGER/STATE regressions
+remain mandatory. Only local VALID-002/003 behavior is claimed. Backend parity and
+external consumer conformance, other semantic types, document aggregation and save
+blocking remain open. Unrelated acceptance statuses are unchanged.
