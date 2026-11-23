@@ -260,7 +260,7 @@ test('scalar definitions fail before accepting absence/null; unsupported pattern
             [type, { constraints: null }, 'constraint'],
             [
                 type,
-                { constraints: { pattern: { dialect: 'portable-ascii-v1', source: 'A' } } },
+                { constraints: { pattern: { dialect: 'portable-ascii-v1', source: 1 } } },
                 'constraint',
             ],
         );
@@ -308,7 +308,7 @@ test('scalar definitions fail before accepting absence/null; unsupported pattern
             assert(!result.diagnostics[0].message.includes('private-row-key'));
         }
     const pattern = check('STRING', slot('A'), { constraints: { pattern: 'A' } });
-    assert.match(pattern.diagnostics[0].message, /VALID-009/);
+    assert.match(pattern.diagnostics[0].message, /Pattern metadata/);
     valid('STRING', '', {
         constraints: { minimumLength: 0, maximumLength: Number.MAX_SAFE_INTEGER },
     });

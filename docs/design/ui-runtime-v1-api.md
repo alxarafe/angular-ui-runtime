@@ -1,5 +1,10 @@
 # UI Runtime 1.0 API and internal contract design
 
+AUR-VALID-009 implements [safe pattern validation and deferred checks](../contracts/pattern-validation.md)
+in the existing boundary. Pending is distinct from valid; invalid results retain
+deferred obligations additively. Nonfatal pattern execution diagnostics are separate
+from fatal definition diagnostics. The malformed-source policy is refined below.
+
 AUR-VALID-005 implements the remaining four [UUID/temporal profiles](../contracts/temporal-uuid-validation.md)
 in `validateField`. The eleven-type definition union is now supported only under
 the published field profiles; patterns and document-wide validation remain pending.
@@ -205,15 +210,21 @@ Examples: `^[A-Z][A-Z0-9_]{0,29}$` is supported; `^(a+)+$`, `\p{L}+`, unanchored
 expressions and ambiguous regex dialects are server-only.
 
 The adapter marks a source portable only after proving whole-input/ASCII semantics
-match its backend (some regex `$` operators accept a final newline). The future
-compiler verifies the subset independently. Unsupported/malformed sources or local
-work limits produce a diagnostic and deferred server-pattern check, never an
-unbounded regex execution or a silently passed constraint. Locally supported
-mismatch is invalid. Above 4,096 input scalars defer that pattern, preserving any
-independent length errors; do not invent a global 4,096-character field limit.
-Do not transmit/execute backend regex in a widget. Server confirmation is required
-for deferred checks. This policy resolves the initial supported subset; runtime
-safety, parser correctness and backend equivalence still need adversarial tests.
+match its backend (some regex `$` operators accept a final newline). The implemented
+compiler independently checks this subset. AUR-VALID-009 refines the earlier
+“unsupported/malformed sources defer” wording: malformed metadata and confidently
+malformed portable fragments (unclosed positive classes, descending ranges, invalid
+escapes or broken/reversed bounded counts) are fatal definition errors. Sources
+outside the grammar or local work profile defer with a nonfatal diagnostic and
+server-pattern check; they are not passed to a general regex parser to certify
+the remainder. This conservative classification does not silently reinterpret a
+malformed portable declaration as another dialect. The exact grammar and precedence
+are specified in the [pattern contract](../contracts/pattern-validation.md).
+Locally supported mismatch is invalid. Above 4,096 input scalars defer that pattern,
+preserving independent local errors and their deferred obligations; do not invent
+a global text field limit. Do not execute backend regex in a widget. Local safety
+and parser behavior now have bounded/adversarial tests, but backend equivalence and
+authoritative confirmation remain separate consumer obligations.
 
 ## Renderer compatibility and change notifications
 

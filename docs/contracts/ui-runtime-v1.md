@@ -117,6 +117,13 @@ The explicit profiles retain lexical edits and compare temporal bounds exactly;
 TIME/DATETIME fractionalDigits is maximum input precision, not adapter output width.
 Backend/consumer parity, complete editors, patterns and document workflows remain pending.
 
+AUR-VALID-009 implements [portable-ascii-v1 matching and deferred server patterns](pattern-validation.md).
+Only STRING/TEXT/ENUM accept patterns. Malformed metadata or confidently malformed
+portable declarations produce definition errors; unsupported sources/work profiles
+defer without execution. Invalid results retain applicable deferred checks; pending
+never means server-confirmed valid. Backend parity and confirmation/save workflows
+remain unimplemented.
+
 INTEGER is one semantic type. The active ARP-INTEGER-001 contract candidate supplies
 effective capacity through optional `bits` (8, 16, 32 or 64) and `signed`, alongside
 exact `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum` and `multipleOf`
