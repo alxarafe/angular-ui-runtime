@@ -10,6 +10,11 @@ import {
     ThemeResolver,
     provideThemeRuntime,
     FIELD_RENDERER_BINDINGS,
+    ListGrid,
+    DetailGrid,
+    FormComposition,
+    type DetailGridContext,
+    type DetailGridChange,
     type ThemeDefinition,
     type ThemeArtifacts,
     type StructureArtifact,
@@ -28,9 +33,48 @@ class FieldProbe implements FieldRenderer {
 @Component({
     selector: 'aur-consumer',
     standalone: true,
-    template: '<p>Runtime {{ version }} {{ theme.current().id }}</p>',
+    imports: [ListGrid, DetailGrid, FormComposition],
+    template: `<p>Runtime {{ version }} {{ theme.current().id }}</p>
+        <aur-list-grid
+            [context]="{
+                id: 'list',
+                label: 'List',
+                columns: details.columns,
+                rows: [],
+                selectable: true,
+            }"
+            (rowSelected)="selected = $event"
+        />
+        <aur-detail-grid [context]="details" (gridChange)="intent = $event" />
+        <aur-form
+            [definition]="{
+                id: 'parent',
+                label: 'Parent',
+                fields: [],
+                collections: [{ id: details.id, path: details.path }],
+            }"
+            [contexts]="{}"
+            [collectionContexts]="{ items: details }"
+            (collectionChange)="intent = $event"
+        />`,
 })
 class Consumer {
+    selected = '';
+    intent?: DetailGridChange;
+    readonly details: DetailGridContext = {
+        id: 'items',
+        label: 'Items',
+        path: [{ kind: 'property', name: 'items' }],
+        columns: [
+            { id: 'quantity', label: 'Quantity', field: 'quantity', artifact: 'field.INTEGER' },
+        ],
+        rows: [],
+        ordered: true,
+        readOnly: false,
+        allowAdd: true,
+        allowRemove: true,
+        allowReorder: true,
+    };
     readonly version = UI_RUNTIME_VERSION;
     readonly theme = inject(ThemeService);
     private readonly registry = inject(ThemeRegistry);

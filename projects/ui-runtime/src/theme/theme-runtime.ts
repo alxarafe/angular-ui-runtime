@@ -91,7 +91,7 @@ export class ThemeRegistry {
                 const mirror =
                     typeof component === 'function' ? reflectComponentType(component) : null;
                 if (
-                    key !== 'form' ||
+                    !['form', 'listGrid', 'detailGrid'].includes(key) ||
                     !mirror?.isStandalone ||
                     !mirror.inputs.some((input) => input.templateName === 'context') ||
                     mirror.ngContentSelectors.length !== 1 ||
@@ -174,11 +174,12 @@ export class ThemeService {
 export class ThemeResolver {
     private readonly registry = inject(ThemeRegistry);
     private readonly service = inject(ThemeService);
-    resolveComponent<K extends keyof ThemeComponents>(key: K): ThemeComponents[K] {
-        if (key !== 'form') throw new Error('Unknown theme component');
-        return (this.service.current().components?.form ??
-            this.registry.require(ThemeId.Default).components?.form ??
-            DefaultFormPresentation) as ThemeComponents[K];
+    resolveComponent<K extends keyof ThemeComponents>(key: K): NonNullable<ThemeComponents[K]> {
+        if (!['form', 'listGrid', 'detailGrid'].includes(key))
+            throw new Error('Unknown theme component');
+        return (this.service.current().components?.[key] ??
+            this.registry.require(ThemeId.Default).components?.[key] ??
+            DefaultFormPresentation) as NonNullable<ThemeComponents[K]>;
     }
     resolveControl(id: string, instance?: ControlRequest): ControlResolution {
         const requested = this.registry.controls.find((control) => control.id === id);

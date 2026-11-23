@@ -1,5 +1,12 @@
 # UI Runtime 1.0 API and internal contract design
 
+AUR-GRID-001 now publishes the refined host-owned grid interfaces in
+[grid composition](../contracts/grid-composition.md). `ListGrid` and `DetailGrid`
+are independent hosts; optional theme grid components are projecting presentation
+frames, not document-aware grid replacements. Add requests carry no invented row.
+The proposed document/session-aware ports and `DocumentChange` below remain
+unpublished. The compile-only theme map follows the implemented frame contracts.
+
 Additive follow-up: [AUR-THEME-PORTS-001](../contracts/theme-composition-v1.md)
 implements independent shell/navigation/panel composition for the legacy artifact
 layer. It does not publish or redesign this document's proposed menu/form/grid API.

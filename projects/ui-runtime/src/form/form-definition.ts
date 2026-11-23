@@ -2,6 +2,7 @@
 import type { InputSignal, Type } from '@angular/core';
 import type { FieldArtifact } from '../theme/theme-definition.js';
 import type { FieldRendererContext, FieldValue } from '../field-types/renderer-context.js';
+import type { FormCollection } from '../grid/grid-definition.js';
 
 export type PathSegment =
     | { readonly kind: 'property'; readonly name: string }
@@ -36,12 +37,14 @@ export type FormFieldDefinition = FormField | OptionalControlFormField;
 export type FormFieldContexts = Readonly<Record<string, FieldRendererContext>>;
 /** Effective field/action catalogue. Applications perform authorization before supplying it. */
 export interface FormDefinition {
+    readonly collections?: readonly FormCollection[];
     readonly id: string;
     readonly label: string;
     readonly fields: readonly FormFieldDefinition[];
     readonly actions?: readonly ContextAction[];
 }
 export interface LayoutGroup {
+    readonly collections?: readonly ValuePath[];
     readonly id: string;
     readonly label?: string;
     readonly fields: readonly ValuePath[];
@@ -70,7 +73,10 @@ export interface FormDiagnostic {
         | 'duplicate-field'
         | 'excluded-field'
         | 'unknown-action'
-        | 'duplicate-action';
+        | 'duplicate-action'
+        | 'unknown-collection'
+        | 'duplicate-collection'
+        | 'excluded-collection';
     readonly path?: ValuePath;
     readonly id?: string;
 }
@@ -98,4 +104,6 @@ export interface FormPresentation {
 }
 export interface ThemeComponents {
     readonly form: Type<FormPresentation>;
+    readonly listGrid?: Type<FormPresentation>;
+    readonly detailGrid?: Type<FormPresentation>;
 }

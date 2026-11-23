@@ -1,5 +1,13 @@
 # Reusable form composition (AUR-FORM-001)
 
+AUR-GRID-001 additively implements the collection extension described in
+[grid composition](grid-composition.md): `FormDefinition.collections`,
+`LayoutGroup.collections`, `collectionContexts` and `collectionChange`, plus
+composed/fallback collection results. Historical future-grid statements below
+describe the FORM-001 baseline and are superseded by that contract. Existing
+field/action placement and outputs remain compatible. The same projecting frame
+port now also admits optional `listGrid` and `detailGrid` presentations.
+
 Implemented first increment, not full UI Runtime 1.0 FORM/STATE/GRID acceptance.
 The public standalone `FormComposition` component (`aur-form`) and pure
 `composeForm()` function live in the core APF package. The testbed only supplies
@@ -101,6 +109,8 @@ reset controlled visual state as appropriate.
 
 `revealField(path): boolean` is a neutral integration boundary: it selects the
 containing tab, expands its section and focuses the eligible input after rendering.
+Its DOM lookup is explicitly scoped to form-owned field outlets; nested detail
+cells with matching column IDs cannot capture a header-field reveal.
 It returns false for unknown/excluded fields. It neither constructs error summaries
 nor validates data. A future validation/document host may call it for issue paths;
 no temporary validation, dirty, save/discard or grid engine is included here.

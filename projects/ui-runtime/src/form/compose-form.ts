@@ -1,5 +1,8 @@
 /** SPDX-License-Identifier: Apache-2.0 */
 import { validateFormFieldRenderer } from './form-field-renderer.js';
+import { snapshotGridPath, type FormCollection } from '../grid/grid-definition.js';
+import { formPathKey } from './value-path.js';
+export { formPathKey } from './value-path.js';
 import type {
     ContextAction,
     FormDefinition,
@@ -12,8 +15,9 @@ import type {
     ValuePath,
 } from './form-definition.js';
 
-export interface ComposedGroup extends Omit<LayoutGroup, 'fields'> {
+export interface ComposedGroup extends Omit<LayoutGroup, 'fields' | 'collections'> {
     readonly fields: readonly FormFieldDefinition[];
+    readonly collections: readonly FormCollection[];
 }
 export interface ComposedSection extends Omit<LayoutSection, 'groups' | 'actions'> {
     readonly groups: readonly ComposedGroup[];
@@ -24,6 +28,7 @@ export interface ComposedTab extends Omit<LayoutTab, 'sections' | 'actions'> {
     readonly actions: readonly ContextAction[];
 }
 export interface FormComposition {
+    readonly unplacedCollections: readonly FormCollection[];
     readonly tabs: readonly ComposedTab[];
     readonly unplaced: readonly FormFieldDefinition[];
     readonly actions: readonly ContextAction[];
@@ -31,19 +36,6 @@ export interface FormComposition {
 }
 function identity(id: unknown): asserts id is string {
     if (typeof id !== 'string' || !id.trim()) throw new Error('Invalid form identity');
-}
-export function formPathKey(path: ValuePath): string {
-    if (!Array.isArray(path) || !path.length) throw new Error('Invalid field path');
-    for (const segment of path) {
-        if (!segment || (segment.kind !== 'property' && segment.kind !== 'row'))
-            throw new Error('Invalid field path');
-        identity(segment.kind === 'property' ? segment.name : segment.key);
-    }
-    return JSON.stringify(
-        path.map((segment) =>
-            segment.kind === 'property' ? ['property', segment.name] : ['row', segment.key],
-        ),
-    );
 }
 function distinct<T extends { readonly id: string }>(items: readonly T[]): void {
     if (!Array.isArray(items)) throw new Error('Invalid form collection');
@@ -59,6 +51,17 @@ export function composeForm(definition: FormDefinition, layout?: FormLayout): Fo
     identity(definition.id);
     identity(definition.label);
     distinct(definition.fields);
+    distinct(definition.collections ?? []);
+    const collections = new Map<string, FormCollection>();
+    for (const collection of definition.collections ?? []) {
+        const path = snapshotGridPath(collection.path),
+            key = formPathKey(path);
+        if (collections.has(key)) throw new Error('Duplicate collection path');
+        if (collection.excluded !== undefined && typeof collection.excluded !== 'boolean')
+            throw new Error('Invalid collection exclusion');
+        collections.set(key, Object.freeze({ ...collection, path }));
+    }
+    const placedCollections = new Set<string>();
     distinct(definition.actions ?? []);
     const fields = new Map<string, FormFieldDefinition>();
     for (const field of definition.fields) {
@@ -85,6 +88,26 @@ export function composeForm(definition: FormDefinition, layout?: FormLayout): Fo
     const placed = new Set<string>(),
         usedActions = new Set<string>(),
         diagnostics: FormDiagnostic[] = [];
+    const placeCollections = (paths: readonly ValuePath[]): readonly FormCollection[] =>
+        Object.freeze(
+            paths.flatMap((path) => {
+                const key = formPathKey(snapshotGridPath(path)),
+                    collection = collections.get(key);
+                const code = !collection
+                    ? 'unknown-collection'
+                    : collection.excluded
+                      ? 'excluded-collection'
+                      : placedCollections.has(key)
+                        ? 'duplicate-collection'
+                        : undefined;
+                if (code) {
+                    diagnostics.push(Object.freeze({ code, path: snapshotGridPath(path) }));
+                    return [];
+                }
+                placedCollections.add(key);
+                return [collection!];
+            }),
+        );
     const placeFields = (paths: readonly ValuePath[]): readonly FormFieldDefinition[] =>
         Object.freeze(
             paths.flatMap((path) => {
@@ -148,7 +171,11 @@ export function composeForm(definition: FormDefinition, layout?: FormLayout): Fo
                 actions: placeActions(section.actions),
                 groups: Object.freeze(
                     section.groups.map((group) =>
-                        Object.freeze({ ...group, fields: placeFields(group.fields) }),
+                        Object.freeze({
+                            ...group,
+                            fields: placeFields(group.fields),
+                            collections: placeCollections(group.collections ?? []),
+                        }),
                     ),
                 ),
             });
@@ -157,6 +184,11 @@ export function composeForm(definition: FormDefinition, layout?: FormLayout): Fo
     });
     rootActions.push(...[...actions.values()].filter((action) => !usedActions.has(action.id)));
     return Object.freeze({
+        unplacedCollections: Object.freeze(
+            [...collections]
+                .filter(([key, collection]) => !collection.excluded && !placedCollections.has(key))
+                .map(([, collection]) => collection),
+        ),
         tabs: Object.freeze(tabs),
         unplaced: Object.freeze(
             [...fields]

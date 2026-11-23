@@ -219,6 +219,11 @@ remain pending. This does not close the complete FORM/STATE/GRID release gate.
 
 ## Collections and editing lifecycle (GRID, STATE)
 
+AUR-GRID-001 implements [grid composition](grid-composition.md): separate list/detail
+hosts, exact keyed editing intents and independently placed form collections.
+The document-state, validation and persistence requirements below remain future
+acceptance obligations, not implementation claims for this increment.
+
 Read-only/list grids display application-provided rows and navigation; they are
 not editable detail collections. Detail collections participate in one parent
 editing document. Support add, edit, remove and ordered reorder when declared,
