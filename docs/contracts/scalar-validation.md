@@ -1,13 +1,18 @@
 # Local STRING, TEXT, BOOLEAN, ENUM and BINARY validation (AUR-VALID-004)
 
 [AUR-VALID-005](temporal-uuid-validation.md) subsequently adds the remaining four
-UUID/temporal definitions. The scalar contracts below are unchanged; patterns and
-document-wide validation remain pending.
+UUID/temporal definitions. The scalar contracts below are unchanged;
+document-wide validation remains pending.
+
+[AUR-VALID-009](pattern-validation.md) now adds patterns to STRING/TEXT/ENUM and a
+distinct pending result. Local errors retain applicable deferred obligations. This
+supersedes the earlier unsupported-pattern-only boundary; scalar semantics remain unchanged.
 
 The existing framework-independent `validateField` accepts five additional public
 definitions: `StringFieldDefinition`, `TextFieldDefinition`, `BooleanFieldDefinition`,
-`EnumFieldDefinition` and `BinaryFieldDefinition`. The request union contains seven
-implemented types including INTEGER and DECIMAL, whose contracts are unchanged.
+`EnumFieldDefinition` and `BinaryFieldDefinition`. This increment originally brought
+the request union to seven types; the subsequent UUID/temporal increment completes
+all eleven. INTEGER and DECIMAL contracts are unchanged.
 There is no parallel engine, document validation store, aggregation or save API.
 
 ```ts
@@ -57,6 +62,7 @@ TextConstraints`, also reused by ENUM:
 interface TextConstraints {
   readonly minimumLength?: number;
   readonly maximumLength?: number;
+  readonly pattern?: PatternConstraint;
 }
 ```
 
@@ -133,7 +139,10 @@ Uploads, downloads, serialization, MIME/base64url and backend parity are outside
 
 ## Results, diagnostics and pattern boundary
 
-The existing immutable `valid`, `invalid` and `definition-error` branches remain.
+The immutable `valid`, `invalid` and `definition-error` branches remain, joined by
+`pending` for locally parsed fields awaiting a server-pattern check. Invalid results
+can retain nonempty deferred `checks` and nonfatal pattern `diagnostics`. Results
+with no pattern preserve their previous shapes. See the [pattern contract](pattern-validation.md).
 Parsed slots, nonempty issue/diagnostic arrays, entries and detached typed path
 segments are frozen. Local issues retain source `local`; definition diagnostics
 retain source `definition`. Messages do not interpolate values, catalogue members,
@@ -147,11 +156,12 @@ Definition errors reuse `definition` (shape, catalogue, profile) and `constraint
 (lengths, contradiction, unknown constraints); no new definition-code vocabulary is
 needed. Definitions fail before any input acceptance, including null/absence.
 
-**Pattern validation remains pending VALID-009.** `TextConstraints` does not publish
-a pattern member. Runtime pattern-bearing text constraints return `constraint` with
-an explicit unsupported-pattern message. Other unsupported members also diagnose;
-they are never silently ignored. No supplied pattern is executed, interpreted as
-JavaScript regex or claimed as passed. There is no portable-ascii-v1 engine here.
+**Patterns are restricted to the implemented VALID-009 boundary.** `TextConstraints`
+admits explicit `portable-ascii-v1` or `server` metadata. The bounded local compiler
+never executes a source as JavaScript regex. Malformed declarations diagnose;
+unsupported sources defer. Pattern matching follows existing Unicode, length and
+ENUM membership checks and cannot replace them. No backend pattern equivalence or
+confirmation workflow is certified. BOOLEAN/BINARY continue to reject patterns.
 
 ## Browser evidence and renderer limitations
 

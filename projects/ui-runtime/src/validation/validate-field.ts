@@ -3,6 +3,7 @@ import type { PathSegment, ValuePath } from '../form/form-definition.js';
 import type { EditingInput, ValueSlot } from '../state/document-state.js';
 import { scalarLength, canonicalBase64 } from './scalar-values.js';
 import { canonicalUuid, parseTemporal, temporalDomain } from './temporal-values.js';
+import { compilePortable, matchPortable, type PatternDeferReason } from './portable-pattern.js';
 import {
     integerMatch,
     numericTextLimit,
@@ -42,9 +43,13 @@ export interface DecimalFieldDefinition {
         readonly scale?: number;
     };
 }
+export type PatternConstraint =
+    | { readonly dialect: 'portable-ascii-v1'; readonly source: string }
+    | { readonly dialect: 'server'; readonly source: string };
 export interface TextConstraints {
     readonly minimumLength?: number;
     readonly maximumLength?: number;
+    readonly pattern?: PatternConstraint;
 }
 interface ScalarDefinition {
     readonly required: boolean;
@@ -127,7 +132,8 @@ export type LocalValidationCode =
     | 'uuid-format'
     | 'date-format'
     | 'time-format'
-    | 'datetime-format';
+    | 'datetime-format'
+    | 'pattern';
 export type DefinitionDiagnosticCode =
     | 'definition'
     | 'capacity'
@@ -147,11 +153,39 @@ export interface DefinitionDiagnostic {
     readonly path: ValuePath;
     readonly message: string;
 }
+export interface DeferredCheck {
+    readonly reason: 'server-pattern';
+    readonly path: ValuePath;
+}
+export type PatternDiagnosticCode =
+    | 'pattern-server-only'
+    | 'pattern-unsupported'
+    | 'pattern-source-limit'
+    | 'pattern-prefix-limit'
+    | 'pattern-repetition-limit'
+    | 'pattern-input-limit';
+/** Nonfatal execution information, distinct from invalid field metadata. */
+export interface PatternDiagnostic {
+    readonly source: 'pattern';
+    readonly code: PatternDiagnosticCode;
+    readonly path: ValuePath;
+    readonly message: string;
+}
+interface DeferredEvidence {
+    readonly checks?: readonly [DeferredCheck, ...DeferredCheck[]];
+    readonly diagnostics?: readonly [PatternDiagnostic, ...PatternDiagnostic[]];
+}
 export type FieldValidationResult =
     | { readonly state: 'valid'; readonly parsed: ValueSlot }
-    | {
+    | ({
           readonly state: 'invalid';
           readonly issues: readonly [ValidationIssue, ...ValidationIssue[]];
+      } & DeferredEvidence)
+    | {
+          readonly state: 'pending';
+          readonly parsed: ValueSlot;
+          readonly checks: readonly [DeferredCheck, ...DeferredCheck[]];
+          readonly diagnostics?: readonly [PatternDiagnostic, ...PatternDiagnostic[]];
       }
     | {
           readonly state: 'definition-error';
@@ -372,6 +406,24 @@ function resolveDecimal(definition: DecimalFieldDefinition) {
         scale: counter(constraints?.scale, 'scale'),
     };
 }
+function resolvePattern(value: unknown) {
+    if (value === undefined) return undefined;
+    if (
+        !shape(value, ['dialect', 'source']) ||
+        typeof value['source'] !== 'string' ||
+        (value['dialect'] !== 'portable-ascii-v1' && value['dialect'] !== 'server')
+    )
+        definitionError(
+            'constraint',
+            'Pattern metadata requires a supported dialect and exact source text.',
+        );
+    if (value['dialect'] === 'server')
+        return { state: 'deferred' as const, reason: 'server-only' as const };
+    const compilation = compilePortable(value['source']);
+    if (compilation.state === 'malformed')
+        definitionError('constraint', 'Malformed portable-ascii-v1 pattern declaration.');
+    return compilation;
+}
 function resolveScalar(definition: ScalarFieldDefinition) {
     const type = definition.type;
     const required = [
@@ -393,9 +445,10 @@ function resolveScalar(definition: ScalarFieldDefinition) {
     if (type === 'BINARY' && definition.format !== 'base64')
         definitionError('definition', 'BINARY requires the explicit base64 profile.');
     const constraints = 'constraints' in definition ? definition.constraints : undefined;
-    if (constraints && typeof constraints === 'object' && Object.hasOwn(constraints, 'pattern'))
-        definitionError('constraint', 'Pattern validation is not supported; pending VALID-009.');
-    if (constraints !== undefined && !shape(constraints, [], ['minimumLength', 'maximumLength']))
+    if (
+        constraints !== undefined &&
+        !shape(constraints, [], ['minimumLength', 'maximumLength', 'pattern'])
+    )
         definitionError('constraint', 'Unsupported text constraints.');
     function counter(value: unknown): number | undefined {
         if (value === undefined) return undefined;
@@ -428,7 +481,8 @@ function resolveScalar(definition: ScalarFieldDefinition) {
             choices.add(choice);
         }
     }
-    return { family: 'scalar' as const, type, minimumLength, maximumLength, choices };
+    const pattern = resolvePattern(constraints?.['pattern']);
+    return { family: 'scalar' as const, type, minimumLength, maximumLength, choices, pattern };
 }
 function resolveUuid(definition: UuidFieldDefinition) {
     if (
@@ -554,15 +608,47 @@ export function validateField(request: FieldValidationRequest): FieldValidationR
         });
     }
     const issues: ValidationIssue[] = [];
+    let checks: readonly [DeferredCheck, ...DeferredCheck[]] | undefined;
+    let patternDiagnostics: readonly [PatternDiagnostic, ...PatternDiagnostic[]] | undefined;
+    const defer = (reason: PatternDeferReason | 'server-only' | 'input-limit') => {
+        const codes = {
+            'server-only': 'pattern-server-only',
+            unsupported: 'pattern-unsupported',
+            'source-limit': 'pattern-source-limit',
+            'prefix-limit': 'pattern-prefix-limit',
+            'repetition-limit': 'pattern-repetition-limit',
+            'input-limit': 'pattern-input-limit',
+        } as const;
+        checks = Object.freeze([
+            Object.freeze({ reason: 'server-pattern' as const, path }),
+        ] as const);
+        const message =
+            reason === 'server-only'
+                ? 'This pattern requires server confirmation.'
+                : reason === 'input-limit'
+                  ? 'Local pattern input exceeds 4096 Unicode scalars; server confirmation is required.'
+                  : 'Local pattern execution is unavailable under the supported syntax or work profile; server confirmation is required.';
+        patternDiagnostics = Object.freeze([
+            Object.freeze({ source: 'pattern' as const, code: codes[reason], path, message }),
+        ] as const);
+    };
     const issue = (code: LocalValidationCode, message: string) =>
         issues.push(Object.freeze({ source: 'local', code, path, message }));
     const invalid = (): FieldValidationResult =>
         Object.freeze({
             state: 'invalid',
             issues: Object.freeze(issues) as readonly [ValidationIssue, ...ValidationIssue[]],
+            ...(checks ? { checks, diagnostics: patternDiagnostics } : {}),
         });
     const valid = (parsed: ValueSlot): FieldValidationResult =>
-        Object.freeze({ state: 'valid', parsed: Object.freeze(parsed) });
+        checks
+            ? Object.freeze({
+                  state: 'pending',
+                  parsed: Object.freeze(parsed),
+                  checks,
+                  diagnostics: patternDiagnostics,
+              })
+            : Object.freeze({ state: 'valid', parsed: Object.freeze(parsed) });
     const input = request.input;
     if (shape(input, ['kind']) && input.kind === 'absent') {
         if (!request.definition.required) return valid({ kind: 'absent' });
@@ -630,6 +716,7 @@ export function validateField(request: FieldValidationRequest): FieldValidationR
                     'Use canonical standard Base64 with correct padding and no whitespace.',
                 );
         } else {
+            if (resolved.pattern?.state === 'deferred') defer(resolved.pattern.reason);
             const length = scalarLength(text);
             if (length === undefined) {
                 issue('invalid-unicode', 'Text contains an isolated Unicode surrogate.');
@@ -641,6 +728,11 @@ export function validateField(request: FieldValidationRequest): FieldValidationR
                 issue('maximum-length', 'Text is longer than the declared maximum length.');
             if (resolved.type === 'ENUM' && !resolved.choices!.has(text))
                 issue('enum', 'Select a declared choice.');
+            if (resolved.pattern?.state === 'compiled') {
+                if (length > 4096) defer('input-limit');
+                else if (matchPortable(resolved.pattern.program, text) !== 'matched')
+                    issue('pattern', 'Text does not match the required whole-input pattern.');
+            }
         }
         return issues.length ? invalid() : valid({ kind: 'value', value: text });
     }

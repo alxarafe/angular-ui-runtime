@@ -9,6 +9,9 @@ import {
     type EnumFieldDefinition,
     type BinaryFieldDefinition,
     type TextConstraints,
+    type PatternConstraint,
+    type DeferredCheck,
+    type PatternDiagnostic,
     type UuidFieldDefinition,
     type DateFieldDefinition,
     type TimeFieldDefinition,
@@ -106,9 +109,42 @@ validateField({
     input,
     path,
 });
-// @ts-expect-error patterns remain unimplemented
+// @ts-expect-error pattern metadata must declare a dialect and source
 const unsupportedPattern: TextConstraints = { pattern: '.*' };
 void unsupportedPattern;
+const pattern: PatternConstraint = {
+    dialect: 'portable-ascii-v1',
+    source: '^[A-Z][A-Z0-9_]{0,29}$',
+};
+const patterned = validateField({
+    definition: { type: 'STRING', required: true, nullable: false, constraints: { pattern } },
+    input,
+    path,
+});
+if (patterned.state === 'pending') {
+    const check: DeferredCheck = patterned.checks[0];
+    const diagnostic: PatternDiagnostic | undefined = patterned.diagnostics?.[0];
+    void check;
+    void diagnostic;
+    // @ts-expect-error pending is not a confirmed valid result with issues
+    patterned.issues;
+    // @ts-expect-error deferred paths remain immutable
+    patterned.checks[0].path[0] = { kind: 'property', name: 'changed' };
+}
+if (patterned.state === 'invalid') {
+    const check: DeferredCheck | undefined = patterned.checks?.[0];
+    void check;
+}
+const emptyPending: FieldValidationResult = {
+    state: 'pending',
+    parsed: { kind: 'value', value: 'A' },
+    // @ts-expect-error pending checks cannot be empty
+    checks: [],
+};
+// @ts-expect-error arbitrary RegExp objects are not pattern definitions
+const executablePattern: PatternConstraint = /A/;
+void emptyPending;
+void executablePattern;
 const partial: IntegerFieldDefinition = {
     type: 'INTEGER',
     required: true,

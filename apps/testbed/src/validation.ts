@@ -31,6 +31,23 @@ const decimal: DecimalFieldDefinition = {
     constraints: { precision: 20, scale: 2, multipleOf: '0.05' },
 };
 const scalarDefinitions = {
+    localCode: {
+        type: 'STRING',
+        required: true,
+        nullable: false,
+        constraints: {
+            pattern: { dialect: 'portable-ascii-v1', source: '^[A-Z][A-Z0-9_]{0,29}$' },
+        },
+    },
+    serverCode: {
+        type: 'STRING',
+        required: true,
+        nullable: false,
+        constraints: {
+            minimumLength: 5,
+            pattern: { dialect: 'server', source: '^SERVER_[A-Z]+$' },
+        },
+    },
     title: {
         type: 'STRING',
         required: true,
@@ -93,6 +110,7 @@ type ScalarId = keyof typeof scalarDefinitions;
                 scalarResults()[id].state
             }}</output>
             <output [attr.data-testid]="'scalar-input-' + id">{{ encode(fieldInput(id)) }}</output>
+            <output [attr.data-testid]="'scalar-checks-' + id">{{ deferredCount(id) }}</output>
         }
     </main>`,
     styles: [
@@ -126,6 +144,8 @@ export class ValidationTestbed {
                         date: '2024-02-29',
                         clock: '12:30:00.1234567',
                         instant: '2026-11-23T18:00:00.1234567+01:00',
+                        localCode: 'CODE_1',
+                        serverCode: 'SERVER_CODE',
                     }).map(([id, value]) => [
                         id,
                         {
@@ -155,6 +175,16 @@ export class ValidationTestbed {
         fields: [
             { id: 'quantity', path, artifact: 'field.INTEGER' },
             { id: 'amount', path: amountPath, artifact: 'field.DECIMAL' },
+            {
+                id: 'localCode',
+                path: [{ kind: 'property', name: 'localCode' }],
+                artifact: 'field.STRING',
+            },
+            {
+                id: 'serverCode',
+                path: [{ kind: 'property', name: 'serverCode' }],
+                artifact: 'field.STRING',
+            },
             { id: 'title', path: [{ kind: 'property', name: 'title' }], artifact: 'field.STRING' },
             { id: 'notes', path: [{ kind: 'property', name: 'notes' }], artifact: 'field.TEXT' },
             {
@@ -192,11 +222,26 @@ export class ValidationTestbed {
     );
     scalarFeedback(id: ScalarId): string {
         const result = this.scalarResults()[id];
+        if (result.state === 'pending')
+            return [
+                'Pending server validation.',
+                ...(result.diagnostics ?? []).map((diagnostic) => diagnostic.message),
+            ].join(' ');
         return result.state === 'invalid'
-            ? result.issues.map((issue) => issue.message).join(' ')
+            ? [
+                  ...result.issues.map((issue) => issue.message),
+                  ...(result.checks ? ['Server pattern confirmation remains required.'] : []),
+                  ...(result.diagnostics ?? []).map((diagnostic) => diagnostic.message),
+              ].join(' ')
             : result.state === 'definition-error'
               ? 'QA definition error'
               : 'Locally valid.';
+    }
+    deferredCount(id: ScalarId): number {
+        const result = this.scalarResults()[id];
+        return result.state === 'pending' || result.state === 'invalid'
+            ? (result.checks?.length ?? 0)
+            : 0;
     }
     rawBooleanDraft(): void {
         this.state.update((state) =>
@@ -230,6 +275,7 @@ export class ValidationTestbed {
     );
     readonly decimalFeedback = computed(() => {
         const result = this.decimalResult();
+        if (result.state === 'pending') return 'Pending server validation.';
         return result.state === 'invalid'
             ? result.issues.map((issue) => issue.message).join(' ')
             : result.state === 'definition-error'
@@ -238,6 +284,7 @@ export class ValidationTestbed {
     });
     readonly feedback = computed(() => {
         const result = this.result();
+        if (result.state === 'pending') return 'Pending server validation.';
         return result.state === 'invalid'
             ? result.issues.map((issue) => issue.message).join(' ')
             : result.state === 'definition-error'
@@ -264,6 +311,8 @@ export class ValidationTestbed {
                         date: 'Gregorian date (text adapter)',
                         clock: 'Local time (text adapter)',
                         instant: 'Offset instant (text adapter)',
+                        localCode: 'Local pattern code',
+                        serverCode: 'Server pattern code',
                     }[id];
                     return [
                         id,
