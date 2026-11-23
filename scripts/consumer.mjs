@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { cpSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
+import {
+    cpSync,
+    mkdtempSync,
+    readFileSync,
+    readdirSync,
+    realpathSync,
+    rmSync,
+    mkdirSync,
+    writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runtimePackage, archivePath } from './package-metadata.mjs';
@@ -9,31 +18,72 @@ import { assertConsumerLockPreserved } from './consumer-lock.mjs';
 const consumer = mkdtempSync(join(tmpdir(), 'aur-consumer-'));
 const run = (command, args) => execFileSync(command, args, { cwd: consumer, stdio: 'inherit' });
 try {
-  cpSync('tests/consumer', consumer, { recursive: true });
-  cpSync(archivePath(runtimePackage), join(consumer, 'runtime.tgz'));
-  const lockfile = readFileSync(join(consumer, 'package-lock.json'), 'utf8');
-  const locked = JSON.parse(lockfile).packages;
-  run('npm', ['ci', '--no-audit', '--no-fund']);
-  const tree = () => JSON.parse(readFileSync(join(consumer, 'node_modules/.package-lock.json'), 'utf8')).packages;
-  const before = tree();
-  run('npm', ['install', '--no-save', '--no-audit', '--no-fund', './runtime.tgz']);
-  assert.equal(readFileSync(join(consumer, 'package-lock.json'), 'utf8'), lockfile, 'Consumer lockfile must remain unchanged');
-  const count = assertConsumerLockPreserved(locked, before, tree());
-  for (const path of Object.keys(before)) {
-    const manifest = JSON.parse(readFileSync(join(consumer, path, 'package.json'), 'utf8'));
-    assert.equal(manifest.version, locked[path].version, `Installed consumer version differs from lockfile: ${path}`);
-  }
-  console.log(`CONSUMER LOCK PASS: ${count} installed dependencies retain locked versions, sources and integrity; only the runtime was added`);
-  const installed = realpathSync(join(consumer, 'node_modules/@alxarafe/ui-runtime'));
-  assert(installed.startsWith(`${consumer}/node_modules/`), 'Package must be installed, not linked to repository sources');
-  run('node', ['--import', '@angular/compiler', '--input-type=module', '-e', `import assert from 'node:assert/strict'; import * as api from '@alxarafe/ui-runtime'; assert.equal(api.UI_RUNTIME_VERSION, ${JSON.stringify(runtimePackage.version)}); assert.deepEqual(api.ThemeId, { Default: 'default' }); for (const name of ['ThemeArtifact', 'THEME_ARTIFACTS', 'ThemeRegistry', 'ThemeService', 'ThemeResolver', 'provideThemeRuntime', 'FIELD_RENDERER_BINDINGS']) assert.ok(api[name], name); assert.equal(api.ThemeArtifact.FieldInteger, 'field.INTEGER'); for (const name of ['FieldInt8', 'FieldUint8', 'FieldInt16', 'FieldUint16', 'FieldInt32', 'FieldUint32', 'FieldInt64']) assert.equal(api.ThemeArtifact[name], undefined, name); assert.equal(api.THEME_ARTIFACTS.length, 14); assert(api.THEME_ARTIFACTS.includes('field.INTEGER')); assert(!api.THEME_ARTIFACTS.some((key) => /^field[.](INT|UINT)(8|16|32|64)$/.test(key))); assert.throws(() => new api.ThemeRegistry([]), /every artifact/);`]);
-  run(join(consumer, 'node_modules/.bin/ng'), ['build', 'consumer']);
-  const output = join(consumer, 'dist/browser');
-  const scripts = readdirSync(output).filter((name) => name.endsWith('.js'));
-  assert(scripts.some((name) => readFileSync(join(output, name), 'utf8').includes(runtimePackage.version)), 'Public export must reach the consumer bundle');
-  mkdirSync('/artifacts/compatibility', { recursive: true });
-  writeFileSync('/artifacts/compatibility/runtime-only.json', JSON.stringify({ name: runtimePackage.name, version: runtimePackage.version, preservedDependencies: count, angularBuild: 'passed', installedPackages: [runtimePackage.name] }, null, 2));
-  console.log('CONSUMER PASS: isolated tarball install, public ESM import, declarations and standalone Angular production build');
+    cpSync('tests/consumer', consumer, { recursive: true });
+    cpSync(archivePath(runtimePackage), join(consumer, 'runtime.tgz'));
+    const lockfile = readFileSync(join(consumer, 'package-lock.json'), 'utf8');
+    const locked = JSON.parse(lockfile).packages;
+    run('npm', ['ci', '--no-audit', '--no-fund']);
+    const tree = () =>
+        JSON.parse(readFileSync(join(consumer, 'node_modules/.package-lock.json'), 'utf8'))
+            .packages;
+    const before = tree();
+    run('npm', ['install', '--no-save', '--no-audit', '--no-fund', './runtime.tgz']);
+    assert.equal(
+        readFileSync(join(consumer, 'package-lock.json'), 'utf8'),
+        lockfile,
+        'Consumer lockfile must remain unchanged',
+    );
+    const count = assertConsumerLockPreserved(locked, before, tree());
+    for (const path of Object.keys(before)) {
+        const manifest = JSON.parse(readFileSync(join(consumer, path, 'package.json'), 'utf8'));
+        assert.equal(
+            manifest.version,
+            locked[path].version,
+            `Installed consumer version differs from lockfile: ${path}`,
+        );
+    }
+    console.log(
+        `CONSUMER LOCK PASS: ${count} installed dependencies retain locked versions, sources and integrity; only the runtime was added`,
+    );
+    const installed = realpathSync(join(consumer, 'node_modules/@alxarafe/ui-runtime'));
+    assert(
+        installed.startsWith(`${consumer}/node_modules/`),
+        'Package must be installed, not linked to repository sources',
+    );
+    run('node', [
+        '--import',
+        '@angular/compiler',
+        '--input-type=module',
+        '-e',
+        `import assert from 'node:assert/strict'; import * as api from '@alxarafe/ui-runtime'; assert.equal(api.UI_RUNTIME_VERSION, ${JSON.stringify(runtimePackage.version)}); assert.deepEqual(api.ThemeId, { Default: 'default' }); for (const name of ['ThemeArtifact', 'THEME_ARTIFACTS', 'ThemeRegistry', 'ThemeService', 'ThemeResolver', 'provideThemeRuntime', 'FIELD_RENDERER_BINDINGS']) assert.ok(api[name], name); assert.equal(api.ThemeArtifact.FieldInteger, 'field.INTEGER'); for (const name of ['FieldInt8', 'FieldUint8', 'FieldInt16', 'FieldUint16', 'FieldInt32', 'FieldUint32', 'FieldInt64']) assert.equal(api.ThemeArtifact[name], undefined, name); assert.equal(api.THEME_ARTIFACTS.length, 14); assert(api.THEME_ARTIFACTS.includes('field.INTEGER')); assert(!api.THEME_ARTIFACTS.some((key) => /^field[.](INT|UINT)(8|16|32|64)$/.test(key))); assert.throws(() => new api.ThemeRegistry([]), /every artifact/);`,
+    ]);
+    run(join(consumer, 'node_modules/.bin/ng'), ['build', 'consumer']);
+    const output = join(consumer, 'dist/browser');
+    const scripts = readdirSync(output).filter((name) => name.endsWith('.js'));
+    assert(
+        scripts.some((name) =>
+            readFileSync(join(output, name), 'utf8').includes(runtimePackage.version),
+        ),
+        'Public export must reach the consumer bundle',
+    );
+    mkdirSync('/artifacts/compatibility', { recursive: true });
+    writeFileSync(
+        '/artifacts/compatibility/runtime-only.json',
+        JSON.stringify(
+            {
+                name: runtimePackage.name,
+                version: runtimePackage.version,
+                preservedDependencies: count,
+                angularBuild: 'passed',
+                installedPackages: [runtimePackage.name],
+            },
+            null,
+            2,
+        ),
+    );
+    console.log(
+        'CONSUMER PASS: isolated tarball install, public ESM import, declarations and standalone Angular production build',
+    );
 } finally {
-  rmSync(consumer, { recursive: true, force: true });
+    rmSync(consumer, { recursive: true, force: true });
 }

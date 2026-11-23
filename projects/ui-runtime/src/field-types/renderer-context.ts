@@ -11,17 +11,17 @@ import { InputSignal, OutputEmitterRef } from '@angular/core';
 // semantic validation belong to consumer applications, not to theme widgets.
 export type FieldValue = string | boolean | null;
 export interface FieldRendererContext {
-  readonly id: string;
-  readonly label: string;
-  readonly value: FieldValue;
-  readonly disabled?: boolean;
-  readonly readOnly?: boolean;
-  readonly choices?: readonly string[];
-  /** Optional instance domain/presentation used by an opt-in control host. */
-  readonly control?: ControlRequest;
+    readonly id: string;
+    readonly label: string;
+    readonly value: FieldValue;
+    readonly disabled?: boolean;
+    readonly readOnly?: boolean;
+    readonly choices?: readonly string[];
+    /** Optional instance domain/presentation used by an opt-in control host. */
+    readonly control?: ControlRequest;
 }
 export interface FieldRenderer {
-  readonly context: InputSignal<FieldRendererContext>;
-  readonly valueChange: OutputEmitterRef<FieldValue>;
+    readonly context: InputSignal<FieldRendererContext>;
+    readonly valueChange: OutputEmitterRef<FieldValue>;
 }
 export const FIELD_RENDERER_BINDINGS = { context: 'context', valueChange: 'valueChange' } as const;

@@ -1,0 +1,19 @@
+# Version control, dependencies and generated output
+.git/
+node_modules/
+dist/
+out-tsc/
+coverage/
+artifacts/
+tmp/
+
+# Lockfiles, manifests and documentation remain outside formatting scope
+package-lock.json
+**/package-lock.json
+*.json
+*.md
+docs/
+
+# Historical and binary fixtures stay byte-for-byte unchanged
+*.tgz
+tests/fixtures/historical-runtime/
