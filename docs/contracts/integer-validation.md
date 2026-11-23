@@ -1,5 +1,8 @@
 # Local INTEGER validation (AUR-VALID-001)
 
+[AUR-VALID-004](scalar-validation.md) subsequently adds five scalar definitions to
+the same boundary; this document continues to specify unchanged INTEGER behavior.
+
 `validateField(request: FieldValidationRequest): FieldValidationResult` is the
 framework-independent local field validation boundary exported from
 `@alxarafe/ui-runtime`. AUR-VALID-001 introduced `IntegerFieldDefinition`;

@@ -107,6 +107,11 @@ AUR-VALID-002/003 adds the [exact DECIMAL subset](decimal-validation.md), includ
 normalized precision/scale, bounds and fractional multipleOf. Other types, backend
 profile conformance and document-wide validation remain pending.
 
+AUR-VALID-004 adds [local STRING/TEXT/BOOLEAN/ENUM/BINARY validation](scalar-validation.md),
+including Unicode scalar lengths and canonical standard Base64. Pattern-bearing
+definitions diagnose unsupported checks; VALID-009 pattern execution, temporal/UUID
+validation, backend parity and document-wide workflows remain pending.
+
 INTEGER is one semantic type. The active ARP-INTEGER-001 contract candidate supplies
 effective capacity through optional `bits` (8, 16, 32 or 64) and `signed`, alongside
 exact `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum` and `multipleOf`

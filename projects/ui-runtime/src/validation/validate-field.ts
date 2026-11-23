@@ -1,6 +1,7 @@
 /** SPDX-License-Identifier: Apache-2.0 */
 import type { PathSegment, ValuePath } from '../form/form-definition.js';
 import type { EditingInput, ValueSlot } from '../state/document-state.js';
+import { scalarLength, canonicalBase64 } from './scalar-values.js';
 import {
     integerMatch,
     numericTextLimit,
@@ -40,6 +41,40 @@ export interface DecimalFieldDefinition {
         readonly scale?: number;
     };
 }
+export interface TextConstraints {
+    readonly minimumLength?: number;
+    readonly maximumLength?: number;
+}
+interface ScalarDefinition {
+    readonly required: boolean;
+    readonly nullable: boolean;
+}
+export interface StringFieldDefinition extends ScalarDefinition {
+    readonly type: 'STRING';
+    readonly constraints?: TextConstraints;
+}
+export interface TextFieldDefinition extends ScalarDefinition {
+    readonly type: 'TEXT';
+    readonly constraints?: TextConstraints;
+}
+export interface BooleanFieldDefinition extends ScalarDefinition {
+    readonly type: 'BOOLEAN';
+}
+export interface EnumFieldDefinition extends ScalarDefinition {
+    readonly type: 'ENUM';
+    readonly choices: readonly string[];
+    readonly constraints?: TextConstraints;
+}
+export interface BinaryFieldDefinition extends ScalarDefinition {
+    readonly type: 'BINARY';
+    readonly format: 'base64';
+}
+type ScalarFieldDefinition =
+    | StringFieldDefinition
+    | TextFieldDefinition
+    | BooleanFieldDefinition
+    | EnumFieldDefinition
+    | BinaryFieldDefinition;
 export type LocalValidationCode =
     | 'required'
     | 'null-not-allowed'
@@ -53,7 +88,12 @@ export type LocalValidationCode =
     | 'minimum'
     | 'maximum'
     | 'multiple-of'
-    | 'input-limit';
+    | 'input-limit'
+    | 'minimum-length'
+    | 'maximum-length'
+    | 'invalid-unicode'
+    | 'enum'
+    | 'binary-format';
 export type DefinitionDiagnosticCode =
     | 'definition'
     | 'capacity'
@@ -84,7 +124,7 @@ export type FieldValidationResult =
           readonly diagnostics: readonly [DefinitionDiagnostic, ...DefinitionDiagnostic[]];
       };
 export interface FieldValidationRequest {
-    readonly definition: IntegerFieldDefinition | DecimalFieldDefinition;
+    readonly definition: IntegerFieldDefinition | DecimalFieldDefinition | ScalarFieldDefinition;
     readonly input: EditingInput;
     readonly path: ValuePath;
 }
@@ -208,7 +248,15 @@ function resolveInteger(definition: IntegerFieldDefinition) {
                 );
         }
     }
-    return { type: 'INTEGER' as const, intrinsicMin, intrinsicMax, min, max, divisor };
+    return {
+        family: 'numeric' as const,
+        type: 'INTEGER' as const,
+        intrinsicMin,
+        intrinsicMax,
+        min,
+        max,
+        divisor,
+    };
 }
 
 function resolveDecimal(definition: DecimalFieldDefinition) {
@@ -276,6 +324,8 @@ function resolveDecimal(definition: DecimalFieldDefinition) {
         definitionError('multiple-of-definition', 'multipleOf must be a positive decimal.');
     return {
         type: 'DECIMAL' as const,
+        family: 'numeric' as const,
+        allowExponent: definition.allowExponent,
         minimum,
         maximum,
         divisor,
@@ -283,13 +333,80 @@ function resolveDecimal(definition: DecimalFieldDefinition) {
         scale: counter(constraints?.scale, 'scale'),
     };
 }
+function resolveScalar(definition: ScalarFieldDefinition) {
+    const type = definition.type;
+    const required = [
+        'type',
+        'required',
+        'nullable',
+        ...(type === 'ENUM' ? ['choices'] : type === 'BINARY' ? ['format'] : []),
+    ];
+    const textual = type === 'STRING' || type === 'TEXT' || type === 'ENUM';
+    if (
+        !shape(definition, required, textual ? ['constraints'] : []) ||
+        typeof definition.required !== 'boolean' ||
+        typeof definition.nullable !== 'boolean'
+    )
+        definitionError(
+            'definition',
+            'A supported scalar definition with explicit presence and nullability is required.',
+        );
+    if (type === 'BINARY' && definition.format !== 'base64')
+        definitionError('definition', 'BINARY requires the explicit base64 profile.');
+    const constraints = 'constraints' in definition ? definition.constraints : undefined;
+    if (constraints && typeof constraints === 'object' && Object.hasOwn(constraints, 'pattern'))
+        definitionError('constraint', 'Pattern validation is not supported; pending VALID-009.');
+    if (constraints !== undefined && !shape(constraints, [], ['minimumLength', 'maximumLength']))
+        definitionError('constraint', 'Unsupported text constraints.');
+    function counter(value: unknown): number | undefined {
+        if (value === undefined) return undefined;
+        if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0)
+            definitionError(
+                'constraint',
+                'Text lengths must be nonnegative safe integer counters.',
+            );
+        return value;
+    }
+    const minimumLength = counter(constraints?.['minimumLength']),
+        maximumLength = counter(constraints?.['maximumLength']);
+    if (minimumLength !== undefined && maximumLength !== undefined && minimumLength > maximumLength)
+        definitionError('constraint', 'The minimum text length exceeds the maximum.');
+    let choices: Set<string> | undefined;
+    if (type === 'ENUM') {
+        if (!Array.isArray(definition.choices) || !definition.choices.length)
+            definitionError('definition', 'ENUM requires a nonempty ordered string catalogue.');
+        choices = new Set<string>();
+        for (const choice of definition.choices) {
+            if (
+                typeof choice !== 'string' ||
+                scalarLength(choice) === undefined ||
+                choices.has(choice)
+            )
+                definitionError(
+                    'definition',
+                    'ENUM choices must be unique well-formed Unicode strings.',
+                );
+            choices.add(choice);
+        }
+    }
+    return { family: 'scalar' as const, type, minimumLength, maximumLength, choices };
+}
 function resolve(definition: FieldValidationRequest['definition']) {
-    return definition?.type === 'DECIMAL'
-        ? resolveDecimal(definition)
-        : resolveInteger(definition as IntegerFieldDefinition);
+    switch (definition?.type) {
+        case 'DECIMAL':
+            return resolveDecimal(definition);
+        case 'STRING':
+        case 'TEXT':
+        case 'BOOLEAN':
+        case 'ENUM':
+        case 'BINARY':
+            return resolveScalar(definition);
+        default:
+            return resolveInteger(definition as IntegerFieldDefinition);
+    }
 }
 
-/** Pure local INTEGER/DECIMAL validation. Never modifies editing state. */
+/** Pure local validation for the implemented semantic types. Never modifies editing state. */
 export function validateField(request: FieldValidationRequest): FieldValidationResult {
     const path = snapshotPath(request.path);
     let resolved: ReturnType<typeof resolve>;
@@ -329,6 +446,16 @@ export function validateField(request: FieldValidationRequest): FieldValidationR
         issue('null-not-allowed', 'Explicit null is not allowed.');
         return invalid();
     }
+    if (resolved.type === 'BOOLEAN') {
+        if (
+            shape(input, ['kind', 'value']) &&
+            input.kind === 'value' &&
+            typeof input.value === 'boolean'
+        )
+            return valid({ kind: 'value', value: input.value });
+        issue('type', 'BOOLEAN requires a boolean value slot.');
+        return invalid();
+    }
     const text =
         shape(input, ['kind', 'text']) && input.kind === 'raw'
             ? input.text
@@ -338,6 +465,28 @@ export function validateField(request: FieldValidationRequest): FieldValidationR
     if (typeof text !== 'string') {
         issue('type', `${resolved.type} requires exact text.`);
         return invalid();
+    }
+    if (resolved.family === 'scalar') {
+        if (resolved.type === 'BINARY') {
+            if (!canonicalBase64(text))
+                issue(
+                    'binary-format',
+                    'Use canonical standard Base64 with correct padding and no whitespace.',
+                );
+        } else {
+            const length = scalarLength(text);
+            if (length === undefined) {
+                issue('invalid-unicode', 'Text contains an isolated Unicode surrogate.');
+                return invalid();
+            }
+            if (resolved.minimumLength !== undefined && length < resolved.minimumLength)
+                issue('minimum-length', 'Text is shorter than the declared minimum length.');
+            if (resolved.maximumLength !== undefined && length > resolved.maximumLength)
+                issue('maximum-length', 'Text is longer than the declared maximum length.');
+            if (resolved.type === 'ENUM' && !resolved.choices!.has(text))
+                issue('enum', 'Select a declared choice.');
+        }
+        return issues.length ? invalid() : valid({ kind: 'value', value: text });
     }
     if (text.length > numericTextLimit) {
         issue(
@@ -349,7 +498,7 @@ export function validateField(request: FieldValidationRequest): FieldValidationR
         return invalid();
     }
     if (resolved.type === 'DECIMAL') {
-        const parsed = parseNumeric(text, request.definition);
+        const parsed = parseNumeric(text, resolved);
         if (!parsed.ok) {
             issue(
                 parsed.reason === 'limit' ? 'input-limit' : 'decimal-syntax',

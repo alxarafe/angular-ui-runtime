@@ -1,5 +1,10 @@
 # UI Runtime 1.0 API and internal contract design
 
+AUR-VALID-004 adds [local scalar validation](../contracts/scalar-validation.md) for
+STRING, TEXT, BOOLEAN, ENUM and BINARY to the same boundary. Seven definitions are
+now implemented; temporal/UUID definitions and pattern execution remain unpublished.
+Runtime pattern-bearing text constraints explicitly diagnose unsupported validation.
+
 AUR-VALID-002/003 extends `validateField` with [exact DECIMAL validation](../contracts/decimal-validation.md).
 The implemented request definition union contains INTEGER and DECIMAL only; decimal
 grammar/normalization/comparison are shared with STATE. The provisional broader
