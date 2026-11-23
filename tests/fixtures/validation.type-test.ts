@@ -3,6 +3,12 @@ import {
     type EditingInput,
     type IntegerFieldDefinition,
     type DecimalFieldDefinition,
+    type StringFieldDefinition,
+    type TextFieldDefinition,
+    type BooleanFieldDefinition,
+    type EnumFieldDefinition,
+    type BinaryFieldDefinition,
+    type TextConstraints,
     type FieldValidationResult,
     type ValuePath,
 } from '../../projects/ui-runtime/src/public-api.js';
@@ -35,7 +41,33 @@ const decimal: DecimalFieldDefinition = {
 };
 validateField({ definition: decimal, input, path });
 // @ts-expect-error unsupported semantic types are not silently unchecked
-validateField({ definition: { type: 'BOOLEAN', required: true, nullable: false }, input, path });
+validateField({ definition: { type: 'UUID', required: true, nullable: false }, input, path });
+const lengths: TextConstraints = { minimumLength: 0, maximumLength: 50000 };
+const scalars: (
+    | StringFieldDefinition
+    | TextFieldDefinition
+    | BooleanFieldDefinition
+    | EnumFieldDefinition
+    | BinaryFieldDefinition
+)[] = [
+    { type: 'STRING', required: true, nullable: false, constraints: lengths },
+    { type: 'TEXT', required: false, nullable: true, constraints: lengths },
+    { type: 'BOOLEAN', required: true, nullable: false },
+    { type: 'ENUM', required: true, nullable: true, choices: ['', 'OPEN'], constraints: lengths },
+    { type: 'BINARY', required: true, nullable: false, format: 'base64' },
+];
+for (const definition of scalars) validateField({ definition, input, path });
+// @ts-expect-error BINARY requires an explicit profile
+validateField({ definition: { type: 'BINARY', required: true, nullable: false }, input, path });
+validateField({
+    // @ts-expect-error BOOLEAN has no synthetic constraints
+    definition: { type: 'BOOLEAN', required: true, nullable: false, constraints: lengths },
+    input,
+    path,
+});
+// @ts-expect-error patterns remain unimplemented
+const unsupportedPattern: TextConstraints = { pattern: '.*' };
+void unsupportedPattern;
 const partial: IntegerFieldDefinition = {
     type: 'INTEGER',
     required: true,

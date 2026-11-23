@@ -1,5 +1,8 @@
 # Local exact DECIMAL validation (AUR-VALID-002/003)
 
+[AUR-VALID-004](scalar-validation.md) subsequently expands the boundary to seven
+implemented definitions; DECIMAL behavior and the numeric work policy below are unchanged.
+
 The existing `validateField` boundary now accepts either `IntegerFieldDefinition`
 or `DecimalFieldDefinition`. It still returns only immutable `valid`, `invalid` or
 `definition-error` results with typed paths. There are no pending obligations,

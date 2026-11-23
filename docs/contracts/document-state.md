@@ -155,6 +155,10 @@ AUR-VALID-001 now supplies [local INTEGER validation](integer-validation.md) ove
 these inputs and paths without changing STATE. The remaining validation catalogue
 and document-wide aggregation are still pending.
 
+[AUR-VALID-004](scalar-validation.md) adds STRING/TEXT/BOOLEAN/ENUM/BINARY validation
+without altering this model or its exact lexical equality. It does not normalize
+text, coerce booleans or install validation state on the document.
+
 `tests/state.test.mjs` covers immutable snapshots, exact equality, nested edits,
 multiple collections, multiset permutations, key stability, permissions, rejection,
 revision safety and reset. `tests/browser/specs/state.spec.mjs` covers the installed
