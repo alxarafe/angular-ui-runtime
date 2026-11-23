@@ -23,6 +23,15 @@ test('absent and empty layouts provide deterministic eligible field/action fallb
   }
 });
 
+test('artifact field definitions accept the canonical INTEGER artifact and reject obsolete widths', () => {
+  const quantity = { id: 'quantity', path: path('quantity'), artifact: 'field.INTEGER' };
+  const result = composeForm({ id: 'integers', label: 'Integers', fields: [quantity] });
+  assert.deepEqual(result.unplaced.map(field => field.id), ['quantity']);
+  assert.equal(result.unplaced[0].artifact, 'field.INTEGER');
+  for (const obsolete of ['field.INT8', 'field.UINT8', 'field.INT16', 'field.UINT16', 'field.INT32', 'field.UINT32', 'field.INT64'])
+    assert.throws(() => composeForm({ ...definition, fields: [{ ...field('legacy'), artifact: obsolete }] }), /Invalid field artifact/);
+});
+
 test('ordered tabs/sections/groups place each field once, diagnose references and keep exclusions absent', () => {
   const layout = { actions: [], tabs: [tab('second', [section('s', [group('g', [path('exact'), path('missing'), path('excluded'), path('exact')])])]), tab('first', [section('other', [group('g', [path('first'), path('exact')])])])] };
   const result = composeForm(definition, layout);
@@ -73,7 +82,7 @@ test('form presentation integrates with the same registry/resolver without chang
   ]) });
   try {
     const resolver = injector.get(ThemeResolver), service = injector.get(ThemeService);
-    assert.equal(THEME_ARTIFACTS.length, 20);
+    assert.equal(THEME_ARTIFACTS.length, 14);
     assert.equal(resolver.resolveComponent('form').name, 'DefaultFormPresentation');
     service.activate('frame'); assert.equal(resolver.resolveComponent('form'), AlternateFrame);
     service.activate('unknown'); assert.equal(resolver.resolveComponent('form').name, 'DefaultFormPresentation');

@@ -35,7 +35,7 @@ test('initializes installed package and renders default contracts', async ({ pag
   await expect(page.getByText(`Repository-local QA fixture · Package ${JSON.parse(readFileSync('/artifacts/testbed/build-evidence.json', 'utf8')).version}`)).toBeVisible();
   await expect(page.getByTestId('active-theme')).toHaveText('default');
   await expect(page.getByTestId('registered-themes')).toHaveText('default, qa-alternative');
-  await expect(page.getByTestId('artifact-count')).toHaveText('20');
+  await expect(page.getByTestId('artifact-count')).toHaveText('14');
   await expect(page.getByTestId('shell-default')).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'QA fixture navigation' })).toBeVisible();
   await expect(page.getByTestId('panel-default')).toBeVisible();

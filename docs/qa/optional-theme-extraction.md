@@ -123,7 +123,7 @@ consumer remains unchanged.
 `/default-theme/` now composes the real five packaged themes. Existing ten browser
 cases remain and ten new cases (five identities at 1280×800 and 390×844) verify:
 
-- All 20 resolved/mounted artifacts and exact override sets, complete default,
+- All 14 resolved/mounted artifacts and exact override sets, complete default,
   optional registration without activation and observable unknown-ID fallback.
 - Exact editing values, Alternative Yes/No/Not set output, mutation guards,
   app-owned draft/field/contribution DOM identity across every theme switch.
@@ -139,7 +139,7 @@ Intentional adaptations from the immutable ERBAS implementation:
 | --- | --- |
 | Alternative | Original green palette and three BOOLEAN choices. Minimal public renderer replaces inheritance from the ERBAS/default base; no list badge or future grid implementation. |
 | Cyberpunk | Original dark palette, accent border/panel wrapper, different workspace/sidebar and right tool rail. Rail reserves 12rem grid space instead of fixed 96px overlay, fitting real controls; below 680px it moves into normal flow after content. Tools follow the workspace in DOM/tab order so mobile ordering is not merely visual. All regions and native links remain reachable. Dark color-scheme makes Chromium calendar/clock indicators light without inversion filters. |
-| Vintage | Original warm tokens and Georgia/Times typography; all 20 components are unchanged default resolutions. No placeholder artifacts. |
+| Vintage | Original warm tokens and Georgia/Times typography; all 14 components are unchanged default resolutions. No placeholder artifacts. |
 | High Contrast | Original black/yellow/teal/white/magenta palette, stronger panel border/content and focus. Broad application section rules are omitted; emphasis is limited to owned panel and active navigation. Native controls use dark color-scheme. |
 
 Application-owned fixture controls/content differ from historical QA, so pixel

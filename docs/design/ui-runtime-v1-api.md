@@ -4,6 +4,11 @@ Additive follow-up: [AUR-THEME-PORTS-001](../contracts/theme-composition-v1.md)
 implements independent shell/navigation/panel composition for the legacy artifact
 layer. It does not publish or redesign this document's proposed menu/form/grid API.
 
+Breaking catalogue update: AUR-INTEGER-001 replaces the seven obsolete integer
+artifacts with one `field.INTEGER`, leaving fourteen mandatory artifacts. The
+design types below no longer encode intrinsic widths; effective capacity and
+constraints remain application/ARP metadata.
+
 AUR-DESIGN-001 · 2026-11-11 · Design baseline:
 `cdb830d1aab39338874d18a0e4d958b00d72f5bb` (remote main verified).
 
@@ -24,7 +29,7 @@ the production library and npm package. No application should import them.
 | D2: field validation | One local field validation boundary, discriminated definitions, exact text constraints and explicit absence/raw editing. No transport validator in widgets. | SemanticType, bounds, field definitions, paths and issue shapes are candidates for publication after implementation/consumer validation; none exported now. |
 | D3: patterns | Small portable ASCII subset with direct bounded scanning; every other backend regex stays server-only. No arbitrary JS RegExp execution. | Policy decided here; implementation, parity and adversarial runtime proof required. |
 | D4: editing document | One recursive field/object/collection tree; accepted and editing payloads share the shape. Stable UI row keys. Lock editing during save. | Internal prototype contracts; validate flat and aggregate reconciliation before publishing a session facade. |
-| D5: themes | Keep the existing 20 artifact keys and complete-default obligations. Optional new component map in the same registry/resolver, with library defaults. | Proposed extension only; future implementation must validate bindings and compatibility. |
+| D5: themes | Keep the existing 14 artifact keys and complete-default obligations. Optional new component map in the same registry/resolver, with library defaults. | Proposed extension only; future implementation must validate bindings and compatibility. |
 | D6: menus | One ordered data source; primary/secondary/account kinds; identities independent of kind and placement; host-owned overflow. | Definitions are publication candidates; placement/component ports remain provisional until browser proof. |
 | D7: composition | Keep ERBAS tabs/sections/groups and projection semantics; separate list and detail grids; callbacks/commands carry no HTTP. | Layout and component ports require implementation validation. |
 
@@ -64,13 +69,16 @@ normative inputs. Backend source inspection is not UI integration evidence.
 
 ## Fields, input and validation boundary
 
-`SemanticType` derives the 17 types from `FieldArtifact`. `IntegerType` excludes a
-nonexistent UINT64. `IntrinsicIntegerRanges` requires all seven integer entries;
-values are the exact string limits in VALID-001, separate from declared bounds.
-`FieldDefinition` is a discriminated union. BOOLEAN has no numeric constraints;
-integers accept exact bounds/multipleOf; DECIMAL adds precision/scale and exponent
-policy; STRING/TEXT and ENUM accept scalar-length and pattern constraints; ENUM requires
-choices; temporal fields accept exact temporal range bounds. UUID/date/time/binary
+`SemanticType` derives the 11 types from `FieldArtifact`. `IntegerType` is the one
+canonical `INTEGER`; it does not encode a width or signedness. Effective integer
+capacity (`bits` 8/16/32/64 and `signed`) and exact constraints come from the
+consuming application and its ARP adapters; `IntegerCapacity` and
+`ResolvedIntegerRange` are data shapes, not an inference engine. Obsolete seven-type
+integer identifiers are absent. `FieldDefinition` is a discriminated union. BOOLEAN
+has no numeric constraints; INTEGER accepts optional effective capacity plus exact
+bounds/multipleOf; DECIMAL adds precision/scale and exponent policy; STRING/TEXT and
+ENUM accept scalar-length and pattern constraints; ENUM requires choices; temporal
+fields accept exact temporal range bounds. UUID/date/time/binary
 specify profiles rather than arbitrary format names.
 FractionalDigits is an integer 0..7 initially; other profiles need separate review.
 Read-only is effective state supplied by the adapter; immutable-on-update and
@@ -392,7 +400,7 @@ provisional interfaces with recorded compatibility analysis before exporting the
 
 [AUR-EXTENSIBILITY-002](../contracts/optional-controls.md) implements an additive
 finite-domain control map in the existing registry/resolver. It does not implement
-or export the proposed ThemeComponents form/menu/grid layer above. Legacy twenty-key
+or export the proposed ThemeComponents form/menu/grid layer above. Legacy fourteen-key
 registration and resolution remain unchanged; optional control fallback searches
 compatible active-theme alternatives before default representations.
 
@@ -410,7 +418,7 @@ The [form-composition contract](../contracts/form-composition.md) publishes the 
 form host, a pure placement function, separate renderer contexts, ValuePath-compatible
 references and visual state/reveal ports. The existing registry/resolver now implements
 only the optional `form` component key. It resolves active → application default →
-core frame without adding to the twenty required artifacts.
+core frame without adding to the fourteen required artifacts.
 
 This refines D5's unpublished form port: `ThemeComponents.form` is a projecting
 `FormPresentation`, while the persistent `FormComposition` host owns navigation and

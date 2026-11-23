@@ -14,8 +14,8 @@ Vintage and High Contrast remain in ERBAS. No consumer repository was modified.
 `packages/themes/default/` is a separately compiled APF source package with its own
 entry point, tsconfigs, license, attribution, source hashes, manifest and CSS.
 It exports one complete `DEFAULT_THEME` with the reserved identity `default` and
-exactly 20 artifact bindings. Eight field component implementations cover the
-17 semantic mappings. `DEFAULT_ARTIFACTS` and the visual component classes are
+exactly 14 artifact bindings. Eight field component implementations cover the
+11 semantic mappings. `DEFAULT_ARTIFACTS` and the visual component classes are
 also public; there is no application service, HTTP model or theme loader.
 
 Core `@alxarafe/ui-runtime` remains a separate archive. It gains no implementation,
@@ -72,8 +72,8 @@ and blocked changes. Source boundary checks reject consumer/private imports and
 resource/login styles. Dependency lock preservation retains its previous negative
 tests and adds explicit two-archive coverage.
 
-At 1280×800 and 390×844, Chromium checks all 17 actual renderer mappings and
-application-observed results for BOOLEAN, STRING/TEXT, every integer width,
+At 1280×800 and 390×844, Chromium checks all 11 actual renderer mappings and
+application-observed results for BOOLEAN, STRING/TEXT, INTEGER,
 DECIMAL, UUID, DATE, TIME, DATETIME and ENUM. BINARY is output-only: its changed
 value is supplied by the application and displayed, not emitted by an invented
 file editor. Tests include null/indeterminate BOOLEAN, null-to-empty display with

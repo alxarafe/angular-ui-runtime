@@ -239,7 +239,7 @@ It uses one provider composition and public installed exports, with no ERBAS,
 generator, backend or production theme dependency. Candidate screenshots are not
 approved visual baselines or proof of all 1.0 requirements.
 
-All 20 required keys, protected complete default, one-hop resolution,
+All 14 required keys, protected complete default, one-hop resolution,
 `activate(id): boolean`, field bindings and provider isolation remain unchanged.
 These invariants remain intact in alpha.3. Independent Default and optional theme
 packages now exist; see [package versioning](package-versioning.md). Full 1.0
@@ -248,7 +248,7 @@ menu/overflow and cross-consumer acceptance remain open.
 Before real default-theme extraction, a separate task must adapt its imports,
 replace router-specific navigation with consumer handling, project consumer-owned
 shell extensions into regions, reconcile old bindings/projection attributes and
-package all 20 default artifacts plus CSS/assets. Package compatibility,
+package all 14 default artifacts plus CSS/assets. Package compatibility,
 separation of consumer-targeted CSS (such as resource-screen selectors),
 licensing/provenance, five-theme consumer/browser evidence and human visual review
 remain required; this task does not automatically adapt or migrate ERBAS themes.

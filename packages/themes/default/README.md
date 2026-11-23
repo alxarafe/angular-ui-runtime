@@ -58,9 +58,9 @@ Additional partial themes fall directly back to this complete `default`.
 
 Root exports: `DEFAULT_THEME`, `DEFAULT_ARTIFACTS`, `DefaultShell`,
 `DefaultNavigation`, `DefaultPanel`, and DefaultBoolean/String/Text/Number/Date/
-Time/Enum/BinaryRenderer. The complete definition has exactly 20 required mappings.
-UUID/DATETIME use string rendering; seven integer types and DECIMAL share exact
-text-number rendering. BINARY remains labelled output-only, not a file editor.
+Time/Enum/BinaryRenderer. The complete definition has exactly 14 required mappings.
+UUID/DATETIME use string rendering; INTEGER and DECIMAL share exact text-number
+rendering. BINARY remains labelled output-only, not a file editor.
 Subpath exports: `theme.css`, `theme-package.json`, `conformance.json`.
 
 All standard named regions are optional: topbar-start/actions, navigation-before/

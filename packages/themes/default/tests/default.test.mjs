@@ -45,14 +45,28 @@ test('ENUM distinguishes null, empty and sentinel-looking strings and rejects in
   } finally { injector.destroy(); }
 });
 
-test('numeric emit keeps exact strings and null without numeric coercion', () => {
+test('the canonical INTEGER renderer keeps exact strings and null without numeric coercion', () => {
   const injector = Injector.create({ providers: [] });
   try {
     const renderer = runInInjectionContext(injector, () => new DefaultNumberRenderer());
-    Object.defineProperty(renderer, 'context', { value: () => ({ id: 'n', label: 'Number', value: null }) });
+    const context = { id: 'n', label: 'Number', value: null };
+    Object.defineProperty(renderer, 'context', { value: () => context });
     const received = [];
     renderer.valueChange.subscribe(value => received.push(value));
-    for (const value of ['-9223372036854775808', '9007199254740993.123456789', null]) renderer.update(value);
-    assert.deepEqual(received, ['-9223372036854775808', '9007199254740993.123456789', null]);
+    const values = [
+      '-1', '1', '0', '-128', '127', '255', '-32768', '32767', '65535',
+      '-2147483648', '2147483647', '4294967295',
+      '-9223372036854775808', '9223372036854775807',
+      '18446744073709551615', '9007199254740993',
+      '-', '007', '1e3', '12.5', '9007199254740993.123456789', null,
+    ];
+    for (const value of values) renderer.update(value);
+    assert.deepEqual(received, values);
+    context.disabled = true;
+    renderer.update('999');
+    context.disabled = false;
+    context.readOnly = true;
+    renderer.update('999');
+    assert.deepEqual(received, values);
   } finally { injector.destroy(); }
 });

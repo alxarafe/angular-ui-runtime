@@ -114,7 +114,7 @@ components with the `context` input and exactly one catch-all projection, and fr
 the optional map. The same provider composition, theme selection and resolver serve
 this port, field rendering and existing artifacts; no second theme registry exists.
 Old definitions still register without changes, including all five packaged themes.
-The twenty base artifacts and their complete-default/fallback rules are unchanged.
+The fourteen base artifacts and their complete-default/fallback rules are unchanged.
 
 `FormPresentation` receives a dedicated `{ id, label }` object and projects
 host-owned content. The full catalogue, including excluded references, is never

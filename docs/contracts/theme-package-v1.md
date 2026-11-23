@@ -132,12 +132,11 @@ It cannot be disabled or removed. Failure of default validation is a fatal
 configuration failure: stop theme-dependent startup and provide host-owned error
 reporting; do not pretend another sparse theme is a valid fallback.
 
-The current mandatory set is exactly these 20 keys:
+The current mandatory set is exactly these 14 keys:
 
 ```text
 shell navigation panel
-field.BOOLEAN field.STRING field.TEXT
-field.INT8 field.UINT8 field.INT16 field.UINT16 field.INT32 field.UINT32 field.INT64
+field.BOOLEAN field.STRING field.TEXT field.INTEGER
 field.DECIMAL field.UUID field.DATE field.TIME field.DATETIME field.ENUM field.BINARY
 ```
 
@@ -159,7 +158,7 @@ For each legacy artifact resolution is exactly selected override → default.
 There is no parent identity, chained inheritance or previous-theme fallback.
 Missing overrides in sparse or empty maps are expected and MUST NOT trigger
 failure notifications. Invalid supplied overrides are rejected, not treated as
-intentional omissions. A complete optional theme can replace all 20 components;
+intentional omissions. A complete optional theme can replace all 14 components;
 CSS-only themes replace none. A structural theme replaces any of shell,
 navigation or panel and may also supply field overrides.
 
@@ -304,7 +303,7 @@ revision/lockfile, Docker commands, browser/environment, supplied overrides and
 capabilities, test results, logs and reviewed baseline revisions. Verify:
 
 - Public-export installation/build against every claimed compatibility profile,
-  default completeness, invalid registration rejection and all 20 fallback paths.
+  default completeness, invalid registration rejection and all 14 fallback paths.
 - CSS-only, sparse and structural selection; unknown/rejected requests; future
   lifecycle operations when implemented, including protected default and failures.
 - Definition → browser interaction → validation → emitted result, exact values,

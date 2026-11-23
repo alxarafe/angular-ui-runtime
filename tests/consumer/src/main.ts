@@ -21,11 +21,13 @@ class Consumer {
   private readonly resolver = inject(ThemeResolver);
   constructor() {
     const structure: StructureArtifact = ThemeArtifact.Shell;
-    const field: FieldArtifact = ThemeArtifact.FieldDecimal;
+    const decimal: FieldArtifact = ThemeArtifact.FieldDecimal;
+    const integer: FieldArtifact = ThemeArtifact.FieldInteger;
     this.registry.require(ThemeId.Default);
     this.theme.activate('css-only');
     this.resolver.resolve(structure);
-    this.resolver.resolve(field);
+    this.resolver.resolve(decimal);
+    this.resolver.resolve(integer);
     if (FIELD_RENDERER_BINDINGS.context !== 'context') throw new Error('Invalid public bindings');
   }
 }

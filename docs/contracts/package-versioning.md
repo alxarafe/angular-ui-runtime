@@ -70,7 +70,7 @@ optional package's `theme.css` in application global styles. Selectors are scope
 to their theme host/component boundaries. Existing browser regressions check
 inactive themes and unrelated content. CSS inclusion remains application-owned.
 
-Default supplies all 20 mandatory artifacts. Alternative overrides BOOLEAN only,
+Default supplies all 14 mandatory artifacts. Alternative overrides BOOLEAN only,
 Cyberpunk shell/panel, Vintage none (CSS-only), High Contrast panel only. Missing
 overrides resolve directly to Default. A runtime-only installation is supported
 when the application supplies its own complete, validated protected `default`.

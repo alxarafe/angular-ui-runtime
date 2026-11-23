@@ -45,7 +45,7 @@ export class QaField extends QaFieldBase {}
 @Component({ selector: 'qa-alternative-field', template: FIELD_TEMPLATE, host: { class: 'qa-field', 'data-renderer': 'alternative' } })
 export class QaAlternativeField extends QaFieldBase {}
 
-// All keys are registered, but the generic probes do not implement 17 semantic widgets.
+// All keys are registered, but the generic probes do not implement 11 semantic widgets.
 const defaults = {
   ...Object.fromEntries(THEME_ARTIFACTS.filter(key => key.startsWith('field.')).map(key => [key, QaField])),
   [ThemeArtifact.Shell]: QaShell,
