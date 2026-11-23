@@ -1,5 +1,11 @@
 # UI Runtime 1.0 API and internal contract design
 
+AUR-VALID-001 publishes the [local INTEGER validation boundary](../contracts/integer-validation.md).
+`validateField` accepts only `IntegerFieldDefinition`, existing `EditingInput` and
+`ValuePath`. It returns immutable parsed/invalid/definition-error results. Capacity
+requires a complete pair when present. The broader proposed eleven-type definitions,
+pending obligations and aggregate validation below remain unpublished.
+
 AUR-STATE-001-CORE publishes the smaller [immutable editing core](../contracts/document-state.md).
 It refines the proposed generic tree into one absent/value/raw document model with
 explicit comparison semantics and effective capabilities. Original/current snapshots,

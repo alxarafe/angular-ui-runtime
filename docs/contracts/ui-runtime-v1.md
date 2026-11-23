@@ -99,6 +99,10 @@ canonical value. Presentation localization must not rewrite the stored value.
 
 ## Validation (VALID)
 
+AUR-VALID-001 implements the [local INTEGER validation subset](integer-validation.md):
+presence/nullability, exact grammar, capacities, bounds, divisibility and definition
+diagnostics. Other semantic types and document-wide validation remain targets below.
+
 INTEGER is one semantic type. The active ARP-INTEGER-001 contract candidate supplies
 effective capacity through optional `bits` (8, 16, 32 or 64) and `signed`, alongside
 exact `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum` and `multipleOf`

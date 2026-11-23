@@ -1,16 +1,16 @@
 /** SPDX-License-Identifier: Apache-2.0 */
+import { integerMatch, numericTextLimit as limit } from './numeric-syntax.js';
 export type NumericSemantics =
     { readonly type: 'INTEGER' } | { readonly type: 'DECIMAL'; readonly allowExponent: boolean };
 
 // Work bounds, not semantic range/precision constraints. No powers or expanded zeros.
-const limit = 4096;
 function canonical(text: string, semantics: NumericSemantics): string | undefined {
     if (typeof text !== 'string' || text.length > limit) return undefined;
     const integer = semantics.type === 'INTEGER';
     if (!integer && (semantics.type !== 'DECIMAL' || typeof semantics.allowExponent !== 'boolean'))
         return undefined;
     const match = integer
-        ? /^([+-]?)([0-9]+)$/.exec(text)
+        ? integerMatch(text)
         : /^([+-]?)([0-9]+)(?:\.([0-9]+))?(?:[eE]([+-]?[0-9]+))?$/.exec(text);
     if (!match || match[0] !== text || (!integer && !semantics.allowExponent && match[4]))
         return undefined;
