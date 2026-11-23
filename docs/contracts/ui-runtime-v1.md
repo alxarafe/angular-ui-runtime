@@ -242,6 +242,12 @@ and editing; AUR-STATE-001 will provide the shared state boundary. Concrete coll
 placement APIs remain provisional until implementation evidence; AUR-FORM-001-R1
 adds no grids, collection editing, persistence or document-state implementation.
 
+AUR-STATE-001-CORE implements the [immutable editing core](document-state.md):
+accepted/current snapshots, neutral keyed operations and exact derived dirty state.
+Only those tested portions of STATE-001/STATE-002 are implemented. Validation,
+save/reconciliation, user-confirmed discard and navigation protection remain pending.
+The lifecycle requirements below remain normative targets.
+
 Track immutable original accepted values, effective edits, raw invalid input,
 touched state and nested collection changes outside visual widgets. Clean/dirty
 and valid/invalid are independent axes. Returning a field to its original exact
