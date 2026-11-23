@@ -6,23 +6,23 @@ import { UI_RUNTIME_VERSION } from '../out-tsc/tests/projects/ui-runtime/src/pub
 const json = (path) => JSON.parse(readFileSync(path, 'utf8'));
 
 test('public technical marker matches the distributable version', () => {
-  const pkg = json('projects/ui-runtime/package.json');
-  assert.equal(pkg.name, '@alxarafe/ui-runtime');
-  assert.equal(UI_RUNTIME_VERSION, pkg.version);
+    const pkg = json('projects/ui-runtime/package.json');
+    assert.equal(pkg.name, '@alxarafe/ui-runtime');
+    assert.equal(UI_RUNTIME_VERSION, pkg.version);
 });
 
 test('library keeps Angular external and has no application dependencies', () => {
-  const pkg = json('projects/ui-runtime/package.json');
-  assert.deepEqual(pkg.peerDependencies, { '@angular/core': '^22.0.0' });
-  assert.deepEqual(Object.keys(pkg.dependencies), ['tslib']);
-  assert.equal(pkg.sideEffects, false);
+    const pkg = json('projects/ui-runtime/package.json');
+    assert.deepEqual(pkg.peerDependencies, { '@angular/core': '^22.0.0' });
+    assert.deepEqual(Object.keys(pkg.dependencies), ['tslib']);
+    assert.equal(pkg.sideEffects, false);
 });
 
 test('production configuration preserves strict compilation and partial Angular output', () => {
-  const base = json('tsconfig.json');
-  const lib = json('projects/ui-runtime/tsconfig.lib.json');
-  assert.equal(base.compilerOptions.strict, true);
-  assert.equal(base.angularCompilerOptions.strictTemplates, true);
-  assert.equal(lib.angularCompilerOptions.compilationMode, 'partial');
-  assert.equal(json('projects/ui-runtime/ng-package.json').lib.entryFile, 'src/public-api.ts');
+    const base = json('tsconfig.json');
+    const lib = json('projects/ui-runtime/tsconfig.lib.json');
+    assert.equal(base.compilerOptions.strict, true);
+    assert.equal(base.angularCompilerOptions.strictTemplates, true);
+    assert.equal(lib.angularCompilerOptions.compilationMode, 'partial');
+    assert.equal(json('projects/ui-runtime/ng-package.json').lib.entryFile, 'src/public-api.ts');
 });

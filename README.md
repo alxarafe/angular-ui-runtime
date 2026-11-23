@@ -17,15 +17,17 @@ Docker Engine access and Bash are required. Node.js, npm and Angular CLI are sup
 Run from the repository root:
 
 ```sh
-./bin/test   # Reproducible dependency installation and automated tests
-./bin/check  # Complete validation, isolated consumer and Chromium QA smoke tests
-./bin/pack   # Reproducible installation, production build and verified npm tarball
-./bin/testbed # Docker-only QA preview at http://127.0.0.1:4173; Ctrl+C to stop
+./bin/test         # Reproducible dependency installation and automated tests
+./bin/check        # Complete validation, isolated consumer and Chromium QA smoke tests
+./bin/pack         # Reproducible installation, production build and verified npm tarball
+./bin/format       # Format maintained source files through ephemeral Docker
+./bin/format-check # Verify formatting without modifying files
+./bin/testbed      # Docker-only QA preview at http://127.0.0.1:4173; Ctrl+C to stop
 ```
 
-Each command runs in ephemeral containers as the host user's UID/GID. Source is mounted read-only; dependencies, temporary workspaces and the consumer live in container storage. Only `artifacts/` is writable on the host. Automated checks publish no ports and create no resident services or named volumes; the explicit testbed preview publishes only host loopback port 4173 until stopped. Repeated runs use `npm ci` with committed lockfiles and discard temporary dependencies on exit.
+Each command runs in ephemeral containers as the host user's UID/GID. Validation commands mount source read-only; `./bin/format` mounts it read-write and rewrites only maintained source directories. Dependencies, temporary workspaces and the consumer live in container storage, so no `node_modules` is written to the host. Automated checks publish no ports and create no resident services or named volumes; the explicit testbed preview publishes only host loopback port 4173 until stopped. Repeated runs use `npm ci` with committed lockfiles and discard temporary dependencies on exit.
 
-`./bin/check` runs TypeScript strict checking, automated bootstrap and Angular-compiled theme tests, the production library build and npm packaging validation. It inspects the tarball's identity, exports, ESM bundle, declarations, license and development-file exclusions. A separate temporary standalone Angular application installs the actual tarball and compiles using only its installed package exports. Its own lockfile pins the consumer toolchain. It is deleted after the check, including on failure.
+`./bin/check` first verifies formatting with Prettier 3.10.1 using the pinned workspace dependency, then runs TypeScript strict checking, automated bootstrap and Angular-compiled theme tests, the production library build and npm packaging validation. It inspects the tarball's identity, exports, ESM bundle, declarations, license and development-file exclusions. A separate temporary standalone Angular application installs the actual tarball and compiles using only its installed package exports. Its own lockfile pins the consumer toolchain. It is deleted after the check, including on failure.
 
 The consumer first runs `npm ci`, then installs the generated tarball with `npm install --no-save` while retaining lockfile resolution. Validation requires the consumer lockfile to remain unchanged and every initially installed dependency to retain its locked version, source and integrity; installed package manifests also confirm the versions. Only the runtime package may be added. Platform-specific optional dependencies absent after `npm ci` are not required. Any dependency drift fails the check before the public-package imports and production consumer build.
 
