@@ -100,11 +100,13 @@ types retain their instances. Frame replacement retains projected views; rendere
 replacement restores scoped logical focus without overriding a user focus move.
 
 Tables have captions and scoped column headers; editable controls have column/row
-labels. Repeated row actions include row labels. When row labels repeat,
-cell and row-action names append a presentation-only ` (row N)` suffix using the
+labels. Both grid types share the same internal row-label disambiguation.
+List selection buttons, detail cells and detail row actions include row labels.
+When row labels repeat, these accessible names append a presentation-only ` (row N)` suffix using the
 current one-based position. If that name collides with another supplied label, the
 suffix repeats until distinct. Unique labels retain their existing names. These
-ordinals update after reordering; stable keys and editing targets never change,
+ordinals update after reordering and row collection changes; selection and editing
+intents continue to target stable keys exclusively,
 and keys or other application metadata are not added to accessible names.
 A focusable, named horizontal scroll region keeps wide tables reachable at mobile
 sizes. `GridRow.message` is a

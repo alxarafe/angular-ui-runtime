@@ -77,6 +77,7 @@ const row = (key: string): DetailGridRow => ({
             ><button (click)="listCount.set(2)">Multiple list</button>
             <button (click)="form().revealField(headerPath)">Reveal document title</button>
             <button (click)="repeatLabels()">Use repeated row labels</button>
+            <button (click)="collidingLabels()">Use colliding row labels</button>
         </div>
         <aur-list-grid [context]="list()" (rowSelected)="selection.set($event)" /><output
             data-testid="selection"
@@ -247,6 +248,17 @@ export class GridTestbed {
             ...data,
             first: data['first']!.map((row) => ({ ...row, label: 'Repeated row' })),
         }));
+    }
+    collidingLabels(): void {
+        this.data.update((data) => ({
+            ...data,
+            first: [
+                { ...row('private-a'), label: 'Repeated' },
+                { ...row('private-b'), label: 'Repeated' },
+                { ...row('private-c'), label: 'Repeated (row 1)' },
+            ],
+        }));
+        this.listCount.set(3);
     }
     nextTheme(event: Event): void {
         event.preventDefault();

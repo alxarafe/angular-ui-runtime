@@ -113,6 +113,37 @@ test('semantic list empty, single and multiple rows; keyed selection and exact n
     await expect(list).toContainText('No rows.');
     await expect(list.getByRole('button')).toHaveCount(0);
 });
+test('list duplicate selection names avoid suffix collisions and follow stable keys after updates', async ({
+    page,
+}) => {
+    const list = page.getByRole('table', { name: 'Read-only list', exact: true });
+    const select = (label) => list.getByRole('button', { name: 'Select ' + label, exact: true });
+    const selection = page.getByTestId('selection');
+    await page.getByRole('button', { name: 'Use colliding row labels', exact: true }).click();
+    for (const label of ['Repeated (row 1) (row 1)', 'Repeated (row 2)', 'Repeated (row 1)'])
+        await expect(select(label)).toHaveCount(1);
+    expect(
+        await list
+            .getByRole('button')
+            .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('aria-label'))),
+    ).not.toEqual(expect.arrayContaining([expect.stringContaining('private-')]));
+    await select('Repeated (row 1) (row 1)').click();
+    await expect(selection).toHaveText('private-a');
+    await first(page)
+        .getByRole('button', { name: 'Move up Repeated (row 2)', exact: true })
+        .click();
+    await select('Repeated (row 2)').click();
+    await expect(selection).toHaveText('private-a');
+    await select('Repeated (row 1) (row 1)').click();
+    await expect(selection).toHaveText('private-b');
+    await first(page).getByRole('button', { name: 'Remove Repeated (row 2)', exact: true }).click();
+    await expect(select('Repeated')).toHaveCount(1);
+    await expect(select('Repeated (row 1)')).toHaveCount(1);
+    await select('Repeated').click();
+    await expect(selection).toHaveText('private-b');
+    await page.getByRole('button', { name: 'Empty list', exact: true }).click();
+    await expect(list.getByRole('button')).toHaveCount(0);
+});
 test('parent-owned header/two collections, cell/add/remove/move and deletion index shifts', async ({
     page,
 }) => {

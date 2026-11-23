@@ -131,6 +131,45 @@ test('duplicate labels use non-sensitive positional names without colliding with
         close();
     }
 });
+test('list duplicate names stay distinct while selection follows keys across collection updates', () => {
+    const rows = [
+        { ...row('private-a'), label: 'Repeated' },
+        { ...row('private-b'), label: 'Repeated' },
+        { ...row('private-c'), label: 'Repeated (row 1)' },
+        { ...row('private-d'), label: 'Repeated (row 1) (row 1)' },
+    ];
+    const initial = { ...context(), selectable: true, rows };
+    const { instance, events, close } = host(ListGrid, initial);
+    const labels = () => instance.grid().rows.map((row) => instance.rowLabel(row));
+    try {
+        assert.deepEqual(labels(), [
+            'Repeated (row 1) (row 1) (row 1)',
+            'Repeated (row 2)',
+            'Repeated (row 1)',
+            'Repeated (row 1) (row 1)',
+        ]);
+        assert.equal(
+            labels().some((label) => label.includes('private-')),
+            false,
+        );
+        instance.select(rows[0].key);
+        instance.context.set({ ...initial, rows: [rows[1], rows[0], rows[2], rows[3]] });
+        assert.equal(new Set(labels()).size, 4);
+        assert.equal(labels()[1], 'Repeated (row 2)');
+        instance.select(instance.grid().rows[1].key);
+        instance.context.set({ ...initial, rows: [rows[1]] });
+        assert.deepEqual(labels(), ['Repeated']);
+        instance.select('private-a');
+        instance.select('private-b');
+        instance.context.set({ ...initial, rows: [] });
+        assert.deepEqual(labels(), []);
+        instance.select('private-b');
+        assert.deepEqual(events, ['private-a', 'private-a', 'private-b']);
+        assert.equal(rows[0].label, 'Repeated');
+    } finally {
+        close();
+    }
+});
 test('immutable intents retain full typed collection/cell identity and never change application rows', () => {
     const original = context(),
         before = JSON.stringify(original);

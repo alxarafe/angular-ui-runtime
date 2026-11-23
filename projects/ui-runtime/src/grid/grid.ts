@@ -13,7 +13,28 @@ import {
     type DetailGridContext,
     type DetailGridRow,
     type ListGridContext,
+    type GridRow,
 } from './grid-definition.js';
+
+/** Ordinals describe presentation only; stable keys remain private event targets. */
+function rowLabels(rows: readonly GridRow[]): Map<string, string> {
+    const counts = new Map<string, number>();
+    for (const row of rows) counts.set(row.label, (counts.get(row.label) ?? 0) + 1);
+    const reserved = new Set(counts.keys()),
+        used = new Set<string>();
+    return new Map(
+        rows.map((row, index) => {
+            let label = row.label;
+            if (counts.get(label)! > 1) {
+                const suffix = ` (row ${index + 1})`;
+                label += suffix;
+                while (reserved.has(label) || used.has(label)) label += suffix;
+            }
+            used.add(label);
+            return [row.key, label] as const;
+        }),
+    );
+}
 
 const styles = `:host, aur-form-frame { display:block; min-width:0; max-width:100%; } .scroll { overflow-x:auto; max-width:100%; padding:.25rem; } table { border-collapse:collapse; width:100%; } th,td { padding:.5rem; border:1px solid currentColor; text-align:start; } caption { text-align:start; font-weight:bold; padding:.5rem; } button { font:inherit; padding:.5rem; margin:.25rem; } :focus-visible { outline:3px solid currentColor; outline-offset:2px; } aur-form-field { display:block; min-width:12rem; }`;
 @Component({
@@ -58,7 +79,7 @@ const styles = `:host, aur-form-frame { display:block; min-width:0; max-width:10
                                     <button
                                         type="button"
                                         (click)="select(row.key)"
-                                        [attr.aria-label]="'Select ' + row.label"
+                                        [attr.aria-label]="'Select ' + rowLabel(row)"
                                     >
                                         Select
                                     </button>
@@ -87,6 +108,10 @@ export class ListGrid {
         validateGrid(this.context());
         return this.context();
     });
+    private readonly rowLabels = computed(() => rowLabels(this.grid().rows));
+    protected rowLabel(row: GridRow): string {
+        return this.rowLabels().get(row.key)!;
+    }
     select(key: string): void {
         if (this.grid().selectable && this.grid().rows.some((row) => row.key === key))
             this.rowSelected.emit(key);
@@ -196,23 +221,7 @@ export class DetailGrid {
     );
     /** Ordinals describe presentation only; stable keys remain private event targets. */
     private readonly rowLabels = computed(() => {
-        const rows = this.grid().rows;
-        const counts = new Map<string, number>();
-        for (const row of rows) counts.set(row.label, (counts.get(row.label) ?? 0) + 1);
-        const reserved = new Set(counts.keys()),
-            used = new Set<string>();
-        return new Map(
-            rows.map((row, index) => {
-                let label = row.label;
-                if (counts.get(label)! > 1) {
-                    const suffix = ` (row ${index + 1})`;
-                    label += suffix;
-                    while (reserved.has(label) || used.has(label)) label += suffix;
-                }
-                used.add(label);
-                return [row.key, label] as const;
-            }),
-        );
+        return rowLabels(this.grid().rows);
     });
     protected rowLabel(row: DetailGridRow): string {
         return this.rowLabels().get(row.key)!;
