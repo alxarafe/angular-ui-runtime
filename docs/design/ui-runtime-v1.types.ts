@@ -4,7 +4,7 @@
  */
 import type { InputSignal, OutputEmitterRef, Type } from '@angular/core';
 import type {
-  FieldArtifact, FieldRenderer, FieldRendererContext, FieldValue, ThemeDefinition,
+  FieldArtifact, FieldRenderer, FieldRendererContext, FieldValue, ThemeDefinition, FormPresentation,
 } from '../../projects/ui-runtime/src/public-api.js';
 
 // Derive the catalogue from the existing artifact keys, not another registry.
@@ -281,7 +281,7 @@ export interface DetailGridComponent {
 }
 export interface ThemeComponents {
   readonly menus: Type<MenusComponent>;
-  readonly form: Type<FormComponent>;
+  readonly form: Type<FormPresentation>; // AUR-FORM-001: host-owned composition, replaceable frame only.
   readonly listGrid: Type<ListGridComponent>;
   readonly detailGrid: Type<DetailGridComponent>;
 }

@@ -402,3 +402,47 @@ and `resolveControl(id)` remain valid. A control's registered finite domain is i
 legacy default, not a universal field scale. The implemented finite-domain limits,
 capability trust boundary and future interval extension point are specified in the
 [optional-control contract](../contracts/optional-controls.md).
+
+
+### AUR-FORM-001: implemented host-owned composition
+
+The [form-composition contract](../contracts/form-composition.md) publishes the first
+form host, a pure placement function, separate renderer contexts, ValuePath-compatible
+references and visual state/reveal ports. The existing registry/resolver now implements
+only the optional `form` component key. It resolves active → application default →
+core frame without adding to the twenty required artifacts.
+
+This refines D5's unpublished form port: `ThemeComponents.form` is a projecting
+`FormPresentation`, while the persistent `FormComposition` host owns navigation and
+field views. The proposed whole-document `FormComponent` and document changes remain
+unpublished. The compile-only design types reference the published presentation port
+to retain old/new theme assignability; other proposed component keys remain pending.
+Published layout action references need only IDs; effective labels/enabled states
+come from the independent application-supplied action catalogue. Existing proposed
+ContextAction references remain structurally assignable. No document-state API,
+semantic validator or grid proposal is implemented by this increment.
+
+
+### AUR-FORM-001-R1: optional fields and diagnostic privacy
+
+The [form contract](../contracts/form-composition.md) now admits an additive field
+union: legacy artifact fields or discriminated optional-control fields. Selection
+and renderer context derive from one effective instance request through the existing
+registry/resolver. Legacy FormField remains an interface; composed field lists admit
+both variants. Reactive request changes may replace a renderer while retaining
+application data and scoped logical focus. No new required artifact is introduced.
+
+Placement diagnostics retain their programmatic frozen structure but are no longer
+rendered, including raw IDs, paths, excluded references and ARIA/hidden diagnostic
+content. Consumer-owned debug surfaces must likewise avoid protected DOM disclosure.
+
+Future detail composition supports zero/one/multiple independent collection identities
+and typed ValuePaths, with no first-detail convention. Collections may be placed in
+different tabs, sections or groups; columns, rows, effective permissions and editing
+capabilities may differ per collection. One logical document can supply a shared
+parent session and save operation across its collections, while independent resources
+may retain independent lifecycles. AUR-GRID-001 owns rendering/editing implementation;
+AUR-STATE-001 owns the shared state boundary. This is an invariant, not a new collection
+placement interface. Preserve an additive path/layout extension point and validate a
+concrete placement design through implementation before publishing it. Neither grids,
+collection editing, persistence nor document state is implemented by this correction.

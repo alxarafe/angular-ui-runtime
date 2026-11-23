@@ -6,7 +6,7 @@
 
 `@alxarafe/ui-runtime` is a general-purpose Angular UI runtime library, independent of backend technologies. ERBAS and Alixar-Solúcar are reference applications that inform its design, not limitations on its use.
 
-Implemented prerelease `0.3.0-alpha.3` provides the Angular 22 theme engine and exact-value field renderer contracts extracted from ERBAS. Version `1.0` plans reusable field validation, typed menus, forms, grids and document editing state; these capabilities are specified in the contract and design documents but are not implemented yet.
+Implemented prerelease `0.3.0-alpha.3` provides the Angular 22 theme engine, exact-value field renderer contracts extracted from ERBAS and reusable neutral form composition. Version `1.0` plans reusable field validation, typed menus, complete validation-aware forms, grids and document editing state; these remaining capabilities are specified in the contract and design documents but are not implemented yet.
 
 ## Requirements
 
@@ -29,7 +29,7 @@ Each command runs in ephemeral containers as the host user's UID/GID. Source is 
 
 The consumer first runs `npm ci`, then installs the generated tarball with `npm install --no-save` while retaining lockfile resolution. Validation requires the consumer lockfile to remain unchanged and every initially installed dependency to retain its locked version, source and integrity; installed package manifests also confirm the versions. Only the runtime package may be added. Platform-specific optional dependencies absent after `npm ci` are not required. Any dependency drift fails the check before the public-package imports and production consumer build.
 
-The private `apps/testbed/` app installs the actual core and five theme archives, preserves its locked dependencies and builds using public exports. `./bin/check` runs forty-eight Playwright browser tests at 1280×800 and 390×844, covering synthetic boundary scenarios and all five packaged themes. Screenshots, reports and archive metadata are written under `artifacts/testbed/`, outside the npm packages. Captures remain pending human visual approval. See [browser QA and human inspection](docs/qa/testbed.md).
+The private `apps/testbed/` app installs the actual core and five theme archives, preserves its locked dependencies and builds using public exports. `./bin/check` runs sixty-eight Playwright browser tests at 1280×800 and 390×844, covering synthetic boundary scenarios and all five packaged themes. Screenshots, reports and archive metadata are written under `artifacts/testbed/`, outside the npm packages. Captures remain pending human visual approval. See [browser QA and human inspection](docs/qa/testbed.md).
 
 The local artifact is:
 
@@ -65,7 +65,10 @@ Optional controls and ordered compatible alternatives are available through the
 same registry/resolver, with per-instance finite domains and presentation capabilities,
 without extending the twenty required base artifacts.
 See the [finite-domain contract and internal rating QA probe](docs/contracts/optional-controls.md).
-No rating widget is distributed; forms, grids and document state remain planned.
+No rating widget is distributed. [Form composition](docs/contracts/form-composition.md)
+now supplies simple/ordered layouts, field/action fallback, per-instance optional
+controls and visual navigation state. Technical placement diagnostics stay programmatic.
+Validation-aware document forms, grids and document state remain planned.
 
 ## Version 1.0 target contract
 

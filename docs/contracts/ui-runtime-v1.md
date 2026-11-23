@@ -208,6 +208,12 @@ changes never alter values, constraints or action semantics. Switching tabs,
 collapsing sections or changing mode/theme preserves editing state. Invalid fields
 in inactive tabs/sections get a visible summary and a focus/reveal path.
 
+AUR-FORM-001 implements the first neutral composition increment through the
+[form-composition contract](form-composition.md): separate catalogue/renderer
+contexts/layouts, deterministic placement and fallback, contextual intent, visual
+state and neutral reveal/focus. Validation/error summaries and document editing
+remain pending. This does not close the complete FORM/STATE/GRID release gate.
+
 ## Collections and editing lifecycle (GRID, STATE)
 
 Read-only/list grids display application-provided rows and navigation; they are
@@ -217,6 +223,16 @@ stable temporary row keys, field and row validation, aggregate errors and parent
 dirty/valid state. Removing or moving the wrong row after index changes is
 prohibited. Read-only cells cannot emit changes. No independent row CRUD request
 is required: adapters may save a complete header/lines aggregate atomically.
+
+Future forms MUST allow zero, one or multiple independently identified detail
+collections, without a privileged first/single detail. Each collection has a stable
+identity and typed ValuePath, may occupy a different tab/section/group, and has its
+own columns, rows, effective permissions and editing capabilities. Collections of
+one logical document can share one parent session/save operation; independent
+resources may retain independent lifecycles. AUR-GRID-001 will implement rendering
+and editing; AUR-STATE-001 will provide the shared state boundary. Concrete collection
+placement APIs remain provisional until implementation evidence; AUR-FORM-001-R1
+adds no grids, collection editing, persistence or document-state implementation.
 
 Track immutable original accepted values, effective edits, raw invalid input,
 touched state and nested collection changes outside visual widgets. Clean/dirty
