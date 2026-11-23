@@ -109,6 +109,8 @@ reset controlled visual state as appropriate.
 
 `revealField(path): boolean` is a neutral integration boundary: it selects the
 containing tab, expands its section and focuses the eligible input after rendering.
+Its DOM lookup is explicitly scoped to form-owned field outlets; nested detail
+cells with matching column IDs cannot capture a header-field reveal.
 It returns false for unknown/excluded fields. It neither constructs error summaries
 nor validates data. A future validation/document host may call it for issue paths;
 no temporary validation, dirty, save/discard or grid engine is included here.

@@ -147,6 +147,7 @@ import {
                                                 <legend>{{ group.label || group.id }}</legend>
                                                 @for (field of group.fields; track field.id) {
                                                     <aur-form-field
+                                                        data-aur-form-field
                                                         [field]="field"
                                                         [context]="boundContexts()[field.id]!"
                                                         [readOnly]="readOnly()"
@@ -184,6 +185,7 @@ import {
                         <legend>{{ layout() ? 'Additional fields' : 'Fields' }}</legend>
                         @for (field of composition().unplaced; track field.id) {
                             <aur-form-field
+                                data-aur-form-field
                                 [field]="field"
                                 [context]="boundContexts()[field.id]!"
                                 [readOnly]="readOnly()"
@@ -380,7 +382,9 @@ export class FormComposition {
         afterNextRender(
             () => {
                 const wrapper = [
-                    ...this.root.nativeElement.querySelectorAll<HTMLElement>('[data-aur-field]'),
+                    ...this.root.nativeElement.querySelectorAll<HTMLElement>(
+                        'aur-form-field[data-aur-form-field]',
+                    ),
                 ].find((node) => node.dataset['aurField'] === fieldId);
                 wrapper
                     ?.querySelector<HTMLElement>(

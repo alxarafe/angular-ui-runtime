@@ -1,7 +1,7 @@
 /** SPDX-License-Identifier: Apache-2.0
  * Neutral parent-document probe; application updates intentionally live only here.
  */
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal, viewChild } from '@angular/core';
 import {
     FormComposition,
     ListGrid,
@@ -75,6 +75,8 @@ const row = (key: string): DetailGridRow => ({
             ><button (click)="listCount.set(0)">Empty list</button
             ><button (click)="listCount.set(1)">Single list</button
             ><button (click)="listCount.set(2)">Multiple list</button>
+            <button (click)="form().revealField(headerPath)">Reveal document title</button>
+            <button (click)="repeatLabels()">Use repeated row labels</button>
         </div>
         <aur-list-grid [context]="list()" (rowSelected)="selection.set($event)" /><output
             data-testid="selection"
@@ -95,6 +97,8 @@ const row = (key: string): DetailGridRow => ({
     ],
 })
 export class GridTestbed {
+    readonly form = viewChild.required(FormComposition);
+    readonly headerPath = path('title');
     readonly theme = inject(ThemeService);
     readonly themes = [
         'default',
@@ -173,7 +177,7 @@ export class GridTestbed {
                     allowReorder: true,
                     columns: [
                         {
-                            id: 'quantity',
+                            id: 'title',
                             label: 'Quantity',
                             field: 'quantity',
                             artifact: 'field.INTEGER',
@@ -237,6 +241,12 @@ export class GridTestbed {
             }
             return { ...data, [intent.collectionId]: next };
         });
+    }
+    repeatLabels(): void {
+        this.data.update((data) => ({
+            ...data,
+            first: data['first']!.map((row) => ({ ...row, label: 'Repeated row' })),
+        }));
     }
     nextTheme(event: Event): void {
         event.preventDefault();

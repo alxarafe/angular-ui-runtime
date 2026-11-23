@@ -100,8 +100,14 @@ types retain their instances. Frame replacement retains projected views; rendere
 replacement restores scoped logical focus without overriding a user focus move.
 
 Tables have captions and scoped column headers; editable controls have column/row
-labels. Repeated row actions include row labels. A focusable, named horizontal
-scroll region keeps wide tables reachable at mobile sizes. `GridRow.message` is a
+labels. Repeated row actions include row labels. When row labels repeat,
+cell and row-action names append a presentation-only ` (row N)` suffix using the
+current one-based position. If that name collides with another supplied label, the
+suffix repeats until distinct. Unique labels retain their existing names. These
+ordinals update after reordering; stable keys and editing targets never change,
+and keys or other application metadata are not added to accessible names.
+A focusable, named horizontal scroll region keeps wide tables reachable at mobile
+sizes. `GridRow.message` is a
 plain application-provided row feedback message, associated with cell wrapper groups.
 Optional `FieldRendererContext.describedBy: readonly string[]` associates external
 feedback with the host wrapper and is also available to renderers. These are minimal

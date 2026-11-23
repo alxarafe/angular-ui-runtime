@@ -98,6 +98,39 @@ test('malformed columns, paths, duplicate keys and missing/extraneous cell targe
     ])
         assert.throws(() => validateGrid(invalid, true));
 });
+test('duplicate labels use non-sensitive positional names without colliding with unique labels', () => {
+    const rows = [
+        { ...row('private-key-a'), label: 'Repeated' },
+        { ...row('private-key-b'), label: 'Repeated' },
+        { ...row('private-key-c'), label: 'Repeated (row 1)' },
+    ];
+    const { instance, events, close } = host(DetailGrid, { ...context(), rows });
+    try {
+        const labels = () =>
+            instance.grid().rows.map((row) => instance.cell(row, instance.grid().columns[0]).label);
+        assert.deepEqual(labels(), [
+            'Value — Repeated (row 1) (row 1)',
+            'Value — Repeated (row 2)',
+            'Value — Repeated (row 1)',
+        ]);
+        assert.equal(
+            labels().some((label) => label.includes('private-key')),
+            false,
+        );
+        instance.context.set({ ...context(), rows: [rows[1], rows[0], rows[2]] });
+        assert.equal(new Set(labels()).size, 3);
+        instance.edit('private-key-b', 'value', '-');
+        assert.equal(events[0].key, 'private-key-b');
+        instance.context.set({ ...context(), rows: [rows[1]] });
+        assert.deepEqual(labels(), ['Value — Repeated']);
+        assert.deepEqual(
+            rows.map((row) => row.label),
+            ['Repeated', 'Repeated', 'Repeated (row 1)'],
+        );
+    } finally {
+        close();
+    }
+});
 test('immutable intents retain full typed collection/cell identity and never change application rows', () => {
     const original = context(),
         before = JSON.stringify(original);

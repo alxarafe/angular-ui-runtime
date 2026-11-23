@@ -135,7 +135,7 @@ export class ListGrid {
                                     <button
                                         type="button"
                                         [disabled]="blocked()"
-                                        [attr.aria-label]="'Remove ' + row.label"
+                                        [attr.aria-label]="'Remove ' + rowLabel(row)"
                                         (click)="remove(row.key)"
                                     >
                                         Remove
@@ -145,14 +145,14 @@ export class ListGrid {
                                     <button
                                         type="button"
                                         [disabled]="blocked() || index === 0"
-                                        [attr.aria-label]="'Move up ' + row.label"
+                                        [attr.aria-label]="'Move up ' + rowLabel(row)"
                                         (click)="step(row.key, -1)"
                                     >
                                         Move up</button
                                     ><button
                                         type="button"
                                         [disabled]="blocked() || index === grid().rows.length - 1"
-                                        [attr.aria-label]="'Move down ' + row.label"
+                                        [attr.aria-label]="'Move down ' + rowLabel(row)"
                                         (click)="step(row.key, 1)"
                                     >
                                         Move down
@@ -194,6 +194,29 @@ export class DetailGrid {
     readonly blocked = computed(
         () => this.readOnly() || this.grid().readOnly || !!this.grid().disabled,
     );
+    /** Ordinals describe presentation only; stable keys remain private event targets. */
+    private readonly rowLabels = computed(() => {
+        const rows = this.grid().rows;
+        const counts = new Map<string, number>();
+        for (const row of rows) counts.set(row.label, (counts.get(row.label) ?? 0) + 1);
+        const reserved = new Set(counts.keys()),
+            used = new Set<string>();
+        return new Map(
+            rows.map((row, index) => {
+                let label = row.label;
+                if (counts.get(label)! > 1) {
+                    const suffix = ` (row ${index + 1})`;
+                    label += suffix;
+                    while (reserved.has(label) || used.has(label)) label += suffix;
+                }
+                used.add(label);
+                return [row.key, label] as const;
+            }),
+        );
+    });
+    protected rowLabel(row: DetailGridRow): string {
+        return this.rowLabels().get(row.key)!;
+    }
     private path(key: string, field: string): ValuePath {
         return Object.freeze([
             ...snapshotGridPath(this.grid().path),
@@ -211,7 +234,7 @@ export class DetailGrid {
             id:
                 'aur-cell-' +
                 encodeURIComponent(JSON.stringify([this.grid().id, row.key, column.id])),
-            label: column.label + ' — ' + row.label,
+            label: column.label + ' — ' + this.rowLabel(row),
             value: row.values[column.field]!,
             readOnly: this.blocked() || options?.readOnly,
             disabled: this.grid().disabled || options?.disabled,

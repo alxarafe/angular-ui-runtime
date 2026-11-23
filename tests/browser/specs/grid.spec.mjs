@@ -15,6 +15,88 @@ const first = (page) =>
         .locator('aur-detail-grid')
         .filter({ has: page.getByRole('table', { name: 'First rows', exact: true }) });
 const event = (page) => page.getByTestId('grid-event');
+test('field reveal scopes the header despite earlier grid cells sharing its field ID', async ({
+    page,
+}) => {
+    const header = page.getByLabel('Document title', { exact: true }),
+        grid = first(page);
+    const earlier = grid.locator('aur-form-field[data-aur-field="title"]').first();
+    await expect(earlier.getByLabel('Quantity — Row a', { exact: true })).toBeVisible();
+    expect(
+        await earlier.evaluate(
+            (node) =>
+                !!(
+                    node.compareDocumentPosition(document.getElementById('grid-title')) &
+                    Node.DOCUMENT_POSITION_FOLLOWING
+                ),
+        ),
+    ).toBe(true);
+    for (const theme of ['default', 'grid-frame']) {
+        await page.getByRole('button', { name: theme, exact: true }).click();
+        await expect(page.getByRole('button', { name: theme, exact: true })).toHaveAttribute(
+            'aria-pressed',
+            'true',
+        );
+        await page.getByRole('button', { name: 'Reveal document title', exact: true }).click();
+        await expect(header).toBeFocused();
+        await expect(grid.getByLabel('Quantity — Row a', { exact: true })).not.toBeFocused();
+    }
+    await expect(event(page)).toHaveText('');
+});
+test('duplicate row labels and values have distinct controls/actions after keyed reorder', async ({
+    page,
+}) => {
+    const grid = first(page);
+    await page.getByRole('button', { name: 'Use repeated row labels', exact: true }).click();
+    const one = grid.getByLabel('Quantity — Repeated row (row 1)', { exact: true });
+    const two = grid.getByLabel('Quantity — Repeated row (row 2)', { exact: true });
+    await expect(one).toHaveCount(1);
+    await expect(two).toHaveCount(1);
+    await expect(one).toHaveValue('18446744073709551615');
+    await expect(two).toHaveValue('18446744073709551615');
+    for (const column of ['Quantity', 'Amount', 'Score', 'Locked'])
+        for (const position of [1, 2])
+            await expect(
+                grid.getByLabel(`${column} — Repeated row (row ${position})`, { exact: true }),
+            ).toHaveCount(1);
+    for (const action of ['Remove', 'Move up', 'Move down'])
+        for (const position of [1, 2])
+            await expect(
+                grid.getByRole('button', {
+                    name: `${action} Repeated row (row ${position})`,
+                    exact: true,
+                }),
+            ).toHaveCount(1);
+    await two.evaluate((node) => {
+        window.__repeatedRow = node;
+    });
+    await grid.getByRole('button', { name: 'Move up Repeated row (row 2)', exact: true }).click();
+    await expect(event(page)).toContainText('"kind":"move-row"');
+    expect(JSON.parse(await event(page).textContent())).toMatchObject({ key: 'b', before: 'a' });
+    await expect.poll(() => one.evaluate((node) => node === window.__repeatedRow)).toBe(true);
+    await one.fill('18446744073709551616');
+    await expect(event(page)).toContainText('"value":"18446744073709551616"');
+    expect(JSON.parse(await event(page).textContent())).toMatchObject({ kind: 'cell', key: 'b' });
+    for (const action of ['Remove', 'Move up', 'Move down'])
+        for (const position of [1, 2])
+            await expect(
+                grid.getByRole('button', {
+                    name: `${action} Repeated row (row ${position})`,
+                    exact: true,
+                }),
+            ).toHaveCount(1);
+    await grid.getByRole('button', { name: 'Remove Repeated row (row 2)', exact: true }).click();
+    await expect(grid.getByLabel('Quantity — Repeated row', { exact: true })).toHaveValue(
+        '18446744073709551616',
+    );
+    expect(JSON.parse(await event(page).textContent())).toMatchObject({
+        kind: 'remove-row',
+        key: 'a',
+    });
+    await expect(
+        grid.getByRole('button', { name: 'Remove Repeated row', exact: true }),
+    ).toHaveCount(1);
+});
 test('semantic list empty, single and multiple rows; keyed selection and exact numeric text', async ({
     page,
 }) => {
