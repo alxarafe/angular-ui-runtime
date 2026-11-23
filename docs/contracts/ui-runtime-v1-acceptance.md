@@ -27,17 +27,17 @@ not be interpreted as a successful 1.0 acceptance run.
 | FIELD-002 | Preserve exact integers, decimals and temporal precision through UI and emitted result. | INTEGER capacity extremes; >2^53; long decimals; seven fractional seconds; offsets. | unit, browser, consumer | tests/contracts/exact-values/; tests/browser/fields/ | partial | String emission probes and exact decimal-text browser input/output exist (E-QA-001); validation, other semantic types and transport proof remain absent. Design/type evidence: E-DESIGN-001 only. |
 | FIELD-003 | Separate definition, presence/raw edit, validation and presentation; retain invalid raw input. | Absent vs null; incomplete sign/decimal; invalid BOOLEAN edit envelope. | unit, browser | tests/contracts/editing/; tests/browser/fields/ | missing | No behavioral evidence yet. Design/type evidence: E-DESIGN-001 only. |
 | FIELD-004 | Preserve context/valueChange and optional flags/choices compatibly; no edits from disabled/read-only. | Existing renderer compiles; null; additive errors; mode switch. | integration, browser | tests/contracts/renderer-compatibility/; tests/browser/fields/ | partial | Context/binding probes and synthetic labelled, disabled/read-only browser controls exist (E-QA-001); compatibility evolution remains unverified. Design/type evidence: E-DESIGN-001 only. |
-| VALID-001 | Enforce exact INTEGER ranges from effective `(bits, signed)` capacity intersected with declared inclusive/exclusive bounds. | 8/16/32/64 signed and unsigned min/max, min−1/max+1, zero, negative unsigned, unsigned 64 maximum, above safe integer, exponent/fraction. | unit, browser | tests/validation/integers/; tests/browser/fields/ | missing | ARP-INTEGER-001 metadata is an input. No AUR dictionary engine or validator evidence exists; artifact simplification alone does not close this row. |
-| VALID-002 | Intersect intrinsic bounds with declared inclusive/exclusive minimum and maximum. | Equality; contradictory limits; extreme decimals; negative operands. | unit | tests/validation/bounds/ | missing | No evidence yet. |
+| VALID-001 | Enforce exact INTEGER ranges from effective `(bits, signed)` capacity intersected with declared inclusive/exclusive bounds. | 8/16/32/64 signed and unsigned min/max, min−1/max+1, zero, negative unsigned, unsigned 64 maximum, above safe integer, exponent/fraction. | unit, browser | tests/validation.test.mjs; tests/fixtures/validation.type-test.ts; tests/browser/specs/validation.spec.mjs | implemented | E-VALID-001: tested local INTEGER subcases, complete capacity pairs, exact grammar/arithmetic, bounds and correction. No dictionary inference or backend parity claim. |
+| VALID-002 | Intersect intrinsic bounds with declared inclusive/exclusive minimum and maximum. | Equality; contradictory limits; extreme decimals; negative operands. | unit | tests/validation.test.mjs | partial | E-VALID-001 covers INTEGER only; DECIMAL and broader numeric profiles remain pending. |
 | VALID-003 | Validate exact decimal precision, normalized scale and positive multipleOf. | Trailing zeros; 12.3400/1000/0.0012; exponent profile; fractional divisibility; zero divisor; NaN/infinity. | unit, consumer | tests/validation/decimal/; consumer evidence | missing | No evidence yet; backend profile conformance required. |
-| VALID-004 | Required checks presence independently of nullability and nonblank. | Absent/default; explicit null; empty/whitespace; all flag combinations; update omission. | unit, consumer | tests/validation/presence/; consumer evidence | missing | No evidence yet. |
+| VALID-004 | Required checks presence independently of nullability and nonblank. | Absent/default; explicit null; empty/whitespace; all flag combinations; update omission. | unit, consumer | tests/validation.test.mjs; consumer evidence pending | partial | E-VALID-001 covers all required/nullable combinations for INTEGER. Empty/whitespace are present but fail INTEGER syntax. Defaults, omission and external consumer conformance remain pending. |
 | VALID-005 | Length counts Unicode scalar values with no implicit trim/normalization. | Min/max ±1; astral char=1; combining sequence=2; isolated surrogate rejected. | unit, consumer | tests/validation/text/; consumer evidence | missing | ERBAS Array.from is source reference, not library evidence. |
 | VALID-006 | Validate BOOLEAN, exact enum membership and base64 profile. | String true; numeric boolean; undeclared/empty enum; malformed base64/null. | unit, browser | tests/validation/scalars/; tests/browser/fields/ | missing | No evidence yet. |
 | VALID-007 | Validate real Gregorian DATE, TIME precision/profile and explicit-offset DATETIME losslessly. | Leap years; invalid day; 24:00; missing offset; >7 TIME fractions; year bounds. | unit, consumer | tests/validation/temporal/; consumer evidence | missing | No evidence yet. |
 | VALID-008 | Validate canonical UUID under declared casing policy without invented version restrictions. | Malformed groups; case policy; valid variant/version texts; nullability. | unit, consumer | tests/validation/uuid/; consumer evidence | missing | No evidence yet. |
 | VALID-009 | Execute only supported safe bounded patterns; show unsupported patterns as server-only pending. | Unsafe repetition; incompatible dialect/flags; anchoring; Unicode; time limit. | unit, integration | tests/validation/patterns/ | missing | No runtime evidence yet; portable-ascii-v1 policy selected in E-DESIGN-001, with implementation/parity pending. |
-| VALID-010 | Invalid drafts remain editable with meaningful associated errors and cannot save successfully. | Invalid hidden-tab field; server rejection; unresolved server-only check. | browser, integration | tests/browser/validation/; tests/contracts/submission/ | missing | No evidence yet. |
-| VALID-011 | Diagnose invalid definitions and map constraints explicitly; backend retains domain authority. | Negative lengths; unsupported combinations; step mismatch; oversized digit/exponent input; permission/business rejection. | unit, consumer | tests/contracts/adapters/; consumer evidence | missing | Resource-controller and scalarInput inspected; no library replacement evidence. |
+| VALID-010 | Invalid drafts remain editable with meaningful associated errors and cannot save successfully. | Invalid hidden-tab field; server rejection; unresolved server-only check. | browser, integration | tests/browser/specs/validation.spec.mjs; submission evidence pending | partial | E-VALID-001 directly demonstrates editable INTEGER drafts, application-provided associated feedback and correction across themes. Hidden errors, server mapping, aggregate presentation and save blocking remain pending. |
+| VALID-011 | Diagnose invalid definitions and map constraints explicitly; backend retains domain authority. | Negative lengths; unsupported combinations; step mismatch; oversized digit/exponent input; permission/business rejection. | unit, consumer | tests/validation.test.mjs; adapter/consumer evidence pending | partial | E-VALID-001 directly demonstrates INTEGER definition/constraint/capacity/work-limit diagnostics. Other semantic constraints, adapter mapping, backend conformance and business rejection remain pending. |
 | MENU-001 | Named menus have unique identity separate from kind and placement; unlimited same-kind menus. | Zero/one/many; two primary, secondary and account menus; duplicate IDs. | unit, browser | tests/contracts/menus/; tests/browser/menus/ | missing | No behavioral evidence yet. Design/type evidence: E-DESIGN-001 only. |
 | MENU-002 | Render each valid nonempty menu/item once in input order; diagnose cycles/duplicate item IDs. | Nested children; equal labels; duplicate placement; empty menu. | unit, browser | tests/contracts/menus/; tests/browser/menus/ | missing | No evidence yet. |
 | MENU-003 | Provide labelled keyboard-accessible default/overflow for every unspecialized placement. | Many menus; unsupported placement; mobile; open/close focus restoration. | browser, visual | tests/browser/menus/; tests/visual/menus/ | missing | No evidence yet. |
@@ -242,7 +242,8 @@ compile-free renderer assertions. These tests verify lossless UI transport only;
 they make no numeric validation claim. `tests/form.test.mjs` proves the existing
 artifact-based form definition accepts `field.INTEGER` and rejects every obsolete
 identifier. VALID-001..002 remain missing until a separately authorized validator
-implements resolved-capacity and constraint checks with exact arithmetic.
+implements resolved-capacity and constraint checks with exact arithmetic. This
+historical gap is addressed for INTEGER by E-VALID-001 below; DECIMAL remains pending.
 
 ## E-GRID-001 — reusable lists and parent-owned detail intents
 
@@ -279,3 +280,17 @@ with one header and two collections at desktop/mobile sizes across theme changes
 STATE-001 and STATE-002 remain partial: no semantic validation or valid-state
 aggregation exists. STATE-003 through STATE-006 remain pending. In-memory reset is
 not confirmation, navigation protection, saving or reconciliation.
+
+## E-VALID-001 — local exact INTEGER and presence validation
+
+[AUR-VALID-001](integer-validation.md) supplies one framework-independent field
+boundary with immutable parsed, invalid and definition-error results. Pure tests
+cover all signed/unsigned capacities, exact grammar and arithmetic, presence/null
+combinations, inclusive/exclusive intersections, positive divisibility, malformed
+definitions, oversized inputs, full keyed paths and STATE compatibility. Compile
+contracts exclude unsupported types, partial capacities and Number field values.
+Installed-APF browser evidence covers invalid editable INTEGER text, application
+feedback, capacity overflow and correction across the five themes plus a structural
+frame at desktop/mobile sizes. Local success is not backend acceptance. No external
+consumer parity, DECIMAL, aggregate validation, hidden-error workflow or save blocking
+is claimed. VALID-003/005–009 remain pending; VALID-002/004/010/011 remain partial.

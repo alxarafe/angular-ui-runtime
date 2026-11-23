@@ -66,6 +66,17 @@ export type {
 
 export { exactNumericEqual } from './state/exact-numeric.js';
 export type { NumericSemantics } from './state/exact-numeric.js';
+export { validateField } from './validation/validate-field.js';
+export type {
+    IntegerBound,
+    IntegerFieldDefinition,
+    LocalValidationCode,
+    DefinitionDiagnosticCode,
+    ValidationIssue,
+    DefinitionDiagnostic,
+    FieldValidationResult,
+    FieldValidationRequest,
+} from './validation/validate-field.js';
 export {
     createDocumentState,
     applyDocumentChange,

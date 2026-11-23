@@ -147,6 +147,10 @@ is present. Save/reconciliation must explicitly establish an authoritative accep
 tree, map keys and address revisions; none of those transitions exists here. Reset
 alone does not satisfy STATE-004 confirmation requirements.
 
+AUR-VALID-001 now supplies [local INTEGER validation](integer-validation.md) over
+these inputs and paths without changing STATE. The remaining validation catalogue
+and document-wide aggregation are still pending.
+
 `tests/state.test.mjs` covers immutable snapshots, exact equality, nested edits,
 multiple collections, multiset permutations, key stability, permissions, rejection,
 revision safety and reset. `tests/browser/specs/state.spec.mjs` covers the installed
