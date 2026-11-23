@@ -12,7 +12,7 @@ import {
 } from '../out-tsc/tests/tests/fixtures/structure-components.js';
 import { DEFAULT_THEME, StructureProbe } from '../out-tsc/tests/tests/fixtures/theme-components.js';
 
-test('compiled structural ports are additive to the legacy registry and twenty-key fallback', () => {
+test('compiled structural ports are additive to the legacy registry and fourteen-key fallback', () => {
   const registry = new ThemeRegistry([DEFAULT_THEME, {
     id: 'independent', cssClass: 'independent', overrides: {
       [ThemeArtifact.Shell]: ShellPortProbe,

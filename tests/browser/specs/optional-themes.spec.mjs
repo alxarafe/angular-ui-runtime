@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const THEMES = {
-  default: { keys: ['shell', 'navigation', 'panel', ...['BOOLEAN', 'STRING', 'TEXT', 'INT8', 'UINT8', 'INT16', 'UINT16', 'INT32', 'UINT32', 'INT64', 'DECIMAL', 'UUID', 'DATE', 'TIME', 'DATETIME', 'ENUM', 'BINARY'].map(type => `field.${type}`)], background: 'rgb(243, 246, 250)' },
+  default: { keys: ['shell', 'navigation', 'panel', ...['BOOLEAN', 'STRING', 'TEXT', 'INTEGER', 'DECIMAL', 'UUID', 'DATE', 'TIME', 'DATETIME', 'ENUM', 'BINARY'].map(type => `field.${type}`)], background: 'rgb(243, 246, 250)' },
   alternative: { keys: ['field.BOOLEAN'], background: 'rgb(242, 247, 242)' },
   cyberpunk: { keys: ['shell', 'panel'], background: 'rgb(21, 20, 43)' },
   vintage: { keys: [], background: 'rgb(244, 236, 216)' },
@@ -14,14 +14,14 @@ const state = async page => JSON.parse(await page.getByTestId('package-resolutio
 const result = (page, id) => page.locator(`[data-field="${id}"] [data-testid="field-result"]`);
 async function activate(page, id) {
   await page.locator(`[data-package-theme="${id}"]`).click();
-  await expect(page.getByTestId('package-status')).toHaveText(`${id} · 20 artifacts`);
+  await expect(page.getByTestId('package-status')).toHaveText(`${id} · 14 artifacts`);
 }
 async function verifyResolution(page, id) {
   const current = await state(page);
   expect(Object.keys(THEMES).every(theme => current.registered.includes(theme))).toBe(true);
   expect(current.id).toBe(id);
   expect([...current.overrides].sort()).toEqual([...THEMES[id].keys].sort());
-  expect(current.artifacts).toHaveLength(20);
+  expect(current.artifacts).toHaveLength(14);
   for (const artifact of current.artifacts) {
     expect(artifact.directFallback).toBe(true);
     if (artifact.key.startsWith('field.')) {
@@ -61,7 +61,7 @@ for (const id of Object.keys(THEMES)) test(`${id}: actual optional archives, spa
   page.on('response', response => { if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
   await page.goto('/default-theme/');
   // Installing/registering optional definitions must not select any of them.
-  await expect(page.getByTestId('package-status')).toHaveText('default · 20 artifacts');
+  await expect(page.getByTestId('package-status')).toHaveText('default · 14 artifacts');
   await activate(page, id);
   const resolution = await verifyResolution(page, id);
   await expect(page.locator('aur-theme-shell')).toHaveClass(`theme-${id}`);
@@ -82,7 +82,7 @@ for (const id of Object.keys(THEMES)) test(`${id}: actual optional archives, spa
     await page.keyboard.press('Tab');
     await expect(page.getByRole('button', { name: 'Optional tool', exact: true })).toBeFocused();
   }
-  const edits = { STRING: 'Draft retained 😀', TEXT: 'Pending\napplication edit', INT64: '-9223372036854775808',
+  const edits = { STRING: 'Draft retained 😀', TEXT: 'Pending\napplication edit', INTEGER: '-9223372036854775808',
     DECIMAL: '9007199254740993.123456789', DATE: '2028-02-29', TIME: '23:45:12.123', DATETIME: '2028-02-29T23:45:12.1234567+02:00' };
   for (const [field, value] of Object.entries(edits)) {
     await page.locator(`#${field}`).fill(value);
@@ -177,7 +177,7 @@ for (const id of Object.keys(THEMES)) test(`${id}: actual optional archives, spa
     const previous = await state(page);
     await page.locator('#STRING').focus();
     await page.locator(`[data-package-theme="${next}"]`).evaluate(button => button.click());
-    await expect(page.getByTestId('package-status')).toHaveText(`${next} · 20 artifacts`);
+    await expect(page.getByTestId('package-status')).toHaveText(`${next} · 14 artifacts`);
     await verifyResolution(page, next);
     await expect(page.getByTestId('package-values')).toHaveText(values);
     const following = await state(page);
@@ -192,7 +192,7 @@ for (const id of Object.keys(THEMES)) test(`${id}: actual optional archives, spa
     expect(await page.evaluate(() => window.themeDraft === document.getElementById('package-application-draft') && window.themeTool === document.getElementById('package-tool') && window.themeString === document.getElementById('STRING'))).toBe(true);
   }
   await page.locator('#package-unknown').click();
-  await expect(page.getByTestId('package-status')).toHaveText('default · 20 artifacts');
+  await expect(page.getByTestId('package-status')).toHaveText('default · 14 artifacts');
   await expect(page.getByTestId('package-activation')).toHaveText('Activation: false');
   expect(await page.locator('.aur-default-shell').evaluate(element => getComputedStyle(element).backgroundColor)).toBe(THEMES.default.background);
   await expect(page.getByTestId('package-values')).toHaveText(values);

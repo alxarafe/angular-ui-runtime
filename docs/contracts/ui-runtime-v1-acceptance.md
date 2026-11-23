@@ -1,9 +1,9 @@
 # UI Runtime 1.0 mandatory acceptance matrix
 
 Normative companion to the [functional contract](ui-runtime-v1.md). All rows are
-mandatory for 1.0.0, including every listed subcase and all seven integer ranges
-and seventeen semantic types. IDs are stable; future work may append finer-grained
-cases without renumbering these requirements. Locations marked planned need not
+mandatory for 1.0.0, including every listed subcase, one canonical INTEGER artifact
+with resolved capacity/constraints, and eleven semantic types. IDs are stable;
+future work may append finer-grained cases without renumbering these requirements. Locations marked planned need not
 exist yet. Status describes implementation and required QA coverage, not a test result.
 
 `implemented` means present in the inspected baseline with existing coverage;
@@ -20,14 +20,14 @@ not be interpreted as a successful 1.0 acceptance run.
 | --- | --- | --- | --- | --- | --- | --- |
 | THEME-001 | Preserve registry validation, immutable sorted snapshots and standalone bindings. | Missing default/artifact; duplicates; malformed IDs; invalid components. | unit, integration | tests/theme.test.mjs | implemented | Existing registry tests; no browser claim. |
 | THEME-002 | Resolve sparse/CSS-only overrides directly to default; unknown activation resets; providers isolate state. | Empty override; all artifacts; unknown ID; two injectors. | unit | tests/theme.test.mjs | implemented | Existing resolution/isolation tests. |
-| THEME-003 | Every effective theme covers structure, navigation, 17 fields, forms, tables and accessibility. | Partial override; missing specialized table/navigation; reference themes. | browser, visual | tests/browser/themes/ | partial | Artifact completeness probes and synthetic shell/navigation/panel browser smoke exist (E-QA-001); full functional/reference themes remain unverified. |
+| THEME-003 | Every effective theme covers structure, navigation, 11 fields, forms, tables and accessibility. | Partial override; missing specialized table/navigation; reference themes. | browser, visual | tests/browser/themes/ | partial | Artifact completeness probes and synthetic shell/navigation/panel browser smoke exist (E-QA-001); full functional/reference themes remain unverified. |
 | THEME-004 | Switching theme preserves edits, errors, row identity/order, saving state and logical focus. | Dirty invalid field; focused replaced control; in-flight save. | browser | tests/browser/specs/smoke.spec.mjs; planned tests/browser/themes/state.spec.ts | missing | E-QA-001 retains fixture-owned scalar values only; no document-state/error/row/save proof. |
 | THEME-005 | Keep application identities separate; version any incompatible artifact/default obligations. | CSS-only application identity; old complete default after artifact addition. | integration, consumer | tests/contracts/theme-compatibility/ | partial | Only generic default exported today; evolution/consumer proof absent. Design/type evidence: E-DESIGN-001 only. |
-| FIELD-001 | Support all 17 types listed in contract with exact scalar semantics. | Each type; boolean/null; unsupported type; base64/enum. | unit, browser | tests/contracts/fields/; tests/browser/fields/ | partial | 17 artifact keys and scalar probes exist; widgets absent. Design/type evidence: E-DESIGN-001 only. |
-| FIELD-002 | Preserve exact integers, decimals and temporal precision through UI and emitted result. | INT64 extremes; >2^53; long decimals; seven fractional seconds; offsets. | unit, browser, consumer | tests/contracts/exact-values/; tests/browser/fields/ | partial | String emission probes and exact decimal-text browser input/output exist (E-QA-001); validation, other semantic types and transport proof remain absent. Design/type evidence: E-DESIGN-001 only. |
+| FIELD-001 | Support all 11 types listed in contract with exact scalar semantics. | Each type; boolean/null; unsupported type; base64/enum. | unit, browser | tests/contracts/fields/; tests/browser/fields/ | partial | 11 artifact keys and scalar probes exist; widgets absent. Design/type evidence: E-DESIGN-001 only. |
+| FIELD-002 | Preserve exact integers, decimals and temporal precision through UI and emitted result. | INTEGER capacity extremes; >2^53; long decimals; seven fractional seconds; offsets. | unit, browser, consumer | tests/contracts/exact-values/; tests/browser/fields/ | partial | String emission probes and exact decimal-text browser input/output exist (E-QA-001); validation, other semantic types and transport proof remain absent. Design/type evidence: E-DESIGN-001 only. |
 | FIELD-003 | Separate definition, presence/raw edit, validation and presentation; retain invalid raw input. | Absent vs null; incomplete sign/decimal; invalid BOOLEAN edit envelope. | unit, browser | tests/contracts/editing/; tests/browser/fields/ | missing | No behavioral evidence yet. Design/type evidence: E-DESIGN-001 only. |
 | FIELD-004 | Preserve context/valueChange and optional flags/choices compatibly; no edits from disabled/read-only. | Existing renderer compiles; null; additive errors; mode switch. | integration, browser | tests/contracts/renderer-compatibility/; tests/browser/fields/ | partial | Context/binding probes and synthetic labelled, disabled/read-only browser controls exist (E-QA-001); compatibility evolution remains unverified. Design/type evidence: E-DESIGN-001 only. |
-| VALID-001 | Enforce exact INT8/UINT8/INT16/UINT16/INT32/UINT32/INT64 inclusive ranges from contract. | Each min/max, min−1/max+1, zero, negative unsigned, exponent/fraction. | unit, browser | tests/validation/integers/; tests/browser/fields/ | missing | ERBAS source is reference only; no library validator evidence. |
+| VALID-001 | Enforce exact INTEGER ranges from effective `(bits, signed)` capacity intersected with declared inclusive/exclusive bounds. | 8/16/32/64 signed and unsigned min/max, min−1/max+1, zero, negative unsigned, unsigned 64 maximum, above safe integer, exponent/fraction. | unit, browser | tests/validation/integers/; tests/browser/fields/ | missing | ARP-INTEGER-001 metadata is an input. No AUR dictionary engine or validator evidence exists; artifact simplification alone does not close this row. |
 | VALID-002 | Intersect intrinsic bounds with declared inclusive/exclusive minimum and maximum. | Equality; contradictory limits; extreme decimals; negative operands. | unit | tests/validation/bounds/ | missing | No evidence yet. |
 | VALID-003 | Validate exact decimal precision, normalized scale and positive multipleOf. | Trailing zeros; 12.3400/1000/0.0012; exponent profile; fractional divisibility; zero divisor; NaN/infinity. | unit, consumer | tests/validation/decimal/; consumer evidence | missing | No evidence yet; backend profile conformance required. |
 | VALID-004 | Required checks presence independently of nullability and nonblank. | Absent/default; explicit null; empty/whitespace; all flag combinations; update omission. | unit, consumer | tests/validation/presence/; consumer evidence | missing | No evidence yet. |
@@ -173,7 +173,7 @@ requirements remain open; this evidence does not close the full MENU-004 gate.
 ## E-EXTENSIBILITY-002-R1 — instance-aware optional controls
 
 Corrective revision 001 supplies additive finite-domain/presentation requests in the
-existing registry/resolver, preserving twenty-key registration, legacy calls and
+existing registry/resolver, preserving fourteen-key registration, legacy calls and
 active-theme alternative priority. Engine/boundary evidence is in
 `tests/optional-controls.test.mjs` and `tests/rating-configuration.test.mjs`;
 `tests/browser/specs/rating.spec.mjs` exercises simultaneous scales, explicit null,
@@ -216,3 +216,30 @@ FORM remains partial. The documented zero/one/multiple detail-collection invaria
 are future AUR-GRID-001/AUR-STATE-001 requirements, not implementation or acceptance
 of grids, editing sessions, persistence or shared saving. No new collection-placement
 API is published. Captures remain candidates pending human review.
+
+## E-INTEGER-001 — one canonical INTEGER artifact
+
+AUR-INTEGER-001 aligns the unreleased AUR catalogue with the active ARP-INTEGER-001
+contract candidate. Seven mandatory identifiers (`field.INT8`, `field.UINT8`,
+`field.INT16`, `field.UINT16`, `field.INT32`, `field.UINT32`, `field.INT64`) are
+replaced by one `field.INTEGER`; no alias or compatibility layer is retained. The
+mandatory set is fourteen artifacts: three structural and eleven field artifacts.
+
+The presentation layer does not infer capacity or signedness from the artifact ID.
+The consuming application and its adapters supply effective `bits`, `signed`,
+`minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum` and `multipleOf`
+metadata from the ARP contract. AUR does not implement the ARP dictionary engine or
+infer constraints. Rendering an INTEGER and transporting its exact string are not
+numeric validation.
+
+`tests/browser/specs/default-theme.spec.mjs` keeps one canonical renderer contract
+with table-driven exact-value coverage: negative and positive values, zero, signed
+and unsigned 8/16/32-bit boundaries, signed 64-bit minimum/maximum, the unsigned
+64-bit maximum `18446744073709551615`, values above the JavaScript safe integer
+limit, invalid-looking raw strings and null, plus disabled/read-only event
+suppression. `packages/themes/default/tests/default.test.mjs` adds equivalent
+compile-free renderer assertions. These tests verify lossless UI transport only;
+they make no numeric validation claim. `tests/form.test.mjs` proves the existing
+artifact-based form definition accepts `field.INTEGER` and rejects every obsolete
+identifier. VALID-001..002 remain missing until a separately authorized validator
+implements resolved-capacity and constraint checks with exact arithmetic.

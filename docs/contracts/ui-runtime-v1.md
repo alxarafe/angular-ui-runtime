@@ -42,7 +42,7 @@ fallback to default. Unknown activation restores default and returns false;
 provider compositions remain isolated. There is no inherited override chain.
 
 Every effective theme MUST provide accessible shell structure, navigation, panels,
-all 17 field renderers, simple/complex forms and both list and editable tables,
+all 11 field renderers, simple/complex forms and both list and editable tables,
 either directly or through fallback. Future form/table composition must reuse the
 engine; adding artifact keys requires a documented compatibility decision because
 complete-default registration would otherwise break existing consumers.
@@ -61,9 +61,13 @@ remain reachable, including fallback navigation and error-bearing hidden tabs.
 
 ## Fields and exact editing values (FIELD)
 
-The semantic catalogue is BOOLEAN, STRING, TEXT, INT8, UINT8, INT16, UINT16, INT32,
-UINT32, INT64, DECIMAL, UUID, DATE, TIME, DATETIME, ENUM and BINARY. No backend enum
-or database type becomes a public dependency.
+The semantic catalogue is BOOLEAN, STRING, TEXT, INTEGER, DECIMAL, UUID, DATE, TIME,
+DATETIME, ENUM and BINARY. One canonical INTEGER replaces the obsolete INT8/UINT8/
+INT16/UINT16/INT32/UINT32/INT64 artifacts; this is a deliberate breaking change to
+the unreleased contract, without aliases. No backend enum or database type becomes
+a public dependency. The renderer must not infer capacity or signedness from the
+artifact identifier: effective integer `bits`, `signed` and declared constraints
+arrive from the consuming application and its adapters.
 
 Keep four separate concepts:
 
@@ -95,23 +99,22 @@ canonical value. Presentation localization must not rewrite the stored value.
 
 ## Validation (VALID)
 
-Intrinsic integer limits are inclusive and intersect declared constraints:
-
-| Type | Minimum | Maximum |
-| --- | --- | --- |
-| INT8 | -128 | 127 |
-| UINT8 | 0 | 255 |
-| INT16 | -32768 | 32767 |
-| UINT16 | 0 | 65535 |
-| INT32 | -2147483648 | 2147483647 |
-| UINT32 | 0 | 4294967295 |
-| INT64 | -9223372036854775808 | 9223372036854775807 |
+INTEGER is one semantic type. The active ARP-INTEGER-001 contract candidate supplies
+effective capacity through optional `bits` (8, 16, 32 or 64) and `signed`, alongside
+exact `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum` and `multipleOf`
+constraints. The artifact identifier carries no range. A resolved `(bits, signed)`
+capacity yields an inclusive representable domain; declared bounds narrow it and do
+not widen it. Unsigned capacity rejects negative values, and the 64-bit unsigned
+maximum is `18446744073709551615`. Values above JavaScript's safe integer limit
+remain exact text. AUR consumes this effective metadata; it must not duplicate the
+ARP dictionary engine or add a second constraint-inference algorithm.
 
 Integer input uses signed base-ten integer text without fractions or exponents;
-unsigned types reject negative values. Canonical submission follows the adapter
-contract, without precision loss. DECIMAL accepts a documented exact decimal
-syntax, including exponent notation when the adapter supports it; reject NaN and
-infinities. Compare exact coefficients/exponents, not binary floating point.
+canonical submission follows the adapter contract, without precision loss. DECIMAL
+accepts a documented exact decimal syntax, including exponent notation when the
+adapter supports it; reject NaN and infinities. Compare exact coefficients/exponents,
+not binary floating point. Rendering an INTEGER, or preserving its raw text, is not
+numeric validation.
 
 Enforce applicable declared minimum/maximum with independent exclusive flags,
 minimum/maximum length, precision, scale, positive multipleOf, enum membership and
@@ -352,6 +355,6 @@ before declaring parity; undocumented disagreement blocks the relevant requireme
 
 The [optional-control contract](optional-controls.md) adds optional identifiers and
 ordered compatible alternatives to the existing registry/resolver. The closed
-catalogue and complete-default rule continue to apply to the twenty base artifacts;
+catalogue and complete-default rule continue to apply to the fourteen base artifacts;
 optional controls do not extend that required map. Existing direct artifact fallback
 is unchanged. This does not implement the planned forms, grids or editing engine.

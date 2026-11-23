@@ -89,6 +89,8 @@ test('rejects unknown artifacts, non-components, non-standalone components and i
     () => new ThemeRegistry([DEFAULT_THEME, { ...CSS_ONLY, overrides }]), pattern,
   );
   reject({ unknown: StructureProbe }, /Unknown or invalid/);
+  for (const obsolete of ['field.INT8', 'field.UINT8', 'field.INT16', 'field.UINT16', 'field.INT32', 'field.UINT32', 'field.INT64'])
+    reject({ [obsolete]: FieldProbe }, /Unknown or invalid/);
   for (const value of [undefined, null, {}, 'component', 42]) reject({ shell: value }, /Unknown or invalid/);
   for (const component of [class NotAComponent {}, NonStandaloneProbe]) reject({ shell: component }, /compiled standalone/);
   for (const component of [StructureProbe, MissingInputProbe, MissingOutputProbe, AliasedFieldProbe])

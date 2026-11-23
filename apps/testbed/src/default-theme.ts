@@ -23,8 +23,7 @@ export const DEFAULT_PACKAGE_THEMES: readonly ThemeDefinition[] = [
   { id: 'css-only', cssClass: 'theme-default', overrides: {} },
 ];
 const initial: Readonly<Record<string, FieldValue>> = {
-  BOOLEAN: null, STRING: null, TEXT: '', INT8: '-128', UINT8: '255', INT16: '-32768', UINT16: '65535',
-  INT32: '-2147483648', UINT32: '4294967295', INT64: '9223372036854775807',
+  BOOLEAN: null, STRING: null, TEXT: '', INTEGER: '-128',
   DECIMAL: '12345678901234567890.123456789', UUID: '550e8400-e29b-41d4-a716-446655440000',
   DATE: '2026-11-12', TIME: '12:34:56.123', DATETIME: '2026-11-12T12:34:56.1234567+01:00',
   ENUM: null, BINARY: null,

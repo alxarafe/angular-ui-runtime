@@ -9,7 +9,9 @@ import type {
 
 // Derive the catalogue from the existing artifact keys, not another registry.
 export type SemanticType = FieldArtifact extends `field.${infer S}` ? S : never;
-export type IntegerType = Extract<SemanticType, `${'INT' | 'UINT'}${number}`>;
+// One canonical integer semantic type. Capacity is effective application metadata.
+export type IntegerType = Extract<SemanticType, 'INTEGER'>;
+export type IntegerBits = 8 | 16 | 32 | 64;
 export type ExactText = string; // Syntax and range require runtime validation.
 export interface Bound {
   readonly value: ExactText;
@@ -21,6 +23,18 @@ export interface RangeConstraints {
 }
 export interface NumericConstraints extends RangeConstraints {
   readonly multipleOf?: ExactText;
+}
+// Effective capacity supplied by the consuming application/adapter, not inferred from the artifact.
+export interface IntegerCapacity {
+  readonly bits?: IntegerBits;
+  readonly signed?: boolean;
+}
+// Shape of a capacity whose 8/16/32/64-bit signedness and representable range are already resolved.
+export interface ResolvedIntegerRange {
+  readonly bits: IntegerBits;
+  readonly signed: boolean;
+  readonly minimum: ExactText;
+  readonly maximum: ExactText;
 }
 export interface DecimalConstraints extends NumericConstraints {
   readonly precision?: number;
@@ -43,7 +57,7 @@ interface FieldBase {
 }
 export type FieldDefinition = FieldBase & (
   | { readonly type: 'BOOLEAN'; readonly constraints?: never }
-  | { readonly type: IntegerType; readonly constraints?: NumericConstraints }
+  | { readonly type: IntegerType; readonly capacity?: IntegerCapacity; readonly constraints?: NumericConstraints }
   | { readonly type: 'DECIMAL'; readonly constraints?: DecimalConstraints;
       readonly allowExponent: boolean }
   | { readonly type: 'STRING' | 'TEXT'; readonly constraints?: TextConstraints }
@@ -54,13 +68,6 @@ export type FieldDefinition = FieldBase & (
   | { readonly type: 'DATETIME'; readonly format: 'offset-instant'; readonly fractionalDigits: number; readonly constraints?: RangeConstraints }
   | { readonly type: 'BINARY'; readonly format: 'base64' }
 );
-export interface IntrinsicIntegerRange {
-  readonly minimum: ExactText;
-  readonly maximum: ExactText;
-}
-// Proposed table shape only; the seven values remain normative in the contract.
-export type IntrinsicIntegerRanges = Readonly<Record<IntegerType, IntrinsicIntegerRange>>;
-
 export type ValueSlot =
   | { readonly kind: 'absent' }
   | { readonly kind: 'value'; readonly value: FieldValue };

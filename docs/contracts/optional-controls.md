@@ -1,7 +1,7 @@
 # Optional controls (AUR-EXTENSIBILITY-002, corrective revision 001)
 
 The existing registry/resolver supports optional controls without changing the
-20 `ThemeArtifact` identifiers, complete-default rule or `resolve()` behavior.
+14 `ThemeArtifact` identifiers, complete-default rule or `resolve()` behavior.
 No optional control is required in any theme. This refines the closed registration
 catalogue in UI Runtime 1.0 THEME; the proposed form/menu/grid layer remains pending.
 

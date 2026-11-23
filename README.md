@@ -63,7 +63,7 @@ The core npm artifact ships no visual themes or field widgets. Five separate exp
 
 Optional controls and ordered compatible alternatives are available through the
 same registry/resolver, with per-instance finite domains and presentation capabilities,
-without extending the twenty required base artifacts.
+without extending the fourteen required base artifacts.
 See the [finite-domain contract and internal rating QA probe](docs/contracts/optional-controls.md).
 No rating widget is distributed. [Form composition](docs/contracts/form-composition.md)
 now supplies simple/ordered layouts, field/action fallback, per-instance optional

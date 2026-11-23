@@ -50,7 +50,7 @@ for (const ids of scenarios) {
       const themes = [${definitions.join(',')}];
       const injector = Injector.create({providers: provideThemeRuntime(themes)});
       const service = injector.get(ThemeService), resolver = injector.get(ThemeResolver);
-      assert.equal(THEME_ARTIFACTS.length, 20);
+      assert.equal(THEME_ARTIFACTS.length, 14);
       for (const theme of themes) {
         assert.equal(service.activate(theme.id), true);
         for (const key of THEME_ARTIFACTS) assert.equal(resolver.resolve(key), theme.overrides[key] ?? DEFAULT_THEME.overrides[key]);

@@ -3,11 +3,19 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const edits = {
   STRING: 'Preserved draft 😀', TEXT: 'Multiple lines\nwith exact text',
-  INT8: '-127', UINT8: '254', INT16: '-32767', UINT16: '65534',
-  INT32: '-2147483647', UINT32: '4294967294', INT64: '-9223372036854775808',
   DECIMAL: '9007199254740993.1234567890123456789', UUID: '123e4567-e89b-42d3-a456-426614174000',
   DATE: '2028-02-29', TIME: '23:45:12.123', DATETIME: '2028-02-29T23:45:12.1234567+02:00',
 };
+// Exact UI transport only: none of these strings is semantically validated.
+const integerSamples = [
+  '-1', '1', '0',
+  '-128', '127', '0', '255',
+  '-32768', '32767', '0', '65535',
+  '-2147483648', '2147483647', '0', '4294967295',
+  '-9223372036854775808', '9223372036854775807',
+  '18446744073709551615', '9007199254740993',
+  '-', '', '007', '1e3', '12.5', ' 42 ',
+];
 const result = (page, id) => page.locator(`[data-field="${id}"] [data-testid="field-result"]`);
 
 test('installed default package covers every mapping, projection, state and accessible controls', async ({ page, browser }, info) => {
@@ -36,8 +44,8 @@ test('installed default package covers every mapping, projection, state and acce
     probe.remove();
     return JSON.stringify(styled) === JSON.stringify(unstyled);
   })).toBe(true);
-  await expect(page.getByTestId('package-status')).toHaveText('default · 20 artifacts');
-  await expect(page.locator('[data-field]')).toHaveCount(17);
+  await expect(page.getByTestId('package-status')).toHaveText('default · 14 artifacts');
+  await expect(page.locator('[data-field]')).toHaveCount(11);
   await expect(page.locator('aur-default-shell')).toHaveCount(1);
   await expect(page.locator('aur-default-panel')).toHaveCount(1);
   await expect(page.getByRole('navigation', { name: 'Application sections' })).toHaveCount(1);
@@ -56,6 +64,13 @@ test('installed default package covers every mapping, projection, state and acce
     await expect(page.locator(`#${id}`)).toHaveValue(value);
     await expect(result(page, id)).toHaveText(JSON.stringify(value));
   }
+  // One canonical INTEGER renderer preserves raw strings across the obsolete widths.
+  for (const value of integerSamples) {
+    await page.locator('#INTEGER').fill(value);
+    await expect(page.locator('#INTEGER')).toHaveValue(value);
+    await expect(result(page, 'INTEGER')).toHaveText(JSON.stringify(value));
+  }
+  await page.locator('#INTEGER').fill(integerSamples[0]);
   await page.locator('#ENUM').selectOption({ index: 1 });
   await expect(result(page, 'ENUM')).toHaveText('""');
   await page.locator('#ENUM').selectOption({ index: 0 });
@@ -72,7 +87,7 @@ test('installed default package covers every mapping, projection, state and acce
   const values = await page.getByTestId('package-values').textContent();
   for (const mode of ['Disable fields', 'Read-only fields']) {
     await page.getByRole('button', { name: mode, exact: true }).click();
-    for (const id of ['BOOLEAN', ...Object.keys(edits), 'ENUM']) {
+    for (const id of ['BOOLEAN', 'INTEGER', ...Object.keys(edits), 'ENUM']) {
       const control = page.locator(`#${id}`);
       if (mode === 'Disable fields' || ['BOOLEAN', 'ENUM'].includes(id)) await expect(control).toBeDisabled();
       else await expect(control).toHaveJSProperty('readOnly', true);
@@ -93,7 +108,7 @@ test('installed default package covers every mapping, projection, state and acce
     await expect(page.getByTestId('package-values')).toHaveText(values);
   }
   await page.getByRole('button', { name: 'Edit fields', exact: true }).click();
-  for (const id of ['BOOLEAN', ...Object.keys(edits), 'ENUM', 'BINARY']) {
+  for (const id of ['BOOLEAN', 'INTEGER', ...Object.keys(edits), 'ENUM', 'BINARY']) {
     expect(await page.locator(`#${id}`).evaluate(control => control.labels?.length)).toBe(1);
   }
   await page.getByRole('button', { name: 'Application action', exact: true }).click();
@@ -112,7 +127,7 @@ test('installed default package covers every mapping, projection, state and acce
   for (const id of ['package-structural', 'package-default', 'package-unknown']) {
     await page.locator('#STRING').focus();
     await page.locator(`#${id}`).evaluate(button => button.click());
-    await expect(page.getByTestId('package-status')).toHaveText(`${id === 'package-structural' ? 'independent-structure' : 'default'} · 20 artifacts`);
+    await expect(page.getByTestId('package-status')).toHaveText(`${id === 'package-structural' ? 'independent-structure' : 'default'} · 14 artifacts`);
     await expect(page.getByTestId('package-values')).toHaveText(values);
     await expect(page.locator('#STRING')).toBeFocused();
     expect(await page.evaluate(() => window.defaultDraft === document.getElementById('package-application-draft') && window.defaultTool === document.getElementById('package-tool') && window.defaultString === document.getElementById('STRING'))).toBe(true);
@@ -154,7 +169,7 @@ test('installed default package covers every mapping, projection, state and acce
   await page.screenshot({ path: `${directory}/full-page.png`, fullPage: true, animations: 'disabled' });
   const build = JSON.parse(readFileSync('/artifacts/theme-default-build.json'));
   writeFileSync(`${directory}/evidence.json`, JSON.stringify({ ...build, chromium: browser.version(), playwright: '1.58.2',
-    viewport: info.project.use.viewport, results: 'all 17 mappings; representative edits; BINARY application-supplied output only',
+    viewport: info.project.use.viewport, results: 'all 11 mappings; representative edits; BINARY application-supplied output only',
     focus, errors, screenshots: ['viewport.png', 'full-page.png'], visualApproval: 'pending human review' }, null, 2));
   expect(errors).toEqual([]);
 });

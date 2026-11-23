@@ -59,8 +59,8 @@ visual acceptance of ERBAS, Alixar/Solucar or the five reference themes in the
 provided by `provideThemeRuntime`; testbed outlets only instantiate resolved
 components and bind public input/output names.
 
-The default registers all 20 existing artifact keys. A generic field probe fills
-all 17 renderer slots to test registration, not to claim 17 semantic widgets exist.
+The default registers all 14 existing artifact keys. A generic field probe fills
+all 11 renderer slots to test registration, not to claim 11 semantic widgets exist.
 Browser scenarios exercise a string-backed exact decimal input, BOOLEAN checkbox,
 disabled/read-only controls, shell, navigation and panel. The alternative overrides
 panel and decimal renderer; shell, navigation and other fields use default fallback.

@@ -4,10 +4,10 @@ import type {
   ThemeArtifacts, ThemeDefinition,
 } from '../../projects/ui-runtime/src/public-api.js';
 import type {
-  SemanticType, IntegerType, FieldDefinition, ValueSlot, EditingInput,
+  SemanticType, IntegerType, IntegerBits, IntegerCapacity, ResolvedIntegerRange, FieldDefinition, ValueSlot, EditingInput,
   FieldValidation, ValidationIssue, DocumentObject, FieldEdit, SaveResult,
   ProposedRendererContext, EditingRenderer, ProposedThemeDefinition,
-  ThemeComponents, MenuDefinition, ValuePath, IntrinsicIntegerRanges,
+  ThemeComponents, MenuDefinition, ValuePath,
 } from '../../docs/design/ui-runtime-v1.types.js';
 
 type Assert<T extends true> = T;
@@ -15,11 +15,14 @@ type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends
   (<T>() => T extends B ? 1 : 2) ? true : false;
 type Extends<A, B> = A extends B ? true : false;
 type Catalogue = Assert<Equal<SemanticType,
-  'BOOLEAN' | 'STRING' | 'TEXT' | 'INT8' | 'UINT8' | 'INT16' | 'UINT16' |
-  'INT32' | 'UINT32' | 'INT64' | 'DECIMAL' | 'UUID' | 'DATE' | 'TIME' |
-  'DATETIME' | 'ENUM' | 'BINARY'>>;
+  'BOOLEAN' | 'STRING' | 'TEXT' | 'INTEGER' | 'DECIMAL' | 'UUID' | 'DATE' |
+  'TIME' | 'DATETIME' | 'ENUM' | 'BINARY'>>;
 type ArtifactParity = Assert<Equal<`field.${SemanticType}`, FieldArtifact>>;
-type RangeCompleteness = Assert<Equal<keyof IntrinsicIntegerRanges, IntegerType>>;
+type OneIntegerType = Assert<Equal<IntegerType, 'INTEGER'>>;
+type NoLegacyIntegerTypes = Assert<Equal<Extract<SemanticType, `${'INT' | 'UINT'}${number}`>, never>>;
+type IntegerCapacitySharesResolvedBits = Assert<Equal<ResolvedIntegerRange['bits'], Exclude<IntegerCapacity['bits'], undefined>>>;
+type IntegerBitsAreSupported = Assert<Equal<IntegerBits, 8 | 16 | 32 | 64>>;
+type IntegerRangeStaysExact = Assert<Equal<Pick<ResolvedIntegerRange, 'minimum' | 'maximum'>, { readonly minimum: string; readonly maximum: string }>>;
 type ExactBoundary = Assert<Equal<FieldValue, string | boolean | null>>;
 type ContextCompatibility = Assert<Extends<ProposedRendererContext, FieldRendererContext>>;
 type OldContextStillAccepted = Assert<Extends<FieldRendererContext, ProposedRendererContext>>;
@@ -84,8 +87,10 @@ function assignments(): void {
   const booleanRange: FieldDefinition = { id: 'flag', label: 'Flag', type: 'BOOLEAN', required: false, nullable: false, constraints: { multipleOf: '2' } };
   // @ts-expect-error ENUM must have declared choices.
   const enumeration: FieldDefinition = { id: 'status', label: 'Status', type: 'ENUM', required: true, nullable: false };
+  const integer: FieldDefinition = { id: 'quantity', label: 'Quantity', type: 'INTEGER', required: true, nullable: false,
+    capacity: { bits: 64, signed: false }, constraints: { minimum: { value: '0' }, maximum: { value: '18446744073709551615' }, multipleOf: '1' } };
   // @ts-expect-error Numeric boundaries must be exact text.
-  const numericRange: FieldDefinition = { id: 'n', label: 'N', type: 'INT64', required: true, nullable: false, constraints: { minimum: { value: 0 } } };
+  const numericRange: FieldDefinition = { id: 'n', label: 'N', type: 'INTEGER', required: true, nullable: false, constraints: { minimum: { value: 0 } } };
   // @ts-expect-error Successful parsing requires a value/presence result.
   const unparsed: FieldValidation = { state: 'valid' };
   // @ts-expect-error Invalid validation needs at least one issue.
@@ -104,7 +109,7 @@ function assignments(): void {
   const pendingIsValid: Extract<FieldValidation, { state: 'valid' }> = { state: 'pending', parsed: absent, checks: [{ path, reason: 'server-pattern' }] };
   void [compatible, exact, absent, explicitNull, intermediate, nested, rootError, menus,
     validEdit, pendingEdit, unparsedValidEdit, unparsedPendingEdit, parsedInvalidEdit,
-    lossy, date, missing, booleanRange, enumeration, numericRange, unparsed,
+    lossy, date, missing, booleanRange, enumeration, integer, numericRange, unparsed,
     emptyError, wrongSource, unstablePath, incompleteSave, misplaced, pendingIsValid];
 }
 void assignments;

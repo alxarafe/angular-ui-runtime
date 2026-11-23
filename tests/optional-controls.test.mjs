@@ -16,7 +16,7 @@ test('optional resolution prefers active alternatives before default requested a
   ], controls) });
   try {
     const resolver = injector.get(ThemeResolver), service = injector.get(ThemeService);
-    assert.equal(THEME_ARTIFACTS.length, 20);
+    assert.equal(THEME_ARTIFACTS.length, 14);
     assert.deepEqual(resolver.resolveControl('rating'), { component: FieldProbe, control: 'rating', theme: 'default' });
     service.activate('active');
     assert.equal(resolver.resolveControl('rating').control, 'numeric');
