@@ -1,5 +1,10 @@
 # UI Runtime 1.0 API and internal contract design
 
+AUR-VALID-002/003 extends `validateField` with [exact DECIMAL validation](../contracts/decimal-validation.md).
+The implemented request definition union contains INTEGER and DECIMAL only; decimal
+grammar/normalization/comparison are shared with STATE. The provisional broader
+catalogue below remains unpublished. INTEGER behavior and result branches are preserved.
+
 AUR-VALID-001 publishes the [local INTEGER validation boundary](../contracts/integer-validation.md).
 `validateField` accepts only `IntegerFieldDefinition`, existing `EditingInput` and
 `ValuePath`. It returns immutable parsed/invalid/definition-error results. Capacity

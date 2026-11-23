@@ -106,6 +106,10 @@ part with at least one digit, and an optional signed exponent only when enabled.
 Examples: `+001` equals `1`; `12.3400` equals `1234e-2` with exponents enabled.
 `.5`, `1.`, whitespace, infinity, NaN and incomplete exponents are unsupported.
 
+[DECIMAL validation](decimal-validation.md) now reuses the same internal normalized
+numeric parser and exact comparison as STATE equality. Its constraints and bounded
+divisibility arithmetic do not change equality semantics or stored editing values.
+
 The helper bounds each lexical input to 4,096 UTF-16 units and exponent text to six
 characters with absolute exponent at most 4,096. It compares normalized coefficient
 text and a bounded BigInt exponent without expanding powers or passing field values
