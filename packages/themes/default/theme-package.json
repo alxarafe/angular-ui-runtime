@@ -18,7 +18,7 @@
     {
       "id": "default",
       "name": "Default",
-      "description": "Complete independent default presentation adapted from ERBAS",
+      "description": "Complete independent default presentation for Angular UI Runtime (AUR)",
       "cssClass": "theme-default",
       "definitionExport": "DEFAULT_THEME",
       "kinds": [

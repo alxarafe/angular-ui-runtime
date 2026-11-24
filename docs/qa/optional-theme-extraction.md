@@ -4,8 +4,8 @@
 
 AUR-THEME-EXTRACT-002 starts from clean main
 `491b52d0c06d7fb5e290141c5c981ded36cabb08` (merged PR #10). No branches or
-consumer repositories are changed or removed. The immutable ERBAS reference is
-`8d1573c315e03a6edbc92bd7b3d41d851bd54ab9`; each package's PROVENANCE.json
+consumer repositories are changed or removed. The immutable source revision is retained in
+[engineering provenance](../history/engineering-provenance.md); each package's PROVENANCE.json
 records original file paths/SHA-256, including the catalog. AUR-QA-002 captures
 are historical comparison candidates only, not approved baselines or build inputs.
 
@@ -26,7 +26,7 @@ Each optional package contains a public entry, declarations/ESM, `theme.css`,
 versioned `theme-package.json`, generated `conformance.json`, LICENSE, NOTICE,
 PROVENANCE.json and README. All expose CSS/manifest/conformance subpaths. Angular
 Core and the public UI Runtime are peers; tslib is the only ordinary dependency.
-No package imports another theme, private source, ERBAS classes/services, router,
+No package imports another theme, private source, application classes/services, router,
 backend, HTTP, generator or application store. Vintage creates no fake component.
 
 In a compatible application's Docker environment, install the runtime and default
@@ -133,11 +133,11 @@ cases remain and ten new cases (five identities at 1280×800 and 390×844) verif
   and readable DATE/TIME text under dark native color schemes. Text contrast is
   measured; additional native-control captures permit visual indicator review.
 
-Intentional adaptations from the immutable ERBAS implementation:
+Intentional adaptations from the historical implementation:
 
 | Theme | Retained / changed |
 | --- | --- |
-| Alternative | Original green palette and three BOOLEAN choices. Minimal public renderer replaces inheritance from the ERBAS/default base; no list badge or future grid implementation. |
+| Alternative | Original green palette and three BOOLEAN choices. Minimal public renderer replaces inheritance from the historical default base; no list badge or future grid implementation. |
 | Cyberpunk | Original dark palette, accent border/panel wrapper, different workspace/sidebar and right tool rail. Rail reserves 12rem grid space instead of fixed 96px overlay, fitting real controls; below 680px it moves into normal flow after content. Tools follow the workspace in DOM/tab order so mobile ordering is not merely visual. All regions and native links remain reachable. Dark color-scheme makes Chromium calendar/clock indicators light without inversion filters. |
 | Vintage | Original warm tokens and Georgia/Times typography; all 14 components are unchanged default resolutions. No placeholder artifacts. |
 | High Contrast | Original black/yellow/teal/white/magenta palette, stronger panel border/content and focus. Broad application section rules are omitted; emphasis is limited to owned panel and active navigation. Native controls use dark color-scheme. |
@@ -193,5 +193,5 @@ the digest.
 Remaining consumer work: install approved/versioned archives, replace internal
 theme catalogs/components, supply neutral navigation/routing intent and region
 templates, retain application-specific resource/login CSS, define logical focus for replaced controls
-and run real application integration/human review. ERBAS and other consumers have
-not been modified. No push, publication, tag or deployment follows from these checks.
+and run real application integration/human review. No consumer repositories have
+been modified. No push, publication, tag or deployment follows from these checks.

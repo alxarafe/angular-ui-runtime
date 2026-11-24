@@ -57,7 +57,7 @@ layer. It does not publish or redesign this document's proposed menu/form/grid A
 Breaking catalogue update: AUR-INTEGER-001 replaces the seven obsolete integer
 artifacts with one `field.INTEGER`, leaving fourteen mandatory artifacts. The
 design types below no longer encode intrinsic widths; effective capacity and
-constraints remain application/ARP metadata.
+constraints remain application-supplied metadata.
 
 AUR-DESIGN-001 · 2026-11-11 · Design baseline:
 `cdb830d1aab39338874d18a0e4d958b00d72f5bb` (remote main verified).
@@ -81,7 +81,7 @@ the production library and npm package. No application should import them.
 | D4: editing document | One recursive field/object/collection tree; accepted and editing payloads share the shape. Stable UI row keys. Lock editing during save. | Internal prototype contracts; validate flat and aggregate reconciliation before publishing a session facade. |
 | D5: themes | Keep the existing 14 artifact keys and complete-default obligations. Optional new component map in the same registry/resolver, with library defaults. | Proposed extension only; future implementation must validate bindings and compatibility. |
 | D6: menus | One ordered data source; primary/secondary/account kinds; identities independent of kind and placement; host-owned overflow. | Definitions are publication candidates; placement/component ports remain provisional until browser proof. |
-| D7: composition | Keep ERBAS tabs/sections/groups and projection semantics; separate list and detail grids; callbacks/commands carry no HTTP. | Layout and component ports require implementation validation. |
+| D7: composition | Keep ordered tabs/sections/groups and projection semantics; separate list and detail grids; callbacks/commands carry no HTTP. | Layout and component ports require implementation validation. |
 
 “Candidate” means sufficiently specified to guide implementation, not ready to
 ship without tests. No new interface is approved for immediate public export.
@@ -96,33 +96,30 @@ design. Theme registration already freezes snapshots, validates standalone/bindi
 metadata, resolves sparse overrides directly to default and isolates providers.
 Keep that implementation rather than create parallel selection or theme registries.
 
-Read-only references were inspected at ERBAS Client
-`8d1573c315e03a6edbc92bd7b3d41d851bd54ab9` and resource-controller
-`e7dd6b0edd88ecc82adb0c55504c15d6e3ad53b2`:
+Historical reuse analysis and immutable source revisions are retained in
+[engineering provenance](../history/engineering-provenance.md). They are design
+evidence, not normative dependencies on external applications.
 
-| Existing code | Reuse / adaptation boundary |
-| --- | --- |
-| ERBAS `app/src/app/core-fe/field-types/normalized-field-types.ts` | Reuse semantic-to-artifact mapping; derive SemanticType from the package's field artifact union to avoid catalogue drift. Runtime unknown-type rejection still required. |
-| ERBAS `core-fe/themes/default/field-renderers.ts` | Preserve context, guarded changes and exact string handling. Do not migrate widgets here. Enum empty-string/null sentinel needs a future fix: empty declared strings and explicit null must remain distinct. |
-| ERBAS `core-fe/field-types/field-renderer-outlet.ts` | Reuse Angular inputBinding/outputBinding and replacement-only-when-type-changes. Extend outlet later to choose one event channel and externalize raw editing state. |
-| ERBAS `core-fe/shell/theme-shell-outlet.ts` | Preserve embedded view ownership outside the replaceable shell; project nodes into the new shell. Extend logical focus restoration and browser tests later. |
-| ERBAS `resource-runtime/fields.ts` (`scalarInput`) | Reuse exact integer range/grammar and Unicode-counting intent as implementation provenance. Refactor toward one validator in an authorized implementation task; do not copy the algorithm into another validator now. Current DATE regex, constraints and pattern coverage are incomplete. |
-| ERBAS `resource-runtime/exact-json.ts` | Keep ExactNumber and lossless parse/stringify in the application adapter; never use JSON.parse Number output for exact numeric values. This is transport code, not a library decimal arithmetic engine. |
-| ERBAS `resource-runtime/resource-form.ts` | Reuse changed-effective-value submission and read-only/immutable projection. Its changed set alone is not the new document dirty model; original/current comparison is required. |
-| ERBAS `resource-runtime/resource-layout.ts` | Reuse first valid placement, ordered hierarchy, unplaced fallback and keyboard tab behavior. Replace HTTP Field/Action models with neutral references/effective actions. |
-| ERBAS `core-fe/shell/shell-extensions.ts`, `shell-content.ts` | Preserve the separate extension slots and legacy single navigation-list bindings. They are not typed menu storage. |
-| resource-controller `src/Trait/ResourceTrait.php::convertMetadataToComponents()` | Preserve metadata propagation intent: required, length, min/max/step, precision/scale, unsigned. Translate explicitly in adapters; do not equate step and multipleOf by name. |
-| resource-controller `src/Component/AbstractField.php`, `Fields/{Integer,Decimal}.php` | Metadata/options and serialized presentation are reference behavior; no PHP validation algorithm or component DTO is copied into this library. |
+Preserve semantic/artifact catalogue parity, guarded exact-string events, Angular
+inputBinding/outputBinding, replacement only on component type changes and embedded
+view ownership outside replaceable shells. Extend logical focus and raw editing
+with browser proof. Empty enum strings must remain distinct from null.
 
-The approved contract's ERBAS published scalar and Alixar/Solucar references remain
-normative inputs. Backend source inspection is not UI integration evidence.
+Use one exact validator; retain integer grammar/ranges and Unicode scalar counting.
+Lossless JSON remains adapter-owned. Changed-effective-value submission must compare
+original/current values, not rely on a changed set. Preserve first valid layout
+placement, ordered hierarchy, fallback and keyboard tabs with neutral references.
+Extension slots and legacy navigation bindings are not typed menu storage.
+Adapters map required, length, bounds, precision/scale and unsigned explicitly;
+`step` and `multipleOf` are equivalent only when semantics agree. No external
+component DTO or backend validation algorithm becomes a public library contract.
 
 ## Fields, input and validation boundary
 
 `SemanticType` derives the 11 types from `FieldArtifact`. `IntegerType` is the one
 canonical `INTEGER`; it does not encode a width or signedness. Effective integer
 capacity (`bits` 8/16/32/64 and `signed`) and exact constraints come from the
-consuming application and its ARP adapters; `IntegerCapacity` and
+consuming application and its metadata adapters; `IntegerCapacity` and
 `ResolvedIntegerRange` are data shapes, not an inference engine. Obsolete seven-type
 integer identifiers are absent. `FieldDefinition` is a discriminated union. BOOLEAN
 has no numeric constraints; INTEGER accepts optional effective capacity plus exact
@@ -179,7 +176,7 @@ validation and safe plain-text rendering.
 ### One exact validation pipeline, implemented later
 
 1. Validate the definition and resource limits, then presence/nullability/type.
-2. Parse integers with the existing ERBAS grammar/range approach using BigInt.
+2. Parse integers with the exact base-ten grammar/range approach using BigInt.
    Compare the contract's signed/unsigned intrinsic limits and intersect declared
    inclusive/exclusive bounds; reject fractional/exponent integer input.
 3. Parse decimal text into an exact integer coefficient and bounded exponent/scale.
@@ -197,11 +194,11 @@ validation and safe plain-text rendering.
    across offsets, not lexical offset-text order). Apply the supported pattern
    policy below and return errors/deferred checks.
 
-Backend authority remains unchanged. The adapter supplies transport limits (ERBAS
-currently 4,096 digits/scale magnitude) before costly arithmetic. Shared library
+Backend authority remains unchanged. The adapter supplies transport limits (the reference
+profile uses 4,096 digits/scale magnitude) before costly arithmetic. Shared library
 implementation must bound parsing work and reject or visibly defer unsupported
 profiles; numeric dependency and detailed limit API remain internal implementation
-choices. No runtime validator, arithmetic routine or copied ERBAS algorithm is
+choices. No runtime validator, arithmetic routine or copied backend algorithm is
 introduced by this task.
 
 ### Safe-pattern policy: portable-ascii-v1
@@ -320,12 +317,12 @@ keeps optimistic concurrency tokens outside the document and maps the outcome ba
 
 A successful id/version-only response is insufficient for accepted: adapter reads
 back or reconstructs an authoritative full snapshot if its protocol permits that.
-If Alixar regenerates line IDs, adapter maps new server data to submitted UI
+If complex document replacement regenerates line IDs, adapter maps new server data to submitted UI
 row keys/order and existing field definitions before returning accepted. Unknown
 structural fields/rows require an explicit session reinitialization after readback,
 not an untyped reconciliation guess; old error paths must be cleared/rebound.
 Its totals/business policy and
-expectedVersion remain application-owned. ERBAS can build its partial payload by
+expectedVersion remain application-owned. A metadata CRUD adapter can build its partial payload by
 comparing original and current, skipping immutable/read-only unchanged fields.
 A no-op is clean and should not send an empty update unless the adapter protocol
 explicitly needs it. Rejected issues clear/revalidate only when their paths change
@@ -345,7 +342,7 @@ No Router, Window, auth policy or persistence dependency enters the state core.
 ## Compatible theme evolution and composition
 
 Do not add menus/forms/grids to ThemeArtifact or THEME_ARTIFACTS. That would make
-existing complete ERBAS defaults incomplete and break registration. D5 instead
+existing complete defaults incomplete and break registration. D5 instead
 proposes optional `components?: Partial<ThemeComponents>` on theme definitions and
 `resolveComponent(key)` on the existing ThemeResolver. Existing resolve(artifact),
 ThemeRegistry rules, ThemeId, CSS class, provider composition and return values stay
@@ -392,7 +389,7 @@ content, and removes the old placement before rendering another. No duplication
 between a specialized region and fallback. Visual hiding cannot be detected by
 types; browser/visual acceptance must verify visibility and keyboard reachability.
 
-Current ERBAS Shell/Navigation artifacts know a single navigation/items list and
+Legacy Shell/Navigation artifacts know a single navigation/items list and
 cannot be assumed to expose typed-menu regions. They remain valid unchanged in
 legacy mode. New typed-menu mode uses the host-owned default menu component unless
 an explicitly capable theme participates; do not also inject the same entries into
@@ -404,7 +401,7 @@ for component slots, and is neither a menu store nor an escape hatch from fallba
 ### Forms and grids
 
 FormLayout keeps ordered tabs, sections, groups and contextual actions. ValuePath
-references replace ERBAS field/HTTP model references. The host resolves these against
+references replace application field/HTTP model references. The host resolves these against
 the document, places each eligible field/action once and supplies fallback for
 unplaced entries; application-excluded fields are not resurrected. Invalid references
 produce diagnostics. Selected tab/collapse/focus are UI state held outside replaceable

@@ -17,7 +17,7 @@
     {
       "id": "high-contrast",
       "name": "High Contrast",
-      "description": "Optional high-contrast presentation adapted from ERBAS",
+      "description": "Optional high-contrast presentation for Angular UI Runtime (AUR)",
       "cssClass": "theme-high-contrast",
       "definitionExport": "HIGH_CONTRAST_THEME",
       "kinds": [

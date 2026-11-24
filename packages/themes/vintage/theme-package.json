@@ -17,7 +17,7 @@
     {
       "id": "vintage",
       "name": "Vintage",
-      "description": "Optional vintage presentation adapted from ERBAS",
+      "description": "Optional vintage presentation for Angular UI Runtime (AUR)",
       "cssClass": "theme-vintage",
       "definitionExport": "VINTAGE_THEME",
       "kinds": [

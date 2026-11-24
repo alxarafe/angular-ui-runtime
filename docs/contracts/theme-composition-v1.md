@@ -11,9 +11,10 @@ execute or require a Java/C# definition generator, HTTP schema or consumer servi
 A future generator is independently usable without this runtime. Interoperability
 belongs to neutral versioned definitions and optional external adapters, whose
 APIs are not defined here. Theme packages use public presentation exports and
-Angular peers; no ERBAS base class or router is required.
+Angular peers; no application base class or router is required.
 
-Read-only ERBAS inspection identified these future extraction changes:
+Historical source inspection identified these extraction boundaries (see
+[engineering provenance](../history/engineering-provenance.md)):
 
 | Reference | Consumer dependency |
 | --- | --- |
@@ -68,7 +69,7 @@ names, standalone metadata and selectors, not actual payloads or visual behavior
 Content is required; heading/footer and regions are optional. The consumer owns
 templates, editing state and extension composition. Missing optional regions are
 normal. There is no library registration, priority ordering, extension discovery
-or fixed ERBAS slot enum.
+or fixed application slot enum.
 
 The host creates stable `div` wrappers around application views:
 
@@ -235,7 +236,7 @@ and two independent shell/navigation/panel implementations. It covers complete
 default, sparse panel-only and CSS-only selection, unknown fallback, navigation
 input/intent updates, named/unclaimed regions, native keyboard controls, retained
 node focus, application view/DOM identity and replacement of one supplied template.
-It uses one provider composition and public installed exports, with no ERBAS,
+It uses one provider composition and public installed exports, with no application source,
 generator, backend or production theme dependency. Candidate screenshots are not
 approved visual baselines or proof of all 1.0 requirements.
 
@@ -251,4 +252,4 @@ shell extensions into regions, reconcile old bindings/projection attributes and
 package all 14 default artifacts plus CSS/assets. Package compatibility,
 separation of consumer-targeted CSS (such as resource-screen selectors),
 licensing/provenance, five-theme consumer/browser evidence and human visual review
-remain required; this task does not automatically adapt or migrate ERBAS themes.
+remain required; this task does not automatically adapt or migrate application themes.

@@ -17,7 +17,7 @@
     {
       "id": "cyberpunk",
       "name": "Cyberpunk",
-      "description": "Optional cyberpunk presentation adapted from ERBAS",
+      "description": "Optional cyberpunk presentation for Angular UI Runtime (AUR)",
       "cssClass": "theme-cyberpunk",
       "definitionExport": "CYBERPUNK_THEME",
       "kinds": [

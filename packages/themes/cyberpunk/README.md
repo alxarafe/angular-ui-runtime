@@ -31,4 +31,5 @@ differences, limits and human review. No 1.0 validation/document engine or theme
 installation lifecycle is implemented. Captures remain pending human approval.
 
 Source/license provenance is recorded in NOTICE and PROVENANCE.json. Historical
-ERBAS QA captures are reference material only. No ERBAS checkout is required.
+QA captures are comparison material only; no reference checkout is required. See
+[engineering provenance](../../../docs/history/engineering-provenance.md).
