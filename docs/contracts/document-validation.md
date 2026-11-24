@@ -81,6 +81,12 @@ The plan is not a general schema language, metadata dictionary, plugin engine or
 second STATE model. Semantic definitions stay out of `DocumentField`. Hostile or
 ambiguous plan values are rejected at runtime with structured diagnostics.
 
+The complete plan is inspected before any document value is evaluated. Object and
+collection plans are walked with ancestor identity, so cycles, malformed nested row
+schemas and the 128-edge limit are detected even when a collection has no rows.
+Shared acyclic row/object plans remain valid. This structural pass never calls
+`validateField`, reads document values or invents placeholder inputs.
+
 **Known limitation:** heterogeneous row definitions are not supported in this
 increment. Every row of one collection must satisfy the same row-object plan.
 Individual row-specific schemas are not guessed or encoded.
@@ -106,6 +112,13 @@ Every applicable field is visited, including fields outside a selected tab, insi
 collapsed sections, inside nonvisible collections, and read-only/disabled fields.
 Visual placement and permissions are not validation filters. Empty objects and empty
 collections produce no fictitious field results.
+
+Before semantic evaluation, every visited document node is checked against the STATE
+structural contract: supported `kind`, capability flags, field equality/input
+metadata, object property maps, collection flags/rows and nonempty unique row keys
+with object values. Raw edit drafts remain admissible. Malformed nodes yield
+`invalid-document`; the check mirrors STATE without reusing `createDocumentState`
+and never changes STATE semantics.
 
 The traversal never reads or modifies `DocumentState.original`. Revalidation is
 explicit: callers invoke `validateDocument` again with the current snapshot. No
@@ -172,7 +185,7 @@ codes:
 | Code | Meaning |
 | --- | --- |
 | `invalid-request` | The request is not exactly a document plus an object plan. |
-| `invalid-document` | The supplied node/input/row structure is not an admitted document shape. |
+| `invalid-document` | The supplied node/input/row violates the STATE structural admission contract. |
 | `missing-definition` | A document node has no matching plan node. |
 | `unknown-definition` | A plan node addresses a nonexistent document property. |
 | `kind-mismatch` | Field/object/collection kinds disagree. |
@@ -190,8 +203,10 @@ codes (`definition`, `capacity`, `constraint`, `constraint-limit`,
 where safe rather than failing at the first independent problem.
 
 Plan cycle detection uses ancestor identity, so sharing a row schema across sibling
-collections/rows is allowed while cyclic references are rejected. Traversal recursion
-is bounded by the 128-edge limit.
+collections/rows is allowed while cyclic references are rejected. The independent
+plan pass detects these cycles even inside empty collections. Traversal recursion is
+bounded by the 128-edge limit. Structural diagnostics are emitted once per code,
+path and message even when a plan node is reached from multiple rows.
 
 ## Immutability and privacy
 

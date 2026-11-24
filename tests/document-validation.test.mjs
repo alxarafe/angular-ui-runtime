@@ -564,6 +564,51 @@ test('cyclic validation plans are detected without recursion overflow', () => {
     assert.equal(result.diagnostics[0].code, 'plan-cycle');
 });
 
+test('cycles inside empty collection row schemas are detected without traversing rows', () => {
+    const lines = planCollection({});
+    lines.row.properties.next = lines;
+    const result = validate(docObject({ lines: docCollection([]) }), planObject({ lines }));
+    assert.equal(result.state, 'definition-error');
+    assert.ok(result.diagnostics.some((diagnostic) => diagnostic.code === 'plan-cycle'));
+    assert.deepEqual(result.fields, []);
+});
+
+test('shared acyclic row schemas remain valid across sibling collections', () => {
+    const row = planObject({ quantity: planField(integer) });
+    const result = validate(
+        docObject({
+            first: docCollection([docRow('a', { quantity: docValue('1') })]),
+            second: docCollection([docRow('b', { quantity: docValue('2') })]),
+        }),
+        planObject({
+            first: { kind: 'collection', row },
+            second: { kind: 'collection', row },
+        }),
+    );
+    assert.equal(result.state, 'valid');
+    assert.equal(result.fields.length, 2);
+    assert.deepEqual(
+        result.fields.map((entry) =>
+            entry.path.map((segment) => (segment.kind === 'property' ? segment.name : segment.key)),
+        ),
+        [
+            ['first', 'a', 'quantity'],
+            ['second', 'b', 'quantity'],
+        ],
+    );
+});
+
+test('malformed nested row schemas are detected in empty collections', () => {
+    const lines = planCollection({
+        inner: { kind: 'collection', row: planField(integer) },
+    });
+    const result = validate(docObject({ lines: docCollection([]) }), planObject({ lines }));
+    assert.equal(result.state, 'definition-error');
+    assert.equal(result.diagnostics[0].code, 'malformed-row-schema');
+    assert.deepEqual(result.diagnostics[0].path, [property('lines'), property('inner')]);
+    assert.deepEqual(result.fields, []);
+});
+
 test('excessive nesting respects the STATE structural depth limit', () => {
     const leafDocument = () => docObject({ value: docValue('1') });
     const leafPlan = () => planObject({ value: planField(integer) });
@@ -586,6 +631,123 @@ test('malformed requests and malformed root documents fail closed', () => {
     const malformed = validateDocument({ document: { kind: 'object' }, plan: planObject({}) });
     assert.equal(malformed.state, 'definition-error');
     assert.equal(malformed.diagnostics[0].code, 'invalid-document');
+});
+
+test('malformed field members and equality metadata are fatal invalid-document diagnostics', () => {
+    const malformed = [
+        { kind: 'field', input: { kind: 'value', value: '1' } },
+        {
+            kind: 'field',
+            equality: { type: 'exact', extra: true },
+            input: { kind: 'value', value: '1' },
+        },
+        { kind: 'field', equality: { type: 'DECIMAL' }, input: { kind: 'value', value: '1' } },
+        {
+            kind: 'field',
+            equality: { type: 'exact' },
+            input: { kind: 'value', value: '1' },
+            extra: true,
+        },
+        {
+            kind: 'field',
+            equality: { type: 'exact' },
+            input: { kind: 'value', value: '1' },
+            readOnly: 'yes',
+        },
+        { kind: 'field', equality: { type: 'exact' }, input: { kind: 'value', value: 1 } },
+        { kind: 'field', equality: { type: 'exact' }, input: { kind: 'absent', extra: true } },
+        { kind: 'scalar', equality: { type: 'exact' }, input: { kind: 'value', value: '1' } },
+    ];
+    for (const node of malformed) {
+        const result = validate(
+            docObject({ quantity: node }),
+            planObject({ quantity: planField(integer) }),
+        );
+        assert.equal(result.state, 'definition-error');
+        assert.equal(result.diagnostics.length, 1);
+        assert.equal(result.diagnostics[0].code, 'invalid-document');
+        assert.deepEqual(result.diagnostics[0].path, [property('quantity')]);
+        assert.deepEqual(result.fields, []);
+        assert.deepEqual(result.issues, []);
+    }
+});
+
+test('valid raw drafts and numeric equality metadata remain admissible documents', () => {
+    const result = validate(
+        docObject({
+            raw: docRaw('1.50', { type: 'DECIMAL', allowExponent: true }),
+            integer: docValue('9007199254740993', { type: 'INTEGER' }),
+        }),
+        planObject({
+            raw: planField({
+                type: 'DECIMAL',
+                required: true,
+                nullable: false,
+                allowExponent: true,
+            }),
+            integer: planField(integer),
+        }),
+    );
+    assert.equal(result.state, 'valid');
+    assert.deepEqual(
+        result.fields.map((entry) => entry.result.state),
+        ['valid', 'valid'],
+    );
+});
+
+test('malformed object collection and row members are fatal invalid-document diagnostics', () => {
+    const objectDocuments = [
+        { kind: 'object', properties: {}, extra: true },
+        { kind: 'object' },
+        { kind: 'object', properties: [] },
+    ];
+    for (const node of objectDocuments) {
+        const result = validate(
+            docObject({ nested: node }),
+            planObject({ nested: planObject({}) }),
+        );
+        assert.equal(result.state, 'definition-error');
+        assert.equal(result.diagnostics[0].code, 'invalid-document');
+        assert.deepEqual(result.fields, []);
+    }
+
+    const collectionNode = (overrides = {}) => ({
+        kind: 'collection',
+        ordered: true,
+        allowAdd: true,
+        allowRemove: true,
+        allowReorder: true,
+        rows: [],
+        ...overrides,
+    });
+    const collectionDocuments = [
+        collectionNode({ ordered: 'yes' }),
+        collectionNode({ allowAdd: undefined }),
+        { kind: 'collection', ordered: true, allowAdd: true, allowRemove: true, rows: [] },
+        {
+            kind: 'collection',
+            ordered: true,
+            allowAdd: true,
+            allowRemove: true,
+            allowReorder: true,
+        },
+        collectionNode({ rows: 'none' }),
+        collectionNode({ rows: [docRow('a', {}), docRow('a', {})] }),
+        { ...collectionNode(), rows: [{ key: 'a' }] },
+        { ...collectionNode(), rows: [{ value: docObject({}) }] },
+        { ...collectionNode(), rows: [{ key: ' ', value: docObject({}) }] },
+        { ...collectionNode(), rows: [{ key: 'a', value: docValue('1') }] },
+        { ...collectionNode(), rows: [{ key: 'a', value: docObject({}), extra: true }] },
+    ];
+    for (const node of collectionDocuments) {
+        const result = validate(
+            docObject({ lines: node }),
+            planObject({ lines: planCollection({}) }),
+        );
+        assert.equal(result.state, 'definition-error');
+        assert.equal(result.diagnostics[0].code, 'invalid-document');
+        assert.deepEqual(result.fields, []);
+    }
 });
 
 test('results, paths, issues, diagnostics and checks are deeply frozen', () => {

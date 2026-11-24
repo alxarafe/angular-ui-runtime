@@ -55,26 +55,118 @@ const states = new WeakSet<DocumentState>();
 function fail(): never {
     throw new Error('Invalid document state or operation');
 }
+function plainRecord(value: unknown): value is Record<string, unknown> {
+    return (
+        !!value &&
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        [Object.prototype, null].includes(Object.getPrototypeOf(value))
+    );
+}
 function record(value: unknown): asserts value is Record<string, unknown> {
-    if (
-        !value ||
-        typeof value !== 'object' ||
-        Array.isArray(value) ||
-        ![Object.prototype, null].includes(Object.getPrototypeOf(value))
-    )
-        fail();
+    if (!plainRecord(value)) fail();
 }
 function identity(value: unknown): asserts value is string {
     if (typeof value !== 'string' || !value.trim()) fail();
 }
-function keys(value: object, required: string[], optional: string[] = []): void {
-    if (
-        required.some((key) => !Object.hasOwn(value, key)) ||
-        Reflect.ownKeys(value).some(
-            (key) => typeof key !== 'string' || ![...required, ...optional].includes(key),
+function onlyKeys(value: object, required: string[], optional: string[] = []): boolean {
+    return (
+        required.every((key) => Object.hasOwn(value, key)) &&
+        Reflect.ownKeys(value).every(
+            (key) => typeof key === 'string' && [...required, ...optional].includes(key),
         )
-    )
-        fail();
+    );
+}
+function keys(value: object, required: string[], optional: string[] = []): void {
+    if (!onlyKeys(value, required, optional)) fail();
+}
+function validInput(value: unknown, accepted: boolean): boolean {
+    if (!plainRecord(value)) return false;
+    if (value['kind'] === 'absent') return onlyKeys(value, ['kind']);
+    if (value['kind'] === 'raw' && !accepted)
+        return onlyKeys(value, ['kind', 'text']) && typeof value['text'] === 'string';
+    if (value['kind'] !== 'value' || !onlyKeys(value, ['kind', 'value'])) return false;
+    const input = value['value'];
+    return input === null || typeof input === 'string' || typeof input === 'boolean';
+}
+/** Structural STATE admission problem for a single node, without child traversal. */
+export type DocumentNodeProblem =
+    | 'not-record'
+    | 'unsupported-kind'
+    | 'members'
+    | 'flags'
+    | 'equality'
+    | 'input'
+    | 'properties'
+    | 'collection'
+    | 'row';
+/**
+ * Describes the first local STATE-contract violation in a document node.
+ * Raw edits remain admissible; semantic validity is not evaluated here.
+ */
+export function documentNodeProblem(
+    value: unknown,
+    accepted = false,
+): DocumentNodeProblem | undefined {
+    if (!plainRecord(value)) return 'not-record';
+    for (const flag of ['readOnly', 'disabled']) {
+        if (value[flag] !== undefined && typeof value[flag] !== 'boolean') return 'flags';
+    }
+    const kind = value['kind'];
+    if (kind === 'field') {
+        if (!onlyKeys(value, ['kind', 'equality', 'input'], ['readOnly', 'disabled']))
+            return 'members';
+        const equality = value['equality'];
+        if (!plainRecord(equality)) return 'equality';
+        if (equality['type'] === 'DECIMAL') {
+            if (
+                !onlyKeys(equality, ['type', 'allowExponent']) ||
+                typeof equality['allowExponent'] !== 'boolean'
+            )
+                return 'equality';
+        } else if (
+            !onlyKeys(equality, ['type']) ||
+            (equality['type'] !== 'exact' && equality['type'] !== 'INTEGER')
+        ) {
+            return 'equality';
+        }
+        return validInput(value['input'], accepted) ? undefined : 'input';
+    }
+    if (kind === 'object') {
+        if (!onlyKeys(value, ['kind', 'properties'], ['readOnly', 'disabled'])) return 'members';
+        const properties = value['properties'];
+        if (!plainRecord(properties)) return 'properties';
+        if (Reflect.ownKeys(properties).length !== Object.keys(properties).length)
+            return 'properties';
+        if (Object.keys(properties).some((name) => !name.trim())) return 'properties';
+        return undefined;
+    }
+    if (kind === 'collection') {
+        if (
+            !onlyKeys(
+                value,
+                ['kind', 'ordered', 'allowAdd', 'allowRemove', 'allowReorder', 'rows'],
+                ['readOnly', 'disabled'],
+            )
+        )
+            return 'members';
+        for (const flag of ['ordered', 'allowAdd', 'allowRemove', 'allowReorder']) {
+            if (typeof value[flag] !== 'boolean') return 'collection';
+        }
+        const rows = value['rows'];
+        if (!Array.isArray(rows) || Object.keys(rows).length !== rows.length) return 'collection';
+        const seen = new Set<string>();
+        for (const row of rows) {
+            if (!plainRecord(row) || !onlyKeys(row, ['key', 'value'])) return 'row';
+            const key = row['key'];
+            if (typeof key !== 'string' || !key.trim() || seen.has(key)) return 'row';
+            seen.add(key);
+            const rowValue = row['value'];
+            if (!plainRecord(rowValue) || rowValue['kind'] !== 'object') return 'row';
+        }
+        return undefined;
+    }
+    return 'unsupported-kind';
 }
 function inputSnapshot(input: EditingInput, accepted = false): EditingInput {
     record(input);
@@ -101,23 +193,14 @@ function snapshot(
 ): DocumentNode {
     record(node);
     if (depth > 128 || ancestors.has(node)) fail();
+    if (documentNodeProblem(node, accepted)) fail();
     ancestors.add(node);
     const flags: EditCapabilities = {};
     for (const flag of ['readOnly', 'disabled'] as const) {
-        if (node[flag] !== undefined && typeof node[flag] !== 'boolean') fail();
         if (node[flag] !== undefined) Object.assign(flags, { [flag]: node[flag] });
     }
     let result: DocumentNode;
     if (node.kind === 'field') {
-        keys(node, ['kind', 'equality', 'input'], ['readOnly', 'disabled']);
-        record(node.equality);
-        if (node.equality.type === 'DECIMAL') {
-            keys(node.equality, ['type', 'allowExponent']);
-            if (typeof node.equality.allowExponent !== 'boolean') fail();
-        } else {
-            keys(node.equality, ['type']);
-            if (node.equality.type !== 'exact' && node.equality.type !== 'INTEGER') fail();
-        }
         result = {
             kind: 'field',
             ...flags,
@@ -125,38 +208,20 @@ function snapshot(
             input: inputSnapshot(node.input, accepted),
         };
     } else if (node.kind === 'object') {
-        keys(node, ['kind', 'properties'], ['readOnly', 'disabled']);
-        record(node.properties);
-        if (Reflect.ownKeys(node.properties).length !== Object.keys(node.properties).length) fail();
         const properties = Object.fromEntries(
-            Object.entries(node.properties).map(([name, child]) => {
-                identity(name);
-                return [name, snapshot(child, accepted, ancestors, depth + 1)];
-            }),
+            Object.entries(node.properties).map(([name, child]) => [
+                name,
+                snapshot(child, accepted, ancestors, depth + 1),
+            ]),
         );
         result = { kind: 'object', ...flags, properties: Object.freeze(properties) };
-    } else if (node.kind === 'collection') {
-        keys(
-            node,
-            ['kind', 'ordered', 'allowAdd', 'allowRemove', 'allowReorder', 'rows'],
-            ['readOnly', 'disabled'],
-        );
-        for (const flag of [node.ordered, node.allowAdd, node.allowRemove, node.allowReorder])
-            if (typeof flag !== 'boolean') fail();
-        if (!Array.isArray(node.rows)) fail();
-        if (Object.keys(node.rows).length !== node.rows.length) fail();
-        const seen = new Set<string>();
-        const rows = node.rows.map((row: DocumentRow) => {
-            record(row);
-            keys(row, ['key', 'value']);
-            identity(row.key);
-            if (seen.has(row.key) || row.value?.kind !== 'object') fail();
-            seen.add(row.key);
-            return Object.freeze({
+    } else {
+        const rows = node.rows.map((row: DocumentRow) =>
+            Object.freeze({
                 key: row.key,
                 value: snapshot(row.value, accepted, ancestors, depth + 1) as DocumentObject,
-            });
-        });
+            }),
+        );
         result = {
             kind: 'collection',
             ...flags,
@@ -166,7 +231,7 @@ function snapshot(
             allowReorder: node.allowReorder,
             rows: Object.freeze(rows),
         };
-    } else return fail();
+    }
     ancestors.delete(node);
     return Object.freeze(result);
 }

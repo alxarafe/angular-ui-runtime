@@ -373,10 +373,11 @@ multiple collections, different row schemas, nested collections, keyed reorderin
 addition/deletion, duplicate values in separate rows, deterministic sorted property
 traversal, all eleven semantic types, local and server-only patterns, invalid raw
 drafts, missing/unknown definitions, kind mismatches, malformed plans and row
-schemas, cycles, excessive depth, frozen detached results, caller-definition
-immutability, message privacy and STATE independence. Type contracts exclude
-`DocumentState` as a request document, scalar/heterogeneous row schemas, unsupported
-plan kinds and mutable result paths.
+schemas, cycles detected through empty collections, shared acyclic row schemas,
+excessive depth, malformed field/equality/input/object/collection/row members,
+frozen detached results, caller-definition immutability, message privacy and STATE
+independence. Type contracts exclude `DocumentState` as a request document,
+scalar/heterogeneous row schemas, unsupported plan kinds and mutable result paths.
 
 Installed-APF browser evidence uses one parent `DocumentState` with a header, a
 nested object, two independently identified detail collections and an application-

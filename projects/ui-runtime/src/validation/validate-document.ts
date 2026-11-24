@@ -1,10 +1,11 @@
 /** SPDX-License-Identifier: Apache-2.0 */
 import type { PathSegment, ValuePath } from '../form/form-definition.js';
+import { documentNodeProblem } from '../state/document-state.js';
 import type {
     DocumentCollection,
     DocumentField,
+    DocumentNodeProblem,
     DocumentObject,
-    DocumentRow,
 } from '../state/document-state.js';
 import {
     validateField,
@@ -90,6 +91,8 @@ interface Context {
     readonly diagnostics: DocumentDiagnostic[];
     readonly patternDiagnostics: PatternDiagnostic[];
     readonly checks: DeferredCheck[];
+    readonly admittedPlans: WeakSet<object>;
+    readonly cyclicPlans: WeakSet<object>;
 }
 
 const MAX_DEPTH = 128;
@@ -116,11 +119,6 @@ function propertyMap(value: unknown): value is Readonly<Record<string, unknown>>
         Object.keys(value).length === Reflect.ownKeys(value).length
     );
 }
-function documentKind(value: unknown): 'field' | 'object' | 'collection' | undefined {
-    if (!isPlainRecord(value)) return undefined;
-    const kind = value['kind'];
-    return kind === 'field' || kind === 'object' || kind === 'collection' ? kind : undefined;
-}
 function appendPath(path: ValuePath, segment: PathSegment): ValuePath {
     return Object.freeze([...path, Object.freeze({ ...segment })]);
 }
@@ -130,19 +128,61 @@ function propertyPath(path: ValuePath, name: string): ValuePath {
 function rowPath(path: ValuePath, key: string): ValuePath {
     return appendPath(path, { kind: 'row', key });
 }
+function segmentId(segment: PathSegment): string {
+    return segment.kind === 'property' ? `property:${segment.name}` : `row:${segment.key}`;
+}
+function samePath(a: ValuePath, b: ValuePath): boolean {
+    return (
+        a.length === b.length &&
+        a.every((segment, index) => segmentId(segment) === segmentId(b[index]!))
+    );
+}
 function structure(
     context: Context,
     code: DocumentStructureDiagnosticCode,
     path: ValuePath,
     message: string,
 ): void {
-    context.diagnostics.push(Object.freeze({ source: 'definition' as const, code, path, message }));
+    const duplicate = context.diagnostics.some(
+        (diagnostic) =>
+            String(diagnostic.code) === code &&
+            diagnostic.message === message &&
+            samePath(diagnostic.path, path),
+    );
+    if (!duplicate)
+        context.diagnostics.push(
+            Object.freeze({ source: 'definition' as const, code, path, message }),
+        );
 }
-function readPlanNode(
+function documentProblemMessage(problem: DocumentNodeProblem): string {
+    switch (problem) {
+        case 'not-record':
+            return 'A document node must be a plain object.';
+        case 'unsupported-kind':
+            return 'The document node kind is unsupported.';
+        case 'members':
+            return 'The document node contains missing or unsupported members.';
+        case 'flags':
+            return 'Document capability flags must be booleans.';
+        case 'equality':
+            return 'The document field equality metadata is invalid.';
+        case 'input':
+            return 'The document field input is not a supported editing slot.';
+        case 'properties':
+            return 'A document object requires an unambiguous properties map.';
+        case 'collection':
+            return 'A document collection requires boolean capability flags and a rows array.';
+        case 'row':
+            return 'A document collection row requires a nonempty unique key and an object value.';
+    }
+}
+function inspectPlanNode(
     value: unknown,
     path: ValuePath,
+    depth: number,
+    ancestors: Set<object>,
     context: Context,
-): ValidationPlanNode | undefined {
+): void {
     if (!isPlainRecord(value)) {
         structure(
             context,
@@ -150,7 +190,16 @@ function readPlanNode(
             path,
             'The validation plan node must be a plain object.',
         );
-        return undefined;
+        return;
+    }
+    if (depth > MAX_DEPTH) {
+        structure(
+            context,
+            'depth-limit',
+            path,
+            'The document or validation plan exceeds the supported structural depth.',
+        );
+        return;
     }
     const kind = value['kind'];
     if (kind === 'field') {
@@ -161,9 +210,10 @@ function readPlanNode(
                 path,
                 'A field validation plan requires only kind and definition.',
             );
-            return undefined;
+            return;
         }
-        return value as unknown as FieldValidationPlan;
+        context.admittedPlans.add(value);
+        return;
     }
     if (kind === 'object') {
         if (!exactKeys(value, ['kind', 'properties']) || !propertyMap(value['properties'])) {
@@ -173,9 +223,30 @@ function readPlanNode(
                 path,
                 'An object validation plan requires an unambiguous properties map.',
             );
-            return undefined;
+            return;
         }
-        return value as unknown as ObjectValidationPlan;
+        if (ancestors.has(value)) {
+            context.cyclicPlans.add(value);
+            structure(context, 'plan-cycle', path, 'The validation plan contains a cycle.');
+            return;
+        }
+        context.admittedPlans.add(value);
+        ancestors.add(value);
+        try {
+            const properties = value['properties'] as Readonly<Record<string, unknown>>;
+            for (const name of Object.keys(properties).sort()) {
+                inspectPlanNode(
+                    properties[name],
+                    propertyPath(path, name),
+                    depth + 1,
+                    ancestors,
+                    context,
+                );
+            }
+        } finally {
+            ancestors.delete(value);
+        }
+        return;
     }
     if (kind === 'collection') {
         if (!exactKeys(value, ['kind', 'row'])) {
@@ -185,7 +256,7 @@ function readPlanNode(
                 path,
                 'A collection validation plan requires only kind and a reusable row schema.',
             );
-            return undefined;
+            return;
         }
         const row = value['row'];
         if (
@@ -200,39 +271,33 @@ function readPlanNode(
                 path,
                 'A collection validation plan row schema must be an object plan.',
             );
-            return undefined;
+            return;
         }
-        return value as unknown as CollectionValidationPlan;
+        if (ancestors.has(value)) {
+            context.cyclicPlans.add(value);
+            structure(context, 'plan-cycle', path, 'The validation plan contains a cycle.');
+            return;
+        }
+        context.admittedPlans.add(value);
+        ancestors.add(value);
+        try {
+            inspectPlanNode(row, path, depth + 1, ancestors, context);
+        } finally {
+            ancestors.delete(value);
+        }
+        return;
     }
     structure(context, 'malformed-plan', path, 'The validation plan node kind is unsupported.');
-    return undefined;
 }
 function walkField(
-    document: unknown,
+    document: DocumentField,
     plan: FieldValidationPlan,
     path: ValuePath,
     context: Context,
 ): void {
-    if (!isPlainRecord(document) || !Object.hasOwn(document, 'input')) {
-        structure(context, 'invalid-document', path, 'A document field requires an editing input.');
-        return;
-    }
-    const input = document['input'];
-    if (
-        !isPlainRecord(input) ||
-        (input['kind'] !== 'absent' && input['kind'] !== 'value' && input['kind'] !== 'raw')
-    ) {
-        structure(
-            context,
-            'invalid-document',
-            path,
-            'The document field input is not a supported editing slot.',
-        );
-        return;
-    }
     const result = validateField({
         definition: plan.definition,
-        input: input as DocumentField['input'],
+        input: document.input,
         path,
     });
     context.fields.push(Object.freeze({ path, result }));
@@ -258,16 +323,7 @@ function walkObject(
     ancestors: Set<object>,
     context: Context,
 ): void {
-    const properties = (document as unknown as Record<string, unknown>)['properties'];
-    if (!propertyMap(properties)) {
-        structure(
-            context,
-            'invalid-document',
-            path,
-            'A document object requires an unambiguous properties map.',
-        );
-        return;
-    }
+    const properties = document.properties;
     const names = Array.from(
         new Set([...Object.keys(properties), ...Object.keys(plan.properties)]),
     ).sort();
@@ -303,50 +359,8 @@ function walkCollection(
     ancestors: Set<object>,
     context: Context,
 ): void {
-    const rows = (document as unknown as Record<string, unknown>)['rows'];
-    if (!Array.isArray(rows)) {
-        structure(
-            context,
-            'invalid-document',
-            path,
-            'A document collection requires an array of keyed rows.',
-        );
-        return;
-    }
-    const seen = new Set<string>();
-    for (const row of rows as readonly DocumentRow[]) {
-        if (!isPlainRecord(row) || typeof row['key'] !== 'string' || !row['key'].trim()) {
-            structure(
-                context,
-                'invalid-document',
-                path,
-                'A document collection contains a malformed row identity.',
-            );
-            continue;
-        }
-        const key = row['key'];
-        const itemPath = rowPath(path, key);
-        if (seen.has(key)) {
-            structure(
-                context,
-                'invalid-document',
-                itemPath,
-                'A document collection contains duplicate row identities.',
-            );
-            continue;
-        }
-        seen.add(key);
-        const value = row['value'];
-        if (!isPlainRecord(value) || value['kind'] !== 'object') {
-            structure(
-                context,
-                'invalid-document',
-                itemPath,
-                'A document collection row value must be an object.',
-            );
-            continue;
-        }
-        walkNode(value, plan.row, itemPath, ancestors, context);
+    for (const row of document.rows) {
+        walkNode(row.value, plan.row, rowPath(path, row.key), ancestors, context);
     }
 }
 function walkNode(
@@ -356,18 +370,15 @@ function walkNode(
     ancestors: Set<object>,
     context: Context,
 ): void {
-    const planNode = readPlanNode(plan, path, context);
-    if (!planNode) return;
-    const kind = documentKind(document);
-    if (!kind) {
-        structure(
-            context,
-            'invalid-document',
-            path,
-            'The document node is not a supported field, object or collection.',
-        );
+    if (typeof plan !== 'object' || plan === null || !context.admittedPlans.has(plan)) return;
+    if (context.cyclicPlans.has(plan)) return;
+    const planNode = plan as ValidationPlanNode;
+    const problem = documentNodeProblem(document);
+    if (problem) {
+        structure(context, 'invalid-document', path, documentProblemMessage(problem));
         return;
     }
+    const kind = (document as { readonly kind: 'field' | 'object' | 'collection' }).kind;
     if (kind !== planNode.kind) {
         structure(
             context,
@@ -386,18 +397,15 @@ function walkNode(
         );
         return;
     }
-    if (
-        (planNode.kind === 'object' || planNode.kind === 'collection') &&
-        ancestors.has(plan as object)
-    ) {
+    if ((planNode.kind === 'object' || planNode.kind === 'collection') && ancestors.has(plan)) {
         structure(context, 'plan-cycle', path, 'The validation plan contains a cycle.');
         return;
     }
     if (planNode.kind === 'field') {
-        walkField(document, planNode, path, context);
+        walkField(document as DocumentField, planNode, path, context);
         return;
     }
-    ancestors.add(plan as object);
+    ancestors.add(plan);
     try {
         if (planNode.kind === 'object') {
             walkObject(document as DocumentObject, planNode, path, ancestors, context);
@@ -405,7 +413,7 @@ function walkNode(
             walkCollection(document as DocumentCollection, planNode, path, ancestors, context);
         }
     } finally {
-        ancestors.delete(plan as object);
+        ancestors.delete(plan);
     }
 }
 function documentValidationState(context: Context): DocumentValidationState {
@@ -428,6 +436,8 @@ export function validateDocument(request: DocumentValidationRequest): DocumentVa
         diagnostics: [],
         patternDiagnostics: [],
         checks: [],
+        admittedPlans: new WeakSet(),
+        cyclicPlans: new WeakSet(),
     };
     if (!isPlainRecord(request) || !exactKeys(request, ['document', 'plan'])) {
         structure(
@@ -439,6 +449,7 @@ export function validateDocument(request: DocumentValidationRequest): DocumentVa
     } else {
         const document = request['document'];
         const plan = request['plan'];
+        inspectPlanNode(plan, ROOT_PATH, 0, new Set(), context);
         if (!isPlainRecord(document) || document['kind'] !== 'object') {
             structure(
                 context,
