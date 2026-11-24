@@ -1,5 +1,15 @@
 # UI Runtime 1.0 API and internal contract design
 
+AUR-VALID-AGG-001 publishes [framework-independent document validation aggregation](../contracts/document-validation.md).
+`validateDocument` adds a purpose-built request/result contract and a declarative
+object/field/collection plan without changing `DocumentField` or `validateField`.
+It reuses typed `ValuePath` stable row keys, retains per-field evidence and applies
+`definition-error > invalid > pending > valid` precedence. The aggregate result is
+deeply frozen and detached; STATE snapshots, revision, dirty state and row identity
+are never modified. Explicit revalidation replaces any previous result. The proposed
+session/submission/reconciliation interfaces and application-owned root/row issues
+below remain unpublished; heterogeneous row schemas are not implemented.
+
 AUR-VALID-009 implements [safe pattern validation and deferred checks](../contracts/pattern-validation.md)
 in the existing boundary. Pending is distinct from valid; invalid results retain
 deferred obligations additively. Nonfatal pattern execution diagnostics are separate

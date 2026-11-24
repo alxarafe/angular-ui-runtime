@@ -167,10 +167,22 @@ fraction spellings can remain dirty even when they satisfy the same instant boun
 field results. Deferred checks belong to validation results and their consuming
 application, not to STATE snapshots, revision tracking or the dirty comparison.
 
+[AUR-VALID-AGG-001](document-validation.md) derives an immutable document-level
+validation result from a separately supplied plan and, normally, `DocumentState.current`.
+It never reads `original`, never mutates or freezes the supplied tree/plan and never
+stores validity, diagnostics or deferred checks on `DocumentState`. Revision, dirty
+state, row keys and row order are unchanged. Revalidation is explicit: a later call
+with the current snapshot replaces the application's previous result; there is no
+cache or STATE subscription. Clean/valid, clean/pending, clean/invalid, dirty/valid,
+dirty/pending and dirty/invalid remain independent combinations. Root/row business
+issues, submission, server confirmation and reconciliation remain future work.
+
 `tests/state.test.mjs` covers immutable snapshots, exact equality, nested edits,
 multiple collections, multiset permutations, key stability, permissions, rejection,
-revision safety and reset. `tests/browser/specs/state.spec.mjs` covers the installed
-public components at desktop/mobile sizes, dirty invalid-looking numeric drafts,
-reordering both collections, semantic reversion, add/remove and theme switching.
-Only tested parts of STATE-001/STATE-002 are claimed; STATE-003–STATE-006 and all
-semantic document-validation acceptance remain pending.
+revision safety and reset. `tests/document-validation.test.mjs` additionally proves
+that document validation leaves current/original snapshots, rows, revision and dirty
+state untouched. `tests/browser/specs/state.spec.mjs` covers the installed public
+components at desktop/mobile sizes, dirty invalid-looking numeric drafts, reordering
+both collections, semantic reversion, add/remove and theme switching. Only tested
+parts of STATE-001/STATE-002 are claimed; STATE-003–STATE-006 and the remaining
+document-validation acceptance requirements remain pending.

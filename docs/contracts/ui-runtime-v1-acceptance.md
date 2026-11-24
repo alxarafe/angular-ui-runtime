@@ -36,8 +36,8 @@ not be interpreted as a successful 1.0 acceptance run.
 | VALID-007 | Validate real Gregorian DATE, TIME precision/profile and explicit-offset DATETIME losslessly. | Leap years; invalid day; 24:00; missing offset; >7 TIME fractions; year bounds. | unit, consumer | tests/temporal-uuid-validation.test.mjs; tests/browser/specs/temporal-uuid-validation.spec.mjs; external consumer evidence pending | implemented | E-VALID-TEMPORAL-001 demonstrates local Gregorian/clock checks, maximum fraction policy, exact instant bounds, ±14:00 offsets and local/UTC year boundaries. Source references inform the profile; external temporal/backend parity remains open. |
 | VALID-008 | Validate canonical UUID under declared casing policy without invented version restrictions. | Malformed groups; case policy; valid variant/version texts; nullability. | unit, consumer | tests/temporal-uuid-validation.test.mjs; tests/browser/specs/temporal-uuid-validation.spec.mjs; external consumer evidence pending | implemented | E-VALID-TEMPORAL-001 covers exact canonical grammar, lower/either casing, mixed case, all version/variant nibbles, presence/nullability and lexical preservation. No generation, normalization or external consumer parity is claimed. |
 | VALID-009 | Execute only supported safe bounded patterns; show unsupported patterns as server-only pending. | Unsafe repetition; incompatible dialect/flags; anchoring; Unicode; time limit. | unit, integration | tests/pattern-validation.test.mjs; tests/browser/specs/pattern-validation.spec.mjs; tests/fixtures/validation.type-test.ts | implemented | E-VALID-PATTERN-001 demonstrates direct bounded matching, exact anchors, immutable compilation, fatal malformed portable declarations, nonfatal deferred diagnostics and retained checks on invalid fields. External backend equivalence and actual server confirmation remain open. |
-| VALID-010 | Invalid drafts remain editable with meaningful associated errors and cannot save successfully. | Invalid hidden-tab field; server rejection; unresolved server-only check. | browser, integration | tests/browser/specs/validation.spec.mjs; tests/browser/specs/scalar-validation.spec.mjs; tests/browser/specs/temporal-uuid-validation.spec.mjs; tests/browser/specs/pattern-validation.spec.mjs; submission evidence pending | partial | Field evidence demonstrates focused feedback, distinct pending status, correction, retained deferred obligations and drafts across themes. Complete editors, hidden errors, actual server confirmation/error mapping, aggregate presentation and save blocking remain pending. |
-| VALID-011 | Diagnose invalid definitions and map constraints explicitly; backend retains domain authority. | Negative lengths; unsupported combinations; step mismatch; oversized digit/exponent input; permission/business rejection. | unit, consumer | tests/validation.test.mjs; tests/decimal-validation.test.mjs; tests/scalar-validation.test.mjs; tests/temporal-uuid-validation.test.mjs; tests/pattern-validation.test.mjs; adapter/consumer evidence pending | partial | Field evidence covers definition/constraint/work-limit diagnostics, invalid lengths/catalogues/profiles, temporal precision/bounds and separate fatal/nonfatal pattern diagnostics. Unsupported profiles, adapter mapping, backend conformance, authoritative server checks and business rejection remain pending. |
+| VALID-010 | Invalid drafts remain editable with meaningful associated errors and cannot save successfully. | Invalid hidden-tab field; server rejection; unresolved server-only check. | browser, integration | tests/browser/specs/validation.spec.mjs; tests/browser/specs/scalar-validation.spec.mjs; tests/browser/specs/temporal-uuid-validation.spec.mjs; tests/browser/specs/pattern-validation.spec.mjs; tests/document-validation.test.mjs; tests/browser/specs/document-validation.spec.mjs; submission evidence pending | partial | Field evidence demonstrates focused feedback, distinct pending status, correction, retained deferred obligations and drafts across themes. E-VALID-AGG-001 adds application-owned document summaries, stable row-key paths and retained sibling checks. Complete editors, hidden-tab error reveal, actual server confirmation/error mapping and save blocking remain pending. |
+| VALID-011 | Diagnose invalid definitions and map constraints explicitly; backend retains domain authority. | Negative lengths; unsupported combinations; step mismatch; oversized digit/exponent input; permission/business rejection. | unit, consumer | tests/validation.test.mjs; tests/decimal-validation.test.mjs; tests/scalar-validation.test.mjs; tests/temporal-uuid-validation.test.mjs; tests/pattern-validation.test.mjs; tests/document-validation.test.mjs; adapter/consumer evidence pending | partial | Field evidence covers definition/constraint/work-limit diagnostics, invalid lengths/catalogues/profiles, temporal precision/bounds and separate fatal/nonfatal pattern diagnostics. E-VALID-AGG-001 adds structural plan diagnostics and collected fatal sibling diagnostics. Unsupported profiles, adapter mapping, backend conformance, authoritative server checks and business rejection remain pending. |
 | MENU-001 | Named menus have unique identity separate from kind and placement; unlimited same-kind menus. | Zero/one/many; two primary, secondary and account menus; duplicate IDs. | unit, browser | tests/contracts/menus/; tests/browser/menus/ | missing | No behavioral evidence yet. Design/type evidence: E-DESIGN-001 only. |
 | MENU-002 | Render each valid nonempty menu/item once in input order; diagnose cycles/duplicate item IDs. | Nested children; equal labels; duplicate placement; empty menu. | unit, browser | tests/contracts/menus/; tests/browser/menus/ | missing | No evidence yet. |
 | MENU-003 | Provide labelled keyboard-accessible default/overflow for every unspecialized placement. | Many menus; unsupported placement; mobile; open/close focus restoration. | browser, visual | tests/browser/menus/; tests/visual/menus/ | missing | No evidence yet. |
@@ -264,10 +264,11 @@ suppression and horizontal scrolling. Captures: `artifacts/testbed/grids/`.
 
 GRID-001/002 remain partial at the full acceptance level because aggregate save
 and cancel/discard require STATE/application integration. GRID-003 has presentation
-and feedback hooks only; validators, aggregate errors and parent-save blocking are
-pending. STATE-001..006 remain missing. Screenshot inspection is task-level QA,
-not approved/versioned visual baselines or a full accessibility audit. No external
-consumer repository or backend integration is claimed.
+and feedback hooks only; E-VALID-AGG-001 now supplies field and structural document
+aggregation separately, but grid-level error presentation, hidden column handling and
+parent-save blocking remain pending. STATE-001..006 remain missing. Screenshot
+inspection is task-level QA, not approved/versioned visual baselines or a full
+accessibility audit. No external consumer repository or backend integration is claimed.
 
 ## E-STATE-CORE-001 — immutable editing core
 
@@ -277,9 +278,12 @@ exact bounded numeric comparison, absence/raw input, nested/multiple collections
 duplicate multiplicity, permissions, stale targets, revision safety and explicit
 in-memory reset. Installed APF browser coverage uses the public FORM/GRID components
 with one header and two collections at desktop/mobile sizes across theme changes.
-STATE-001 and STATE-002 remain partial: no semantic validation or valid-state
-aggregation exists. STATE-003 through STATE-006 remain pending. In-memory reset is
-not confirmation, navigation protection, saving or reconciliation.
+STATE-001 and STATE-002 remain partial. E-VALID-AGG-001 derives semantic document
+validity from `state.current` through a separate immutable plan, but that result is
+not stored in STATE, does not subscribe to revisions and does not by itself satisfy
+the remaining STATE acceptance requirements. STATE-003 through STATE-006 remain
+pending. In-memory reset is not confirmation, navigation protection, saving or
+reconciliation.
 
 ## E-VALID-001 — local exact INTEGER and presence validation
 
@@ -357,3 +361,38 @@ server-only field pending even after clean reversion. No HTTP, backend equivalen
 or confirmation/save workflow is claimed. FIELD-003 remains incomplete and
 VALID-010/011 remain partial while editor, aggregation and server-confirmed saving
 requirements are open.
+
+## E-VALID-AGG-001 — recursive document validation aggregation
+
+[AUR-VALID-AGG-001](document-validation.md) publishes `validateDocument` and a
+declarative object/field/collection plan. It reuses `validateField` and the existing
+immutable `DocumentObject`/`DocumentState` snapshots. Unit evidence covers empty
+documents, one/multiple valid and invalid fields, pending and invalid siblings,
+fatal field definitions with retained sibling evidence, nested objects, zero/one/
+multiple collections, different row schemas, nested collections, keyed reordering,
+addition/deletion, duplicate values in separate rows, deterministic sorted property
+traversal, all eleven semantic types, local and server-only patterns, invalid raw
+drafts, missing/unknown definitions, kind mismatches, malformed plans and row
+schemas, cycles detected through empty collections, shared acyclic row schemas,
+semantic definition errors inside empty and populated collections without per-row
+duplicates, schema paths without invented row keys, excessive depth, malformed
+field/equality/input/object/collection/row members, frozen detached results,
+caller-definition immutability, message privacy and STATE independence. Type
+contracts exclude `DocumentState` as a request document, scalar/heterogeneous row
+schemas, unsupported plan kinds and mutable result paths.
+
+Installed-APF browser evidence uses one parent `DocumentState` with a header, a
+nested object, two independently identified detail collections and an application-
+owned summary. Desktop/mobile tests show an initially pending clean document, an
+invalid nested row issue with a stable keyed path, an independently invalid header
+field, a retained server-pattern check, row add/remove/reorder with unchanged path
+identity, validation changing independently from dirty state, and preservation of
+drafts/diagnostics across five packaged themes plus a structural frame.
+
+Only framework-independent local aggregation and structural plan diagnostics are
+claimed. Hidden-tab error reveal/focus, application root/row business issues,
+heterogeneous row schemas, server error mapping, persistence, submission,
+confirmation, reconciliation, navigation protection, mutable caches and save
+blocking are not implemented. VALID-010/011 remain partial; GRID-003 and
+STATE-001/002 gain related evidence but remain partial/pending for their other
+requirements.

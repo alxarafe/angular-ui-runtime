@@ -24,3 +24,8 @@ The same page now explicitly registers all five independently packaged themes,
 with optional override/fallback, safe layout and dark native-control evidence in
 [optional-theme QA](../../docs/qa/optional-theme-extraction.md). Human review and
 consumer panel-only focus policy remain pending.
+
+`?scenario=document-validation` exercises the public `validateDocument` aggregation
+over one parent `DocumentState` with a header, nested object and two detail
+collections. It renders an application-owned summary only; it does not implement
+submission, server confirmation or save blocking.
