@@ -124,6 +124,16 @@ defer without execution. Invalid results retain applicable deferred checks; pend
 never means server-confirmed valid. Backend parity and confirmation/save workflows
 remain unimplemented.
 
+AUR-VALID-AGG-001 adds [document validation aggregation](document-validation.md).
+`validateDocument` traverses an immutable `DocumentObject` against a separate
+declarative object/field/collection plan, reuses `validateField` for every semantic
+field, preserves stable keyed paths and applies
+`definition-error > invalid > pending > valid` precedence while retaining sibling
+issues, diagnostics and deferred checks. It does not mutate STATE, store aggregate
+validity on STATE, cache results or implement submission, server confirmation,
+reconciliation, root/row business rules or save blocking. Heterogeneous row schemas
+and application-owned root/row issue injection remain future work.
+
 INTEGER is one semantic type. The active ARP-INTEGER-001 contract candidate supplies
 effective capacity through optional `bits` (8, 16, 32 or 64) and `signed`, alongside
 exact `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum` and `multipleOf`

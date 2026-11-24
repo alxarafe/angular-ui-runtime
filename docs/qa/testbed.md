@@ -160,12 +160,13 @@ fallback and control reachability, isolated from the synthetic fixture styleshee
 See [original extraction evidence](default-theme-extraction.md); the optional-theme
 follow-up above extends this page without approving any reference-theme visuals.
 
-No semantic field validation, date/UUID/decimal rules, typed multi-menu fallback,
-forms/tabs, grids/editable collections, dirty/save/discard/navigation engine, domain
-adapters, optimistic concurrency, all-reference-theme coverage, cross-browser/device
-coverage, complete accessibility audit or approved visual regression baselines are
-established. The [acceptance matrix](../contracts/ui-runtime-v1-acceptance.md) records
-only this foundation's verified evidence; the 1.0 release gate remains open.
+Installed-browser evidence below covers the implemented field/document validation,
+forms, grids and document-state scenarios. Complete editors, backend/consumer parity,
+hidden-tab error reveal, submission/save/discard/navigation engine, domain adapters,
+optimistic concurrency, cross-browser/device coverage, a complete accessibility audit
+and approved visual regression baselines remain absent. The
+[acceptance matrix](../contracts/ui-runtime-v1-acceptance.md) records only this
+foundation's verified evidence; the 1.0 release gate remains open.
 
 ## Neutral navigation consumer
 
@@ -244,3 +245,22 @@ document-state engine is included.
 [grid contract](../contracts/grid-composition.md) for the public API, exact-value
 guarantees, form integration, error hooks and pending acceptance. Captures are
 review candidates; no approved release baseline is claimed.
+
+## Document validation aggregation technical scenario
+
+`/default-theme/?scenario=document-validation` mounts the public `FormComposition`
+over one parent `DocumentState` containing a header, a nested customer object and two
+independently identified detail collections. The fixture calls only the public
+`validateDocument` export with a separate declarative plan and renders an
+application-owned summary of aggregate state, local issues, deferred server checks
+and typed field paths. It does not store validation on STATE or implement submission,
+confirmation or backend error mapping.
+
+`tests/browser/specs/document-validation.spec.mjs` runs at desktop/mobile sizes. It
+starts from a clean pending document, produces an invalid nested row path and an
+invalid header field outside the collection, retains the server-pattern check while
+another field is invalid, adds/removes/reorders rows without changing keyed path
+identity, cycles all five packaged themes plus the structural frame, and finally
+restores original values to a clean but still pending document. Dirty state and
+validation remain independent throughout. Captures are not an approved visual
+baseline.
