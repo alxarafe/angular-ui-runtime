@@ -1,96 +1,88 @@
-# Angular UI Runtime
+# Angular UI Runtime (AUR)
 
-![Angular](https://img.shields.io/badge/Angular-22-DD0031?logo=angular)
-[![CI](https://github.com/alxarafe/angular-ui-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/alxarafe/angular-ui-runtime/actions/workflows/ci.yml)
-![License](https://img.shields.io/badge/License-Apache%202.0-blue)
+**Angular UI Runtime (AUR)** is a reusable, backend-agnostic UI toolkit for Angular applications. It provides theme resolution, presentation composition, form and grid primitives, immutable editing state, and local data validation without imposing an application architecture or a transport protocol.
 
-`@alxarafe/ui-runtime` is a general-purpose Angular UI runtime library, independent of backend technologies. ERBAS and Alixar-Solúcar are reference applications that inform its design, not limitations on its use.
+AUR is distributed as an **Angular Package Format (APF)** library. Visual themes are separate, optional APF packages. Applications choose which packages, components, and integrations to use.
 
-Implemented prerelease `0.3.0-alpha.3` provides the Angular 22 theme engine, exact-value field renderer contracts extracted from ERBAS and reusable neutral form composition. Version `1.0` plans reusable field validation, typed menus, complete validation-aware forms, grids and document editing state; these remaining capabilities are specified in the contract and design documents but are not implemented yet.
+> **Status: experimental prerelease.** The runtime currently declares `0.3.0-alpha.3`, and the five reference themes declare `0.1.0-alpha.3`. Development has continued without changing those version strings. The packages are private, have not been published to the public npm registry, and are not a certified 1.0 release. Pin the source revision and archive digest when evaluating a build.
 
-## Requirements
+## Capabilities
 
-Docker Engine access and Bash are required. Node.js, npm and Angular CLI are supplied exclusively by an immutable Node.js 24 LTS Docker image; no host installation is needed. The build image provides Node.js 24.22.2 and npm 11.19.1. Browser checks use a separate digest-pinned Playwright 1.58.2 image with its matching Chromium. The first run requires internet access to download images and npm dependencies.
+- **Independent themes.** A complete default theme, optional partial themes, deterministic fallback, standalone Angular components, and scoped styles.
+- **UI composition.** Shell, navigation, panel, forms with tabs/sections/groups, and list/editable-detail grids.
+- **Exact field semantics.** Eleven scalar types: `BOOLEAN`, `STRING`, `TEXT`, `INTEGER`, `DECIMAL`, `UUID`, `DATE`, `TIME`, `DATETIME`, `ENUM`, and `BINARY`. Numeric and temporal values can be handled without lossy JavaScript number/date conversion.
+- **Immutable document editing core.** Snapshots, dirty-state comparison, keyed nested collections, and add/edit/remove/reorder operations.
+- **Local validation.** Field validation, exact numeric and temporal constraints, bounded pattern checks, deferred server checks, and recursive document-level validation.
+- **Consumer-controlled integration.** Applications retain ownership of authorization, routing, API calls, persistence, server-side validation, business rules, and user workflows.
 
-## Commands
+These capabilities are building blocks, not a complete save-and-reconcile workflow. See [API and feature status](docs/api-overview.md) for implemented behavior and known gaps.
 
-Run from the repository root:
+## Packages
 
-```sh
-./bin/test         # Reproducible dependency installation and automated tests
-./bin/check        # Complete validation, isolated consumer and Chromium QA smoke tests
-./bin/pack         # Reproducible installation, production build and verified npm tarball
-./bin/format       # Format maintained source files through ephemeral Docker
-./bin/format-check # Verify formatting without modifying files
-./bin/testbed      # Docker-only QA preview at http://127.0.0.1:4173; Ctrl+C to stop
+| Package | Purpose | Declared version |
+| --- | --- | --- |
+| `@alxarafe/ui-runtime` | UI runtime and public APIs | `0.3.0-alpha.3` |
+| `@alxarafe/ui-theme-default` | Complete default presentation | `0.1.0-alpha.3` |
+| `@alxarafe/ui-theme-alternative` | Optional field presentation | `0.1.0-alpha.3` |
+| `@alxarafe/ui-theme-cyberpunk` | Optional structural presentation | `0.1.0-alpha.3` |
+| `@alxarafe/ui-theme-vintage` | Optional CSS-only presentation | `0.1.0-alpha.3` |
+| `@alxarafe/ui-theme-high-contrast` | Optional high-contrast presentation | `0.1.0-alpha.3` |
+
+The runtime has no dependency on a visual theme. An application using theme rendering must provide a complete `default` theme; the supplied default package is one option. Optional themes fall back directly to that default. Themes are not loaded or installed dynamically at runtime.
+
+**Compatibility:** Angular `^22.0.0` is the declared peer dependency; the reference themes require the exact runtime prerelease version shown above. Other Angular majors have not been certified. The toolkit does not include Angular itself.
+
+## Build and try it
+
+Requirements: Bash, Git, and access to a running Docker Engine. No host Node.js, npm, or Angular CLI installation is required by the repository scripts. The first run needs internet access for container images and dependencies.
+
+From the repository root:
+
+```bash
+./bin/test       # Unit/contract tests in Docker
+./bin/check      # Full build, package, consumer and Chromium verification
+./bin/pack       # Produce the core and five theme APF archives
+./bin/testbed    # Open the local QA preview on http://127.0.0.1:4173
 ```
 
-Each command runs in ephemeral containers as the host user's UID/GID. Validation commands mount source read-only; `./bin/format` mounts it read-write and rewrites only maintained source directories. Dependencies, temporary workspaces and the consumer live in container storage, so no `node_modules` is written to the host. Automated checks publish no ports and create no resident services or named volumes; the explicit testbed preview publishes only host loopback port 4173 until stopped. Repeated runs use `npm ci` with committed lockfiles and discard temporary dependencies on exit.
+`./bin/testbed` runs until interrupted with Ctrl+C. It is a repository-local QA fixture, **not** a distributed demo or an application runtime. The build archives are written under `artifacts/` and are not published automatically.
 
-`./bin/check` first verifies formatting with Prettier 3.10.1 using the pinned workspace dependency, then runs TypeScript strict checking, automated bootstrap and Angular-compiled theme tests, the production library build and npm packaging validation. It inspects the tarball's identity, exports, ESM bundle, declarations, license and development-file exclusions. A separate temporary standalone Angular application installs the actual tarball and compiles using only its installed package exports. Its own lockfile pins the consumer toolchain. It is deleted after the check, including on failure.
+For installation in your own Angular 22 project, see [Getting started](docs/getting-started.md). The current package installation route is through locally built `.tgz` archives, not `npm install` from a public registry.
 
-The consumer first runs `npm ci`, then installs the generated tarball with `npm install --no-save` while retaining lockfile resolution. Validation requires the consumer lockfile to remain unchanged and every initially installed dependency to retain its locked version, source and integrity; installed package manifests also confirm the versions. Only the runtime package may be added. Platform-specific optional dependencies absent after `npm ci` are not required. Any dependency drift fails the check before the public-package imports and production consumer build.
+## Minimal application configuration
 
-The private `apps/testbed/` app installs the actual core and five theme archives, preserves its locked dependencies and builds using public exports. `./bin/check` runs sixty-eight Playwright browser tests at 1280×800 and 390×844, covering synthetic boundary scenarios and all five packaged themes. Screenshots, reports and archive metadata are written under `artifacts/testbed/`, outside the npm packages. Captures remain pending human visual approval. See [browser QA and human inspection](docs/qa/testbed.md).
+After installing the runtime and default theme archives:
 
-The local artifact is:
+```ts
+import { ApplicationConfig } from '@angular/core';
+import { provideThemeRuntime } from '@alxarafe/ui-runtime';
+import { DEFAULT_THEME } from '@alxarafe/ui-theme-default';
 
-```text
-artifacts/alxarafe-ui-runtime-0.3.0-alpha.3.tgz
+export const appConfig: ApplicationConfig = {
+    providers: [...provideThemeRuntime([DEFAULT_THEME])],
+};
 ```
 
-Packaging does not publish to npm. Push, PR, merge, publication and deployment require separate authorization.
+Load the default theme stylesheet once in the application's global styles:
 
-## Library boundaries
+```css
+@import '@alxarafe/ui-theme-default/theme.css';
+```
 
-The workspace is private; the distributable package manifest is `projects/ui-runtime/package.json`. The public entry point is `projects/ui-runtime/src/public-api.ts`. Angular CLI and ng-packagr produce Angular Package Format with ESM, type declarations, partial compilation and `sideEffects: false`. Angular core remains a peer dependency (`^22.0.0`). TypeScript and Angular template checks are strict.
+This registers the theme infrastructure; it does not automatically create an application screen. Render UI through the public AUR outlets and components, and connect their inputs/events to your own application state. See the [installation and composition guide](docs/getting-started.md).
 
-`UI_RUNTIME_VERSION` is a technical bootstrap marker used to verify the public package boundary. It does not define business functionality or a metadata API. Future Angular components must use standalone APIs. No styling framework, state library or permanent demonstration app is included.
+## Documentation
 
-Consumer applications own application-specific workflows, configuration, routing and business logic. Import only from `@alxarafe/ui-runtime`, never from this repository's source tree. To evaluate the local archive in an Angular 22 consumer, install the generated `.tgz` with npm in that consumer's Docker environment; do not commit machine-specific absolute dependency paths.
+- [Getting started: prerequisites, packaging, installation, and local QA](docs/getting-started.md)
+- [Public API overview and current limitations](docs/api-overview.md)
+- [Guía rápida en español](docs/es/inicio-rapido.md)
 
-## Theme engine
+## Design boundaries
 
-The public API exports `ThemeArtifact`, `THEME_ARTIFACTS`, `ThemeId` (only the generic `Default` identity), `ThemeDefinition`, `ThemeArtifacts`, `FieldArtifact`, `StructureArtifact`, `ThemeRegistry`, `ThemeService`, `ThemeResolver` and `provideThemeRuntime`.
+AUR is a UI library, not an ERP framework, application generator, router, HTTP client, authentication service, database abstraction, or persistence engine. It does not require any specific backend, API schema, database, or consuming application. Integration adapters belong to consumers.
 
-Consumers call `provideThemeRuntime(themes)` in their application providers. They supply a `default` theme containing every artifact (shell, navigation, panel and each field renderer), then optional themes with sparse overrides or an empty override map for CSS-only changes. All artifacts must be compiled standalone Angular components. Field components must expose the `context` input and `valueChange` output. Registration rejects unknown artifacts, invalid identities, duplicate theme IDs and incomplete defaults, and captures frozen snapshots.
-
-`ThemeService.current` is a readonly signal. `activate(id)` selects a registered theme and returns `true`; an unknown ID restores `default` and returns `false`. `ThemeResolver.resolve(artifact)` uses the selected override or falls directly back to the default component. Selection stays local to each provider composition; there is no persistence or browser/HTTP dependency.
-
-The renderer API exports `FieldValue`, `FieldRendererContext`, `FieldRenderer` and `FIELD_RENDERER_BINDINGS`. Exact numeric, date, time, instant and binary values remain strings; booleans and null retain their values. Context includes identity, label, value, optional disabled/read-only flags and choices. Transport and semantic validation remain consumer responsibilities.
-
-Opt-in `ThemeShellOutlet`, `ThemeNavigationOutlet` and `ThemePanelOutlet` provide independent structural composition using public navigation/intent ports and application-owned Angular projection. No consumer base classes or router are required. Optional synchronous `[linkActivation]` lets consumers cancel eligible native links before applying their own SPA policy; action intent stays separate. See the [structural composition contract](docs/contracts/theme-composition-v1.md) for bindings, named regions, view lifetime and compatibility limits.
-
-The core npm artifact ships no visual themes or field widgets. Five separate experimental APF packages provide the complete [`default`](packages/themes/default/README.md) and optional [`alternative`](packages/themes/alternative/README.md), [`cyberpunk`](packages/themes/cyberpunk/README.md), [`vintage`](packages/themes/vintage/README.md) and [`high-contrast`](packages/themes/high-contrast/README.md) themes. Each theme is independently versioned at `0.1.0-alpha.3` with exact runtime peer `0.3.0-alpha.3`; all six packages are private and publication is prohibited. See the [version and compatibility policy](docs/contracts/package-versioning.md). See [installation, extraction evidence and known limits](docs/qa/optional-theme-extraction.md). Consumer adoption and human visual approval remain separate work.
-
-Optional controls and ordered compatible alternatives are available through the
-same registry/resolver, with per-instance finite domains and presentation capabilities,
-without extending the fourteen required base artifacts.
-See the [finite-domain contract and internal rating QA probe](docs/contracts/optional-controls.md).
-No rating widget is distributed. [Form composition](docs/contracts/form-composition.md)
-now supplies simple/ordered layouts, field/action fallback, per-instance optional
-controls and visual navigation state. Technical placement diagnostics stay programmatic.
-Validation-aware document forms, grids and document state remain planned.
-
-## Version 1.0 target contract
-
-The [UI Runtime 1.0 contract](docs/contracts/ui-runtime-v1.md) and its
-[mandatory acceptance matrix](docs/contracts/ui-runtime-v1-acceptance.md) define
-the target functionality and release gate. They do not describe completed prerelease
-features. The repository-local Angular QA testbed is a non-distributed
-fixture covering existing public contracts; full 1.0 coverage remains pending. The [API and internal contract design](docs/design/ui-runtime-v1-api.md)
-contains compiled, unpublished interface proposals and compatibility decisions.
-
-## Technical references
-
-- [ERBAS client](https://github.com/alxarafe/erbas-client): Angular/npm conventions and Docker validation patterns.
-- [Solucar web](https://github.com/alxarafe/solucar-web): Angular 22 toolchain and install/typecheck/test/build validation sequence.
-- [Creating Angular libraries](https://angular.dev/tools/libraries/creating-libraries).
-- [Angular Package Format](https://angular.dev/tools/libraries/angular-package-format).
-- [Angular version compatibility](https://angular.dev/reference/versions).
-
-The reference repositories are read-only inputs and are not modified by these scripts.
+Its public runtime entry point is `@alxarafe/ui-runtime`. Do not import from this repository's private source paths. All packages use APF and the official public exports.
 
 ## License
 
-Apache-2.0. The original `LICENSE` is preserved and included in the npm archive alongside `NOTICE`, which records extraction provenance.
+Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE) for license and attribution information.
