@@ -17,7 +17,7 @@
     {
       "id": "alternative",
       "name": "Alternative",
-      "description": "Optional alternative presentation adapted from ERBAS",
+      "description": "Optional alternative presentation for Angular UI Runtime (AUR)",
       "cssClass": "theme-alternative",
       "definitionExport": "ALTERNATIVE_THEME",
       "kinds": [

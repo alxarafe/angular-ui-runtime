@@ -9,29 +9,22 @@ public exports, testbed or consumer changes. MUST denotes a release requirement.
 
 ## Inspected baseline and architectural continuity
 
-The base is main `c1869b2d17a19864ac24ccfb7f593af2de172851`, confirmed against remote
-main. The following read-only local reference revisions informed this contract;
-source inspection is design evidence, not consumer integration test evidence.
+The contract baseline is AUR revision `c1869b2d17a19864ac24ccfb7f593af2de172851`.
+Historical sources and inspected revisions are recorded in
+[engineering provenance](../history/engineering-provenance.md). Inspection is design
+evidence, not integration test evidence or a dependency on a particular application.
 
-| Repository / revision | Inspected sources and consequence |
-| --- | --- |
-| angular-ui-runtime / base above | `projects/ui-runtime/src/{public-api.ts,theme/theme-definition.ts,theme/theme-runtime.ts,field-types/renderer-context.ts}`, `tests/theme.test.mjs`, `scripts/{pack,consumer}.mjs`, `bin/run`: preserve the extracted runtime and APF boundary. |
-| erbas-client / `8d1573c315e03a6edbc92bd7b3d41d851bd54ab9` | `app/src/app/resource-runtime/{fields.ts,resource-form.ts,resource-layout.ts,models.ts}`, `core-fe/themes/themes.ts`, `core-fe/shell/shell-extensions.ts`: reuse layout projection and renderer concepts; do not extract its HTTP models wholesale. |
-| erbas-contract / `9d6f4a3035eee9d1bce074b7521dedd34212d823` | `docs/core/resources-001.md`, `openapi/core/resources/contract.yaml`, `openapi/modules/wms/shared.yaml`: exact scalars, independent presence/nullability and published constraint vocabulary. |
-| resource-controller / `e7dd6b0edd88ecc82adb0c55504c15d6e3ad53b2` | `src/Trait/ResourceTrait.php`, especially `convertMetadataToComponents()`: existing propagation of required, length, min/max/step, precision/scale and unsigned informs adapter mapping, not a PHP algorithm to copy. |
-| solucar-web / `c9dda6a7e8222ba09506577f7b94fded27deac96` | `src/app/core/navigation/navigation-entry.ts`, `src/app/app.routes.ts`, contact and API structure: permissions, routes and transport are application responsibilities. No proposal UI integration is claimed. |
-| alixar / `aed4c0a0cca98c0314eafb96c9bc8d4d56c78744` | `docs/proposals.md`, `docs/design/ALIXAR-COM-001-proposal-order-design.md`: header plus ordered editable lines and expected-version replacement provide an independent aggregate scenario. |
+AUR preserves theme registration/resolution, renderer bindings and the public APF
+boundary. The original baseline did not provide complete validation, menus, forms,
+grids or document state; the implementation increments below retain their explicit
+limits. Exact integer range checks, independent nullability, enum membership and
+Unicode scalar lengths are required; DATE syntax alone does not validate a calendar.
+Patterns, exact constraints and client feedback must not move HTTP serialization
+or authoritative business rules into renderers.
 
-The current package contains theme registration/resolution and renderer bindings,
-not complete validation, menus, forms, grids or document state. ERBAS
-`scalarInput()` already preserves exact numbers, uses BigInt integer range checks,
-checks nullability, simple DATE syntax, enum membership and code-point lengths.
-It leaves patterns, exact numeric constraints and business rules to the server;
-DATE syntax alone does not validate a calendar. The replacement must close these
-client feedback gaps without moving HTTP serialization into renderers.
-Resource-controller's PHP metadata names are not a new public metadata contract.
-Adapters translate published definitions explicitly; `step` means `multipleOf`
-only when their semantics actually agree. Missing metadata must not be invented.
+Adapters explicitly translate published metadata; external metadata names are not
+new public contracts. `step` means `multipleOf` only when semantics agree. Missing
+metadata must not be invented.
 
 ## Theme system (THEME)
 
@@ -52,9 +45,9 @@ validation, dirty state, collection identity/order and pending-save state. State
 must live outside replaceable visual component instances; restore logical focus
 if a switch replaces the focused control. Unsaved values must not disappear.
 
-Only `default` is a library theme identity. ERBAS identities default, alternative,
-cyberpunk, vintage and high-contrast are the initial reference QA compositions,
-not new library enum members or promised packaged brands. Each must be exercised,
+Only `default` is reserved by the runtime. The five AUR theme packages supply
+default, alternative, cyberpunk, vintage and high-contrast QA compositions;
+these names are not new runtime enum members or a claim of 1.0 conformance. Each must be exercised,
 including CSS-only and structural overrides. Applications own identities and theme
 selection persistence. A theme is conformant only if all mandatory capabilities
 remain reachable, including fallback navigation and error-bearing hidden tabs.
@@ -134,7 +127,7 @@ validity on STATE, cache results or implement submission, server confirmation,
 reconciliation, root/row business rules or save blocking. Heterogeneous row schemas
 and application-owned root/row issue injection remain future work.
 
-INTEGER is one semantic type. The active ARP-INTEGER-001 contract candidate supplies
+INTEGER is one semantic type. The effective metadata profile supplies
 effective capacity through optional `bits` (8, 16, 32 or 64) and `signed`, alongside
 exact `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum` and `multipleOf`
 constraints. The artifact identifier carries no range. A resolved `(bits, signed)`
@@ -142,7 +135,7 @@ capacity yields an inclusive representable domain; declared bounds narrow it and
 not widen it. Unsigned capacity rejects negative values, and the 64-bit unsigned
 maximum is `18446744073709551615`. Values above JavaScript's safe integer limit
 remain exact text. AUR consumes this effective metadata; it must not duplicate the
-ARP dictionary engine or add a second constraint-inference algorithm.
+external dictionary engine or add a second constraint-inference algorithm.
 
 Integer input uses signed base-ten integer text without fractions or exponents;
 canonical submission follows the adapter contract, without precision loss. DECIMAL
@@ -163,7 +156,7 @@ agreement and declare any stricter lexical/storage limits. Contradictory bounds,
 negative lengths, nonpositive multipleOf or unsupported constraint combinations
 produce definition diagnostics, never silently relaxed validation. Adapters must
 respect declared input-size/digit/exponent limits before expensive exact arithmetic;
-the current ERBAS transport bound is 4,096 digits/scale magnitude, not an invitation
+the reference transport bound is 4,096 digits/scale magnitude, not an invitation
 to allocate unbounded input. Oversized drafts retain visible feedback.
 
 Required means property presence after application-supplied default policy, not
@@ -178,11 +171,11 @@ verify the same counting, including supplementary and combining characters.
 
 DATE is valid Gregorian `yyyy-MM-dd` with real month/day/leap-year checking, years
 0001–9999. TIME is local `HH:mm:ss` with zero to seven fractional digits for the
-ERBAS profile (canonical output seven); no timezone or invalid 24:00/leap second.
+declared integration profile (canonical output seven); no timezone or invalid 24:00/leap second.
 DATETIME represents an instant with an explicit Z or numeric offset and valid
 calendar/time; retain fractional precision and offset while editing, normalize
-only via a lossless declared adapter rule (ERBAS output UTC). UUID accepts canonical
-hyphenated UUID text with declared casing policy (ERBAS canonical output); do not
+only via a lossless declared adapter rule (adapter output UTC). UUID accepts canonical
+hyphenated UUID text with declared casing policy (adapter canonical output); do not
 invent version restrictions. ENUM requires an exact declared string; BINARY
 requires valid base64 under its declared profile. STRING/TEXT retain exact Unicode.
 BOOLEAN rejects string/number coercion. Other API format profiles require explicit
@@ -231,14 +224,14 @@ MenuDefinition, multi-menu registry, placement or overflow requirements above.
 
 ## Forms and layouts (FORM)
 
-Reuse ERBAS's useful hierarchy: form → ordered tabs → sections → groups → field
+Use the hierarchy: form → ordered tabs → sections → groups → field
 references, with root/tab/section contextual actions and a fallback for eligible
 unplaced fields/actions. Keep stable identities, first valid placement once,
 deterministic order, collapsible sections and explicit selected tab. Reject
 malformed definitions; adapters diagnose unknown references and remove unauthorized
 entries. Do not append fields explicitly excluded by an application projection.
 Absent layout yields a usable simple form. Empty visual containers may collapse;
-actions alone must keep their container reachable. No ERBAS HTTP model is imported.
+actions alone must keep their container reachable. No application HTTP model is imported.
 
 Support read-only and editable modes, immutable-on-update adapter policy, labels,
 help and errors, keyboard tabs and reachable contextual actions. Theme layout
@@ -310,7 +303,7 @@ logout, record replacement, refresh and programmatic workflow transitions must u
 the same discard decision before destroying state. The application owns which
 actions can discard; the library provides a consistent protection boundary.
 
-## Independent adapters and reference scenario (ADAPTER)
+## Independent integration profiles (ADAPTER)
 
 The library owns generic rendering, exact local validation, layout and editing
 mechanics. Applications own API decoding/encoding, defaults, persistence,
@@ -318,17 +311,26 @@ concurrency, authorization, navigation, business commands and error translation.
 No ERP operations, authentication policy, HTTP assumptions, endpoints, database
 models or backend-specific metadata enter the public library.
 
-ERBAS adapts published resource metadata and its existing flat CREATE/PATCH CRUD
-protocol; immutable/read-only behavior and lossless numeric JSON remain there.
-Solucar/Alixar adapts its own APIs and complex documents independently. Its proposal
-draft is a mandatory consumer reference scenario: edit header and ordered lines,
-add/remove/reorder rows, validate exact quantities/prices, cancel discard, save a
-complete draft with optimistic expectedVersion, handle stale-version conflict
-without losing edits, then reconcile successful id/version and refreshed data.
-Totals, currency/business policy and permission decisions stay in that application.
-Alixar replacement can regenerate line IDs, so temporary UI identity must not
-assume persistence identity survives. This scenario is not a built-in Proposal
-model; source/backend tests do not establish an existing Solucar proposal screen.
+Two independent integration profiles are mandatory; neither defines AUR through
+a named application or introduces a built-in business document model.
+
+### Metadata-driven CRUD resources
+
+Adapters map published resource metadata, exact scalars and flat CREATE/PATCH CRUD
+semantics. Preserve immutable/read-only behavior, nullable clearing, independent
+absence/default policy, lossless numeric JSON and server-error mapping. Validation
+and transport conformance need reproducible integration evidence.
+
+### Complex documents
+
+Edit a header and ordered detail collections, add/remove/reorder rows, validate exact
+quantities/prices, cancel discard and save a complete draft with optimistic
+expectedVersion. Stale-version conflicts retain edits. Successful id/version responses
+require authoritative refreshed data and reconciliation. Replacement may regenerate
+row IDs: temporary UI identity must not assume persistence identity survives.
+Totals, currency/business rules and permissions remain application-owned. Source or
+backend tests alone do not prove a library-backed document UI. Save, discard and
+reconciliation remain requirements, not implementation claims.
 
 ## Browser correctness and local QA testbed (VISUAL, PACKAGE)
 
@@ -375,7 +377,7 @@ Validate no testbed/test/dev dependencies or private paths leak into the tarball
 Angular packages remain peers where required. Review API compatibility, versioned
 changes, migration documentation and all public documentation against the package.
 
-Cross-repository ERBAS Client and Solucar integration must have separate reproducible
+Independent metadata CRUD and complex document integrations must have separate reproducible
 evidence: consumer revision, runtime tarball version/hash, lockfiles, Docker command,
 scenarios, results and logs. `./bin/check` must verify the required evidence manifest
 for the release candidate; do not mutate reference checkouts or silently skip absent

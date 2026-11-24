@@ -6,8 +6,9 @@ Follow-up: [AUR-THEME-EXTRACT-002](optional-theme-extraction.md) adds four separ
 optional packages and extends the installed default testbed. The evidence/scope
 below records the original extraction, not retroactive visual approval.
 
-AUR-THEME-EXTRACT-001 extracts only the default theme. Alternative, Cyberpunk,
-Vintage and High Contrast remain in ERBAS. No consumer repository was modified.
+AUR-THEME-EXTRACT-001 extracts only the default theme. At this extraction snapshot,
+Alternative, Cyberpunk, Vintage and High Contrast had not been extracted.
+No consumer repository was modified.
 
 ## Package and runtime boundary
 
@@ -26,7 +27,7 @@ runtime dependency. No dependency versions or dependency locks are changed.
 This is the private `0.0.0-experimental.0` theme, tested against runtime code at
 `23e3bf40bf4c3dbad034d3deb71b3358075f51b3`, including the merged structural ports.
 The local runtime archive still identifies as 0.2.0. That version coordinate
-alone does not establish compatibility: the older 0.2.0 artifact used by ERBAS
+alone does not establish compatibility: the historical 0.2.0 artifact
 lacks these ports and is unsupported. Theme builds explicitly check required
 exports. Exact tested runtime/theme archive digests are recorded in generated
 evidence. Coordinated release versions and peer ranges remain an explicit
@@ -48,7 +49,7 @@ and the unchanged disposable legacy consumer. Packing additionally builds/tests
 the theme in a separate temporary workspace with a fresh locked toolchain and
 an installed runtime tarball, without core source files or TS aliases. The
 theme-only command repeats that isolated build using the existing runtime archive.
-No ERBAS checkout, source fetch or unmerged QA branch participates.
+No reference checkout, source fetch or unmerged QA branch participates.
 
 The testbed performs its independent locked install, adds both generated archives
 and checks that existing locked versions/sources/integrities are unchanged. Only
@@ -97,10 +98,10 @@ model, forms, grids, transport or backend integration is implemented. Native DAT
 intermediate editing remains browser-controlled. Unsupported high-precision TIME
 uses text deliberately; no format validation is claimed. Only Chromium is tested.
 
-## Compare with ERBAS
+## Historical appearance comparison
 
-The immutable implementation reference is ERBAS Client
-`8d1573c315e03a6edbc92bd7b3d41d851bd54ab9`, default theme sources and artifact mapping.
+Immutable source revisions, default theme sources and artifact mapping are retained
+in [engineering provenance](../history/engineering-provenance.md).
 PROVENANCE.json stores original file hashes; NOTICE lists adaptations under
 Apache-2.0. AUR-QA-002 captures at application commit `8d1573c...` plus its recorded
 dirty QA source hash are historical comparison candidates, not approved baselines
@@ -116,7 +117,7 @@ or build inputs. Its unmerged local task branch is not a dependency.
 | Navigation | Neutral native href/action tree replaces RouterLink/applicationRoute. Nested lists sit within one named navigation landmark. Applications now own current-state computation and router adaptation. |
 | Slots | Public named-region projection replaces consumer extension injection. Contribution registration/order/state remain outside the theme. |
 | Floating actions | Deliberately in normal flow, aligned at the content end. This avoids the fixed mobile overlay observed in historical QA. No important control is covered to imitate a visual reference. |
-| Resource UI | Resource tables, forms, filters, login and business selectors stay with the application. This extraction is not a replacement for ERBAS's full application stylesheet. |
+| Resource UI | Resource tables, forms, filters, login and business selectors stay with the application. This extraction is not a replacement for a complete application stylesheet. |
 
 Different synthetic content, new projection wrappers and removal of resource styles
 mean pixel equality would be misleading. Compare generic shell dimensions, palette,
@@ -143,7 +144,7 @@ because these paths are overwritten. A pre-commit run records its base commit an
 dirty source identity honestly; do not rewrite it to pretend it tested a later
 commit. Re-run from a clean revision for future distribution evidence.
 
-Review both viewport/full-page images against the historical ERBAS default
+Review both viewport/full-page images against the historical default
 captures and the original templates/CSS. Inspect labels, focus, long exact values,
 disabled/read-only fields, mobile layout, scrolling and every region/action.
 Confirm no clipping/occlusion, including the former floating area. Record reviewer,
@@ -153,6 +154,6 @@ approval or baseline equality test is introduced. Any discovered functional/layo
 defect must remain recorded and be corrected/retested rather than hidden.
 
 Remaining migration obstacles: coordinate public versions; review/approve visual
-references; adapt ERBAS's router and extension templates; keep resource/login CSS in
+references; adapt application routing and extension templates; keep resource/login CSS in
 the consumer; and adopt this installed package there in a separately authorized
 task. The four other themes and all pending 1.0 capabilities remain out of scope.

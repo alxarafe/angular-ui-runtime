@@ -40,7 +40,7 @@ collisions explicitly before constructing the registry; never use last-writer wi
 The public `ThemeDefinition` remains exactly `id`, `cssClass` and `overrides`.
 Both identity strings follow the existing `/^[a-z][a-z0-9-]*$/` rule. `id` is stable
 within the application catalog, distinct from npm package name, display name and
-package version. `default` is reserved for the protected fallback. No ERBAS identity
+package version. `default` is reserved for the protected fallback. No application identity
 besides the generic default becomes a library enum member.
 
 A conforming independently distributed package MUST publish a versioned manifest
@@ -148,7 +148,7 @@ registration. There is no shipped complete default implementation in UI Runtime.
 An application can obtain default from a separate, reviewed theme package: import
 its public complete definition, validate its compatibility and evidence, include
 its CSS/assets and pass it as `default` to `provideThemeRuntime`. The runtime
-depends only on its public ports and identity, never ERBAS component imports,
+depends only on its public ports and identity, never application component imports,
 package names or business models. The fallback package MUST be available locally
 at startup independently of optional theme network availability. Replacing its
 implementation requires a controlled application upgrade with a fully validated
@@ -313,13 +313,12 @@ capabilities, test results, logs and reviewed baseline revisions. Verify:
   keyboard access, approved initial screenshots and human layout review. Screenshot
   equality alone is insufficient; baseline changes need explicit review.
 
-Existing ERBAS `default`, `alternative`, `cyberpunk`, `vintage` and `high-contrast`
-are reference identities only. Read-only inspection of
-`erbas-client/app/src/app/core-fe/themes/themes.ts` confirms a complete default,
-a BOOLEAN-only alternative, shell/panel cyberpunk, empty vintage and panel-only
-high-contrast. This is sparse-authoring evidence, not certification or permission
-to copy/migrate them. Reference provenance is recorded in the parent contract.
-The repository's E-QA-001 synthetic themes do not certify these reference themes.
+The five AUR theme packages are `default`, `alternative`, `cyberpunk`, `vintage`
+and `high-contrast`. The complete default, BOOLEAN-only alternative, shell/panel
+cyberpunk, CSS-only vintage and panel-only high-contrast exercise independent
+complete and sparse compositions. Historical source inspection is recorded in
+[engineering provenance](../history/engineering-provenance.md); it is not certification.
+The E-QA-001 synthetic themes do not certify these packages.
 
 All 53 existing acceptance IDs, statuses and evidence remain unchanged. THEME-001/002
 cover today's registration/selection; THEME-003/004/005 constrain effective capability,

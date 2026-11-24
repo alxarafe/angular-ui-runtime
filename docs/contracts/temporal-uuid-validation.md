@@ -76,7 +76,7 @@ The same policy applies to temporal bounds. Validation never pads the returned
 editing text: `12:30:00.1` remains that exact spelling.
 
 This interpretation follows AUR's zero-to-seven input contract and separates it
-from ERBAS's reference serialization of seven digits. An application adapter owns
+from the historical adapter's reference serialization of seven digits. An application adapter owns
 any successful canonical output. No local TIME is converted to UTC.
 
 Internally a local clock is exact 100-nanosecond ticks since midnight: whole seconds
@@ -125,15 +125,12 @@ The normative AUR contract determines Gregorian years, clock ranges, seven-digit
 precision, explicit offsets and lexical retention. Read-only source inspection
 informed the previously unspecified offset bound and year-crossing policy:
 
-| Reference / revision | Evidence and boundary |
-| --- | --- |
-| erbas-contract `9d6f4a3035eee9d1bce074b7521dedd34212d823`, `docs/core/resources-001.md` | TIME input accepts 0–7 fractional digits; adapter output uses seven. DATETIME serializes UTC. |
-| erbas `3b237cf3e5a38b75de3a9c89e10f95a329158a8a`, `erbas-core/.../resources/ScalarType.java` | Uses Java OffsetDateTime; does not explicitly enforce this narrow offset/lexical subset. No equivalence to that permissive parser is claimed. |
-| arp-dotnet `2e6aa2ca2ba17b148b1f0873c58fcd2b38ddd6df`, `ScalarValidator.cs` and `RuntimeTests.cs` | Explicit ±14:00 boundary, minute checks, seven-digit ticks and rejected UTC year crossings. |
-| arp-java `91b5212aba176f97c37366166cb90fc7ae786bfb`, `ScalarValidator.java`; arp-php `51c57cfbbe3953d460896d1a2e30b196329b5f58`, `Internal/Scalar.php` | Independently express the same fourteen-hour and UTC-year checks. |
-
-These are profile-selection evidence, not imported backend models or external
-consumer conformance tests. No reference repository is modified or run for library QA.
+Historical profile-selection sources and revisions are retained in
+[engineering provenance](../history/engineering-provenance.md). The AUR profile
+requires the ±14:00 offset boundary, minute checks, seven-digit precision and rejection
+of UTC year crossings. Input precision and adapter output width remain separate.
+These rules do not imply equivalence to permissive backend parsers or external
+consumer conformance. No reference repository is modified or run for library QA.
 
 ## Bounds, diagnostics and bounded work
 

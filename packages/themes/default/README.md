@@ -1,7 +1,7 @@
 # Independent default theme (experimental)
 
 `@alxarafe/ui-theme-default@0.1.0-alpha.3` is a separate APF package,
-adapted from ERBAS's Apache-2.0 default presentation. It ships no application,
+providing a complete default presentation under Apache-2.0. It ships no application,
 backend, routing, generator or domain service. See NOTICE and PROVENANCE.json.
 
 ## Compatibility and distribution status
@@ -81,7 +81,7 @@ Native DATE editing still has browser-controlled intermediate-value behavior.
 
 ENUM uses selected index, not a colliding empty-string sentinel: Not set emits
 null and a declared empty-string choice emits `""`. This explicitly corrects the
-original ERBAS ambiguity without changing the public value type. Disabled/read-only
+historical empty-string/null ambiguity without changing the public value type. Disabled/read-only
 renderers cannot emit edits. Navigation uses native hrefs and action intent, with
 the application responsible for validated data, routing and authorization.
 

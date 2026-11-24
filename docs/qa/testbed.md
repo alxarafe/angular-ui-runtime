@@ -53,8 +53,8 @@ prepares the site but is not a substitute for that Docker entry point.
 ## Scenarios and evidence limits
 
 The two theme identities `default` and `qa-alternative` are **synthetic fixtures**.
-They are not ERBAS's production default/alternative themes and do not establish
-visual acceptance of ERBAS, Alixar/Solucar or the five reference themes in the
+They are not production default/alternative themes and do not establish
+visual acceptance of external applications or the five AUR themes in the
 1.0 contract. There is one installed ThemeRegistry/ThemeService/ThemeResolver,
 provided by `provideThemeRuntime`; testbed outlets only instantiate resolved
 components and bind public input/output names.
