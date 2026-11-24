@@ -264,3 +264,13 @@ identity, cycles all five packaged themes plus the structural frame, and finally
 restores original values to a clean but still pending document. Dirty state and
 validation remain independent throughout. Captures are not an approved visual
 baseline.
+
+## Document submission and recovery
+
+AUR-STATE-SAVE-001 adds `/default-theme/?scenario=document-save` using only installed
+public APF exports. `document-save.spec.mjs` exercises the synthetic adapter's invalid
+submission guard, pending checks, in-flight edit/duplicate locks, exact keyed drafts,
+theme switching, validation/transport/conflict feedback, stale attempts and locked
+committed/uncertain/incomplete acceptance with authoritative recovery. Desktop and
+mobile cases run in the normal Docker Chromium workflow. No external application,
+HTTP call, persistence, discard/route guard or visual certification is introduced.

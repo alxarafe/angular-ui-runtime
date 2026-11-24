@@ -29,3 +29,12 @@ consumer panel-only focus policy remain pending.
 over one parent `DocumentState` with a header, nested object and two detail
 collections. It renders an application-owned summary only; it does not implement
 submission, server confirmation or save blocking.
+
+## Operational document save probe
+
+`/default-theme/?scenario=document-save` consumes the public `DocumentSession` APF
+export with a manual synthetic adapter. Edit header/detail fields, submit, exercise
+locked duplicate/edit probes, and choose acceptance, conflict, transport rejection,
+committed or uncertain responses. Incomplete acceptance requires authoritative
+recovery. Theme replacement retains the same session and exact keyed drafts.
+There is no network/persistence, business logic, discard confirmation or route guard.

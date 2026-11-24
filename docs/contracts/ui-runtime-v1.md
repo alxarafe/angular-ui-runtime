@@ -272,8 +272,11 @@ adds no grids, collection editing, persistence or document-state implementation.
 
 AUR-STATE-001-CORE implements the [immutable editing core](document-state.md):
 accepted/current snapshots, neutral keyed operations and exact derived dirty state.
-Only those tested portions of STATE-001/STATE-002 are implemented. Validation,
-save/reconciliation, user-confirmed discard and navigation protection remain pending.
+Only those tested portions of STATE-001/STATE-002 are implemented by that core.
+AUR-STATE-SAVE-001 adds the [operational save lifecycle](document-state.md#operational-save-lifecycle-aur-state-save-001)
+over the same core and document validation, with edit locks, complete authoritative
+acceptance and explicit uncertain-outcome recovery. User-confirmed discard and
+navigation protection remain pending.
 The lifecycle requirements below remain normative targets.
 
 Track immutable original accepted values, effective edits, raw invalid input,
@@ -329,8 +332,9 @@ expectedVersion. Stale-version conflicts retain edits. Successful id/version res
 require authoritative refreshed data and reconciliation. Replacement may regenerate
 row IDs: temporary UI identity must not assume persistence identity survives.
 Totals, currency/business rules and permissions remain application-owned. Source or
-backend tests alone do not prove a library-backed document UI. Save, discard and
-reconciliation remain requirements, not implementation claims.
+backend tests alone do not prove a library-backed document UI. Save and
+reconciliation are implemented generically by DocumentSession; application-specific
+adapter conformance remains unproven and discard confirmation remains pending.
 
 ## Browser correctness and local QA testbed (VISUAL, PACKAGE)
 
