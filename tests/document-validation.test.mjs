@@ -532,6 +532,115 @@ test('malformed field definitions keep their existing definition-error meaning',
     assert.equal(result.fields[1].result.state, 'definition-error');
     assert.equal(result.fields[1].result.diagnostics[0].code, 'capacity');
     assert.deepEqual(result.issues, []);
+    assert.equal(result.diagnostics.length, 1);
+});
+
+test('empty collections reject invalid INTEGER, temporal and portable-pattern definitions', () => {
+    const capacity = validate(
+        docObject({ lines: docCollection([]) }),
+        planObject({
+            lines: planCollection({
+                quantity: planField({
+                    type: 'INTEGER',
+                    required: true,
+                    nullable: false,
+                    capacity: { bits: 7, signed: true },
+                }),
+            }),
+        }),
+    );
+    assert.equal(capacity.state, 'definition-error');
+    assert.equal(capacity.diagnostics.length, 1);
+    assert.equal(capacity.diagnostics[0].code, 'capacity');
+    assert.deepEqual(capacity.diagnostics[0].path, [property('lines'), property('quantity')]);
+    assert.deepEqual(capacity.fields, []);
+
+    const temporal = validate(
+        docObject({ lines: docCollection([]) }),
+        planObject({
+            lines: planCollection({
+                createdAt: planField({
+                    type: 'DATETIME',
+                    required: true,
+                    nullable: false,
+                    format: 'offset-instant',
+                    fractionalDigits: 3,
+                    constraints: { minimum: { value: '2024-01-01T00:00:00' } },
+                }),
+            }),
+        }),
+    );
+    assert.equal(temporal.state, 'definition-error');
+    assert.equal(temporal.diagnostics.length, 1);
+    assert.equal(temporal.diagnostics[0].code, 'constraint');
+    assert.deepEqual(temporal.diagnostics[0].path, [property('lines'), property('createdAt')]);
+    assert.deepEqual(temporal.fields, []);
+
+    const portable = validate(
+        docObject({ lines: docCollection([]) }),
+        planObject({
+            lines: planCollection({
+                code: planField({
+                    type: 'STRING',
+                    required: true,
+                    nullable: false,
+                    constraints: {
+                        pattern: { dialect: 'portable-ascii-v1', source: '^[A-Z$' },
+                    },
+                }),
+            }),
+        }),
+    );
+    assert.equal(portable.state, 'definition-error');
+    assert.equal(portable.diagnostics.length, 1);
+    assert.equal(portable.diagnostics[0].code, 'constraint');
+    assert.deepEqual(portable.diagnostics[0].path, [property('lines'), property('code')]);
+    assert.deepEqual(portable.fields, []);
+});
+
+test('valid empty collections remain valid when all row definitions resolve', () => {
+    const result = validate(
+        docObject({ lines: docCollection([]) }),
+        planObject({ lines: planCollection({ quantity: planField(integer) }) }),
+    );
+    assert.equal(result.state, 'valid');
+    assert.deepEqual(result.fields, []);
+    assert.deepEqual(result.diagnostics, []);
+});
+
+test('invalid row definitions fail populated collections without duplicate diagnostics', () => {
+    const result = validate(
+        docObject({
+            lines: docCollection([
+                docRow('a', { quantity: docValue('1'), label: docValue('one') }),
+                docRow('b', { quantity: docValue('2'), label: docValue('two') }),
+            ]),
+        }),
+        planObject({
+            lines: planCollection({
+                quantity: planField({
+                    type: 'INTEGER',
+                    required: true,
+                    nullable: false,
+                    capacity: { bits: 7, signed: true },
+                }),
+                label: planField(text),
+            }),
+        }),
+    );
+    assert.equal(result.state, 'definition-error');
+    assert.equal(result.diagnostics.length, 1);
+    assert.equal(result.diagnostics[0].code, 'capacity');
+    assert.deepEqual(result.diagnostics[0].path, [property('lines'), property('quantity')]);
+    assert.deepEqual(
+        result.fields.map((entry) =>
+            entry.path.map((segment) => (segment.kind === 'property' ? segment.name : segment.key)),
+        ),
+        [
+            ['lines', 'a', 'label'],
+            ['lines', 'b', 'label'],
+        ],
+    );
 });
 
 test('malformed collection row schemas, unsupported members and node kinds are rejected', () => {

@@ -84,8 +84,11 @@ ambiguous plan values are rejected at runtime with structured diagnostics.
 The complete plan is inspected before any document value is evaluated. Object and
 collection plans are walked with ancestor identity, so cycles, malformed nested row
 schemas and the 128-edge limit are detected even when a collection has no rows.
-Shared acyclic row/object plans remain valid. This structural pass never calls
-`validateField`, reads document values or invents placeholder inputs.
+Field-plan definitions are resolved with the same definition-resolution logic used
+by `validateField`, so invalid capacities, temporal constraints, portable patterns
+and other semantic declarations fail even without a field instance. Shared acyclic
+row/object plans remain valid. This pass never calls `validateField`, reads document
+values or invents placeholder inputs.
 
 **Known limitation:** heterogeneous row definitions are not supported in this
 increment. Every row of one collection must satisfy the same row-object plan.
@@ -207,6 +210,15 @@ collections/rows is allowed while cyclic references are rejected. The independen
 plan pass detects these cycles even inside empty collections. Traversal recursion is
 bounded by the 128-edge limit. Structural diagnostics are emitted once per code,
 path and message even when a plan node is reached from multiple rows.
+
+A definition diagnostic discovered by plan prevalidation uses the schema path, not
+a concrete row path. For example, an invalid `quantity` definition inside the
+`lines` row schema is reported at `lines / quantity` without inventing a row key,
+even when the collection is empty. The invalid schema field is not instantiated for
+each row, so its fatal diagnostic is not repeated; sibling fields still produce their
+normal results, issues and pending checks. A definition error on a non-collection
+field is also reported at its normal field path and deduplicated when the field is
+instantiated.
 
 ## Immutability and privacy
 

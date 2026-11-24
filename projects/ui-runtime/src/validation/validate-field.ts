@@ -218,8 +218,8 @@ function shape(
         )
     );
 }
-function snapshotPath(path: ValuePath): ValuePath {
-    if (!Array.isArray(path) || !path.length || path.length > 128)
+function freezePath(path: ValuePath, allowEmpty: boolean): ValuePath {
+    if (!Array.isArray(path) || (!allowEmpty && !path.length) || path.length > 128)
         throw new Error('Invalid validation path');
     return Object.freeze(
         Array.from(path, (part: PathSegment) => {
@@ -231,6 +231,12 @@ function snapshotPath(path: ValuePath): ValuePath {
             return Object.freeze({ ...part });
         }),
     );
+}
+function snapshotPath(path: ValuePath): ValuePath {
+    return freezePath(path, false);
+}
+function schemaPath(path: ValuePath): ValuePath {
+    return freezePath(path, true);
 }
 class DefinitionError extends Error {
     constructor(
@@ -587,13 +593,15 @@ function resolve(definition: FieldValidationRequest['definition']) {
             return resolveInteger(definition as IntegerFieldDefinition);
     }
 }
-
-/** Pure local validation for the implemented semantic types. Never modifies editing state. */
-export function validateField(request: FieldValidationRequest): FieldValidationResult {
-    const path = snapshotPath(request.path);
-    let resolved: ReturnType<typeof resolve>;
+type DefinitionResolution =
+    | { readonly resolved: ReturnType<typeof resolve> }
+    | { readonly diagnostics: readonly [DefinitionDiagnostic, ...DefinitionDiagnostic[]] };
+function resolveDefinition(
+    definition: FieldValidationRequest['definition'],
+    path: ValuePath,
+): DefinitionResolution {
     try {
-        resolved = resolve(request.definition);
+        return { resolved: resolve(definition) };
     } catch (error) {
         if (!(error instanceof DefinitionError)) throw error;
         const diagnostic = Object.freeze({
@@ -602,11 +610,31 @@ export function validateField(request: FieldValidationRequest): FieldValidationR
             path,
             message: error.message,
         });
+        return { diagnostics: Object.freeze([diagnostic] as const) };
+    }
+}
+/**
+ * Resolves only a field-plan definition without fabricating an editing input.
+ * Diagnostic paths may be schema paths and need not identify a document row.
+ */
+export function validateFieldDefinition(
+    definition: FieldValidationRequest['definition'],
+    path: ValuePath,
+): readonly [DefinitionDiagnostic, ...DefinitionDiagnostic[]] | undefined {
+    const resolution = resolveDefinition(definition, schemaPath(path));
+    return 'diagnostics' in resolution ? resolution.diagnostics : undefined;
+}
+
+/** Pure local validation for the implemented semantic types. Never modifies editing state. */
+export function validateField(request: FieldValidationRequest): FieldValidationResult {
+    const path = snapshotPath(request.path);
+    const resolution = resolveDefinition(request.definition, path);
+    if ('diagnostics' in resolution)
         return Object.freeze({
             state: 'definition-error',
-            diagnostics: Object.freeze([diagnostic] as const),
+            diagnostics: resolution.diagnostics,
         });
-    }
+    const resolved = resolution.resolved;
     const issues: ValidationIssue[] = [];
     let checks: readonly [DeferredCheck, ...DeferredCheck[]] | undefined;
     let patternDiagnostics: readonly [PatternDiagnostic, ...PatternDiagnostic[]] | undefined;

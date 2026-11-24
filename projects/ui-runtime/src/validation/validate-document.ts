@@ -9,6 +9,7 @@ import type {
 } from '../state/document-state.js';
 import {
     validateField,
+    validateFieldDefinition,
     type DeferredCheck,
     type DefinitionDiagnostic,
     type FieldValidationRequest,
@@ -137,22 +138,23 @@ function samePath(a: ValuePath, b: ValuePath): boolean {
         a.every((segment, index) => segmentId(segment) === segmentId(b[index]!))
     );
 }
+function diagnostic(context: Context, value: DocumentDiagnostic): void {
+    const duplicate = context.diagnostics.some(
+        (existing) =>
+            existing.source === value.source &&
+            existing.code === value.code &&
+            existing.message === value.message &&
+            samePath(existing.path, value.path),
+    );
+    if (!duplicate) context.diagnostics.push(value);
+}
 function structure(
     context: Context,
     code: DocumentStructureDiagnosticCode,
     path: ValuePath,
     message: string,
 ): void {
-    const duplicate = context.diagnostics.some(
-        (diagnostic) =>
-            String(diagnostic.code) === code &&
-            diagnostic.message === message &&
-            samePath(diagnostic.path, path),
-    );
-    if (!duplicate)
-        context.diagnostics.push(
-            Object.freeze({ source: 'definition' as const, code, path, message }),
-        );
+    diagnostic(context, Object.freeze({ source: 'definition' as const, code, path, message }));
 }
 function documentProblemMessage(problem: DocumentNodeProblem): string {
     switch (problem) {
@@ -180,6 +182,7 @@ function inspectPlanNode(
     value: unknown,
     path: ValuePath,
     depth: number,
+    schema: boolean,
     ancestors: Set<object>,
     context: Context,
 ): void {
@@ -212,6 +215,14 @@ function inspectPlanNode(
             );
             return;
         }
+        const diagnostics = validateFieldDefinition(
+            (value as unknown as FieldValidationPlan).definition,
+            path,
+        );
+        if (diagnostics) {
+            for (const item of diagnostics) diagnostic(context, item);
+            if (schema) return;
+        }
         context.admittedPlans.add(value);
         return;
     }
@@ -239,6 +250,7 @@ function inspectPlanNode(
                     properties[name],
                     propertyPath(path, name),
                     depth + 1,
+                    schema,
                     ancestors,
                     context,
                 );
@@ -281,7 +293,7 @@ function inspectPlanNode(
         context.admittedPlans.add(value);
         ancestors.add(value);
         try {
-            inspectPlanNode(row, path, depth + 1, ancestors, context);
+            inspectPlanNode(row, path, depth + 1, true, ancestors, context);
         } finally {
             ancestors.delete(value);
         }
@@ -313,7 +325,7 @@ function walkField(
             for (const diagnostic of result.diagnostics)
                 context.patternDiagnostics.push(diagnostic);
     } else if (result.state === 'definition-error') {
-        for (const diagnostic of result.diagnostics) context.diagnostics.push(diagnostic);
+        for (const item of result.diagnostics) diagnostic(context, item);
     }
 }
 function walkObject(
@@ -449,7 +461,7 @@ export function validateDocument(request: DocumentValidationRequest): DocumentVa
     } else {
         const document = request['document'];
         const plan = request['plan'];
-        inspectPlanNode(plan, ROOT_PATH, 0, new Set(), context);
+        inspectPlanNode(plan, ROOT_PATH, 0, false, new Set(), context);
         if (!isPlainRecord(document) || document['kind'] !== 'object') {
             structure(
                 context,
