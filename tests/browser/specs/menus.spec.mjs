@@ -12,7 +12,12 @@ test('six independent menus use exactly one ordered placement across all themes 
     await expect(page.getByTestId('menu-diagnostics')).toContainText('mixed-navigation');
     await expect(page.getByTestId('menu-diagnostics')).toContainText('conflicting-placement');
     await page.getByLabel('Owned draft').fill('Retained draft');
-    await page.locator('[data-aur-menu="primary0"]').evaluate((el) => (el.qaIdentity = 'retained'));
+    await page.locator('[data-aur-menu]').evaluateAll((nodes) => {
+        for (const node of nodes) node.qaIdentity = node.getAttribute('data-aur-menu');
+    });
+    await page.locator('[data-aur-menu="primary0"] summary').focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('[data-aur-menu="primary0"] details')).toHaveAttribute('open', '');
     for (const theme of [
         'menu-regions',
         'default',
@@ -23,18 +28,45 @@ test('six independent menus use exactly one ordered placement across all themes 
         'menu-regions',
     ]) {
         await page.getByRole('button', { name: theme, exact: true }).click();
+        // Counts and retained values also match the previous theme. Wait for the
+        // actual placement, reading every region in one browser task.
+        await expect
+            .poll(() =>
+                page.locator('aur-theme-shell').evaluate((root) => {
+                    const menus = [...root.querySelectorAll('[data-aur-menu]')];
+                    const read = (selector) =>
+                        [...root.querySelectorAll(selector)].map((node) =>
+                            node.getAttribute('data-aur-menu'),
+                        );
+                    return {
+                        theme: root.className,
+                        menus: read('[data-aur-menu]'),
+                        tools: read('[aria-label="Special menu region"] [data-aur-menu]'),
+                        overflow: read('section[aria-label="More menus"] [data-aur-menu]'),
+                        identities: menus.map((node) => node.qaIdentity),
+                        expanded: menus.map((node) => node.querySelector('details').open),
+                        items: menus.map((menu) =>
+                            [...menu.querySelectorAll('[data-aur-menu-item]')].map((item) =>
+                                item.getAttribute('data-aur-menu-item'),
+                            ),
+                        ),
+                    };
+                }),
+            )
+            .toEqual({
+                theme: theme === 'menu-regions' ? 'aur-default' : `theme-${theme}`,
+                menus: ids,
+                tools: theme === 'menu-regions' ? ['primary0'] : [],
+                overflow: theme === 'menu-regions' ? ids.slice(1) : ids,
+                identities: ids,
+                expanded: ids.map((id) => id === 'primary0'),
+                items: ids.map(() => ['group', 'action', 'disabled', 'native']),
+            });
         await expect(page.locator('[data-aur-menu]')).toHaveCount(6);
         await expect(page.locator('[data-aur-menu-item]')).toHaveCount(24);
-        expect(
-            await page.locator('[data-aur-menu="primary0"]').evaluate((el) => el.qaIdentity),
-        ).toBe('retained');
         await expect(page.getByLabel('Owned draft')).toHaveValue('Retained draft');
-        const fallback = page.getByRole('region', { name: 'More menus', exact: true });
-        expect(
-            await fallback
-                .locator('[data-aur-menu]')
-                .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-aur-menu'))),
-        ).toEqual(theme === 'menu-regions' ? ids.slice(1) : ids);
+        await expect(page.getByRole('region', { name: 'More menus', exact: true })).toBeVisible();
+        for (const id of ids) await expect(page.locator(`[data-aur-menu="${id}"]`)).toBeVisible();
         await expect(page.locator('aur-menu-view nav')).toHaveCount(6);
     }
     expect(errors).toEqual([]);
