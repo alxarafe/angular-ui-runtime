@@ -9,6 +9,7 @@ import {
     applyDocumentChange,
     assertDocumentState,
     createDocumentState,
+    resetDocumentState,
     type DocumentChange,
     type DocumentNode,
     type DocumentObject,
@@ -59,6 +60,14 @@ export type DocumentSaveState =
 export type DocumentSubmitResult =
     | { readonly kind: 'blocked'; readonly validation: DocumentValidationResult }
     | { readonly kind: 'ready'; readonly submission: DocumentSubmission };
+
+/** The application owns the dialog and its accessible focus restoration. */
+export interface DiscardRequest {
+    readonly revision: number;
+    readonly reason: string;
+}
+export type ConfirmDiscard = (request: DiscardRequest) => Promise<boolean>;
+export type DiscardResult = 'allowed' | 'cancelled' | 'blocked' | 'stale';
 
 let nextSession = 0n;
 const pathKey = (path: ValuePath): string => JSON.stringify(path);
@@ -171,7 +180,54 @@ export class DocumentSession {
     readonly #id = `document-${++nextSession}`;
     #attempt = 0n;
     #state: DocumentState;
-    #save: DocumentSaveState = Object.freeze({ kind: 'idle' });
+    #saveValue: DocumentSaveState = Object.freeze({ kind: 'idle' });
+    #generation = 0;
+    #confirming = false;
+    readonly #listeners = new Set<() => void>();
+    get #save(): DocumentSaveState {
+        return this.#saveValue;
+    }
+    set #save(value: DocumentSaveState) {
+        this.#saveValue = value;
+        this.#generation++;
+        // Observers cannot interrupt a completed state transition.
+        for (const listener of [...this.#listeners]) {
+            try {
+                listener();
+            } catch {
+                /* Observers own their errors. */
+            }
+        }
+    }
+    /** Observe completed transitions; returns an idempotent unsubscribe function. */
+    subscribe(listener: () => void): () => void {
+        this.#listeners.add(listener);
+        return () => {
+            this.#listeners.delete(listener);
+        };
+    }
+    get requiresProtection(): boolean {
+        return this.#state.dirty || this.locked;
+    }
+    /** Only the captured idle editing lifetime may be reset after confirmation. */
+    async requestDiscard(reason: string, confirm: ConfirmDiscard): Promise<DiscardResult> {
+        if (this.locked || this.#confirming) return 'blocked';
+        if (!this.#state.dirty) return 'allowed';
+        const captured = this.#state;
+        const generation = this.#generation;
+        this.#confirming = true;
+        try {
+            const confirmed = await confirm(Object.freeze({ revision: captured.revision, reason }));
+            if (this.locked) return 'blocked';
+            if (this.#state !== captured || this.#generation !== generation) return 'stale';
+            if (confirmed !== true) return 'cancelled';
+            this.#state = resetDocumentState(captured);
+            this.#save = Object.freeze({ kind: 'idle' });
+            return 'allowed';
+        } finally {
+            this.#confirming = false;
+        }
+    }
     constructor(state: DocumentState) {
         assertDocumentState(state);
         this.#state = state;

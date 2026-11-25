@@ -275,8 +275,9 @@ accepted/current snapshots, neutral keyed operations and exact derived dirty sta
 Only those tested portions of STATE-001/STATE-002 are implemented by that core.
 AUR-STATE-SAVE-001 adds the [operational save lifecycle](document-state.md#operational-save-lifecycle-aur-state-save-001)
 over the same core and document validation, with edit locks, complete authoritative
-acceptance and explicit uncertain-outcome recovery. User-confirmed discard and
-navigation protection remain pending.
+acceptance and explicit uncertain-outcome recovery. User-confirmed discard and a framework-independent navigation decision boundary
+are implemented by AUR-STATE-PROTECTION-001, with explicit optional unload integration.
+Applications own Router/history adapters and accessible confirmation dialogs.
 The lifecycle requirements below remain normative targets.
 
 Track immutable original accepted values, effective edits, raw invalid input,

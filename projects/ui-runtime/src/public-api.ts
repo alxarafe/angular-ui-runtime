@@ -136,3 +136,6 @@ export type {
     DocumentSaveState,
     DocumentSubmitResult,
 } from './state/document-session.js';
+export type { DiscardRequest, ConfirmDiscard, DiscardResult } from './state/document-session.js';
+export { NavigationProtection, protectBeforeUnload } from './state/navigation-protection.js';
+export type { BeforeUnloadTarget } from './state/navigation-protection.js';
