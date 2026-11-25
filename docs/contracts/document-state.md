@@ -221,8 +221,8 @@ and collection capabilities so the UI reflects the same lock enforced by `change
 All edits within this lifetime must go through `change`, which delegates directly
 to `applyDocumentChange`. The standalone STATE primitives remain unchanged and do
 not acquire a global lock. Calling a standalone primitive on a retained snapshot
-creates a different state; it cannot replace the session's private state. There is
-no reset, discard, state-replacement or route-guard method on this coordinator.
+creates a different state; it cannot replace the session's private state. The protection increment below adds confirmed discard and a leave boundary;
+there is no unrestricted state-replacement method on this coordinator.
 Constructing a session requires an actual state admitted by the existing STATE core,
 not a spread/JSON reconstruction. A new session denotes a new lifetime.
 
@@ -312,3 +312,59 @@ manual synthetic-adapter responses at desktop/mobile sizes and preservation duri
 five packaged themes plus a structural frame. This implements the generic STATE-003
 lock-and-reconcile behavior; external adapter conformance, full visual/accessibility
 review, touched/error integration and STATE-004–STATE-006 remain outside this increment.
+
+## Discard and navigation protection (AUR-STATE-PROTECTION-001)
+
+This increment supersedes the discard/navigation gaps recorded above. It extends
+`DocumentSession`, reusing `resetDocumentState`; it introduces no second state engine.
+
+- `requestDiscard(reason: string, confirm: ConfirmDiscard): Promise<DiscardResult>`
+  returns `allowed`, `cancelled`, `blocked` or `stale`. A clean idle session allows
+  immediately without prompting or advancing revision. Dirty sessions pass a frozen
+  `DiscardRequest` (`revision`, `reason`) to the application asynchronous dialog.
+  Only literal `true` confirms; cancellation leaves the entire state and feedback
+  untouched. Confirmation restores the latest authoritative accepted snapshot,
+  including nested keys/order, clears save feedback and increments revision once.
+- Saving, reconciling and recovery block even a clean document. After confirmation,
+  both snapshot identity/revision and lifecycle generation must still match. Edits,
+  acceptance and even a save/rejection cycle invalidate an earlier confirmation.
+  A concurrent request returns `blocked`, without another dialog or shared permission.
+  Dialog rejection propagates to the caller, preserving state and releasing the gate.
+- `new NavigationProtection(session, confirm).requestLeave(reason): Promise<boolean>`
+  returns true only for `allowed`. Route, Back and destructive application adapters
+  await it before executing their action. All instances share the session's gate.
+  Cancellation does not change views or focus in the library. The application owns
+  accessible dialog focus capture/restoration and must defer navigation (or restore
+  history after a popstate); this API does not itself intercept browser Back.
+- `requiresProtection` is dirty OR locked. `subscribe(listener)` observes completed
+  transitions and returns an idempotent unsubscribe function. It does not immediately
+  emit. Observers should read state, not initiate further transitions. Observer errors
+  are isolated from the completed operation; applications own reporting those errors.
+
+```ts
+const protection = new NavigationProtection(session, applicationConfirmDiscard);
+if (await protection.requestLeave('record-switch')) {
+    // Perform the application-owned replacement only after permission.
+}
+// Explicit browser owner setup; pass undefined during SSR.
+const cleanup = protectBeforeUnload(session, browserWindow);
+// Call cleanup() when this owner is destroyed.
+```
+
+`protectBeforeUnload(session, target?)` installs no globals implicitly. The optional
+`BeforeUnloadTarget` is a minimal add/remove listener port; omitting it is SSR-safe.
+It synchronously registers only while dirty or locked, including clean uncertain
+saves, and removes the listener on clean idle transitions or explicit cleanup.
+Cleanup is idempotent and unsubscribes from future session transitions. The handler
+uses preventDefault and returnValue, never an asynchronous custom dialog. Browsers
+control native prompt text and may suppress prompts (including without prior user
+activation and on mobile lifecycle termination). Native prompts and recovery cannot
+be guaranteed; this API provides no persistence or durable recovery mechanism.
+
+`tests/document-protection.test.mjs` covers raw invalid drafts, nested removals,
+accepted snapshot restoration, cancellation, stale confirmations, concurrent requests,
+save/recovery locks, SSR, listener registration and cleanup. The installed public APF
+scenario `?scenario=document-protection` uses synthetic route/Back/programmatic
+adapters, with desktop/mobile Chromium tests for retained drafts/focus, stale dialog
+responses and synchronous unload cancellation/cleanup. These are synthetic decision
+adapters, not real Angular Router/history interception or guaranteed native prompts.

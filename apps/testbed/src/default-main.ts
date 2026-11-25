@@ -1,3 +1,4 @@
+import { DocumentProtectionTestbed } from './document-protection';
 import { DocumentSaveTestbed } from './document-save';
 import { StateTestbed } from './state';
 import { ValidationTestbed } from './validation';
@@ -17,21 +18,23 @@ const documentValidation =
     new URLSearchParams(location.search).get('scenario') === 'document-validation';
 const grid = new URLSearchParams(location.search).get('scenario') === 'grid';
 bootstrapApplication(
-    save
-        ? DocumentSaveTestbed
-        : documentValidation
-          ? DocumentValidationTestbed
-          : validation
-            ? ValidationTestbed
-            : state
-              ? StateTestbed
-              : grid
-                ? GridTestbed
-                : form
-                  ? FormTestbed
-                  : new URLSearchParams(location.search).get('scenario') === 'navigation'
-                    ? NavigationTestbed
-                    : DefaultThemeTestbed,
+    new URLSearchParams(location.search).get('scenario') === 'document-protection'
+        ? DocumentProtectionTestbed
+        : save
+          ? DocumentSaveTestbed
+          : documentValidation
+            ? DocumentValidationTestbed
+            : validation
+              ? ValidationTestbed
+              : state
+                ? StateTestbed
+                : grid
+                  ? GridTestbed
+                  : form
+                    ? FormTestbed
+                    : new URLSearchParams(location.search).get('scenario') === 'navigation'
+                      ? NavigationTestbed
+                      : DefaultThemeTestbed,
     {
         providers: provideThemeRuntime(
             grid || state || validation || documentValidation || save

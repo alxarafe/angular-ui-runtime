@@ -7,7 +7,17 @@ It implements locked editing, validated exact immutable submissions, attempt/loc
 revision identity, definite rejection/conflict retention, complete authoritative
 acceptance with adapter-mapped UI keys, and locked reconciliation/recovery for
 committed or uncertain outcomes. Pending checks need explicit adapter confirmation.
-It adds no HTTP, version storage, business rules, discard or router guard.
+It adds no HTTP, version storage or business rules.
+
+AUR-STATE-PROTECTION-001 now publishes `DiscardRequest`, `ConfirmDiscard`,
+`DiscardResult`, `DocumentSession.requestDiscard`, `requiresProtection`, `subscribe`,
+`NavigationProtection.requestLeave` and the explicit `protectBeforeUnload` browser
+port (`BeforeUnloadTarget`). The [protection contract](../contracts/document-state.md#discard-and-navigation-protection-aur-state-protection-001)
+supersedes the provisional discard/navigation API below. Confirmed discard reuses
+the existing reset primitive, guarded by snapshot/lifecycle identity and save locks.
+Concurrent requests are denied, not coalesced into multiple action permissions.
+Applications own routing, dialog focus and owner cleanup; no Router dependency or
+implicit global listener is introduced.
 
 AUR-VALID-AGG-001 publishes [framework-independent document validation aggregation](../contracts/document-validation.md).
 `validateDocument` adds a purpose-built request/result contract and a declarative
