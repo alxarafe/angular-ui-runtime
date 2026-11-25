@@ -26,6 +26,7 @@ import type {
     FormFieldContexts,
     FormFieldChange,
     FormFieldEdit,
+    FormFieldPage,
     FormLayout,
     FormViewState,
     ValuePath,
@@ -38,6 +39,7 @@ import {
     type FormCollectionContexts,
     type DetailGridChange,
     type DetailGridEdit,
+    type DetailGridPage,
 } from '../grid/grid-definition.js';
 /** Application data is input/output only; the host owns solely visual navigation state. */
 @Component({
@@ -156,6 +158,7 @@ import {
                                                         [readOnly]="readOnly()"
                                                         (fieldChange)="fieldChange.emit($event)"
                                                         (fieldEdit)="fieldEdit.emit($event)"
+                                                        (fieldPage)="fieldPage.emit($event)"
                                                     />
                                                 }
                                                 @for (
@@ -169,6 +172,7 @@ import {
                                                         [readOnly]="readOnly()"
                                                         (gridChange)="collectionChange.emit($event)"
                                                         (gridEdit)="collectionEdit.emit($event)"
+                                                        (gridPage)="collectionPage.emit($event)"
                                                     />
                                                 }
                                                 @if (
@@ -196,6 +200,7 @@ import {
                                 [readOnly]="readOnly()"
                                 (fieldChange)="fieldChange.emit($event)"
                                 (fieldEdit)="fieldEdit.emit($event)"
+                                (fieldPage)="fieldPage.emit($event)"
                             />
                         }
                     </fieldset>
@@ -206,6 +211,7 @@ import {
                         [readOnly]="readOnly()"
                         (gridChange)="collectionChange.emit($event)"
                         (gridEdit)="collectionEdit.emit($event)"
+                        (gridPage)="collectionPage.emit($event)"
                     />
                 }
                 @if (
@@ -300,6 +306,8 @@ export class FormComposition {
     readonly fieldChange = output<FormFieldChange>();
     readonly fieldEdit = output<FormFieldEdit>();
     readonly collectionEdit = output<DetailGridEdit>();
+    readonly fieldPage = output<FormFieldPage>();
+    readonly collectionPage = output<DetailGridPage>();
     readonly actionSelected = output<string>();
     readonly composition = computed(() => composeForm(this.definition(), this.layout()));
     protected readonly boundContexts = computed(() => {

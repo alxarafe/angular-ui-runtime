@@ -5,12 +5,14 @@ import { ThemeService } from '../theme/theme-runtime.js';
 import { FormFrame, FormFieldOutlet } from '../form/form-outlets.js';
 import type { FieldRendererContext, FieldValue } from '../field-types/renderer-context.js';
 import type { FormFieldDefinition, ValuePath } from '../form/form-definition.js';
+import type { ChoicePageDirection } from '../selector/choice-options.js';
 import {
     exactGridValue,
     snapshotGridPath,
     validateGrid,
     type DetailGridChange,
     type DetailGridEdit,
+    type DetailGridPage,
     type DetailGridColumn,
     type DetailGridContext,
     type DetailGridRow,
@@ -162,6 +164,7 @@ export class ListGrid {
                                         [context]="cell(row, column)"
                                         (fieldChange)="edit(row.key, column.field, $event.value)"
                                         (fieldEdit)="editInput(row.key, column.field, $event.input)"
+                                        (fieldPage)="page(row.key, column.field, $event.direction)"
                                     />
                                 </td>
                             }
@@ -225,6 +228,7 @@ export class DetailGrid {
     readonly readOnly = input(false);
     readonly gridChange = output<DetailGridChange>();
     readonly gridEdit = output<DetailGridEdit>();
+    readonly gridPage = output<DetailGridPage>();
     protected readonly theme = inject(ThemeService);
     readonly grid = computed(() => {
         validateGrid(this.context(), true);
@@ -322,6 +326,26 @@ export class DetailGrid {
                 ...(row.message ? [this.messageId(row.key)] : []),
             ],
         };
+    }
+    page(key: string, field: string, direction: ChoicePageDirection): void {
+        const row = this.grid().rows.find((row) => row.key === key);
+        const column = this.grid().columns.find((column) => column.field === field);
+        if (!row || !column) throw new Error('Unknown grid cell');
+        const context = this.cell(row, column);
+        if (
+            !context.disabled &&
+            !context.readOnly &&
+            !context.selector?.busy &&
+            context.selector?.[direction]
+        )
+            this.gridPage.emit({
+                collectionId: this.grid().id,
+                collectionPath: snapshotGridPath(this.grid().path),
+                key,
+                field,
+                path: this.path(key, field),
+                direction,
+            });
     }
     private emit(
         intent:

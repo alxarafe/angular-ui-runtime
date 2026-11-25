@@ -92,6 +92,11 @@ export interface FormFieldEdit {
     readonly path: ValuePath;
     readonly input: EditingInput;
 }
+export interface FormFieldPage {
+    readonly id: string;
+    readonly path: ValuePath;
+    readonly direction: import('../selector/choice-options.js').ChoicePageDirection;
+}
 /** Visual state only. This is not a document editing or dirty-state model. */
 export interface FormViewState {
     readonly selectedTab?: string;

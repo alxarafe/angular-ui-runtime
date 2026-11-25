@@ -62,12 +62,34 @@ export class DefaultTimeRenderer extends FieldRendererBase {
     styles: [':host select { min-height: 2.6em; }'],
 })
 export class DefaultEnumRenderer extends FieldRendererBase {
+    outside(): boolean {
+        const context = this.context();
+        return (
+            !!context.selector &&
+            typeof context.value === 'string' &&
+            context.selector.current?.value === context.value &&
+            !context.selector.options.some((option) => option.value === context.value)
+        );
+    }
+    selectChoice(control: HTMLSelectElement): void {
+        const page = this.context().selector;
+        const value = control.selectedOptions[0]?.value;
+        // Ignore stale DOM options which are no longer in the supplied page.
+        if (
+            page &&
+            !page.busy &&
+            value !== undefined &&
+            page.options.some((option) => option.value === value)
+        )
+            this.update(value);
+    }
     readonly placeholder = computed(() => {
         const input = this.context().documentInput;
         if (!input) return 'Not set';
         if (input.kind === 'absent') return 'Absent — choose a value';
         if (input.kind === 'raw') return 'Draft — choose to replace';
         if (input.value === null) return 'Null — choose a value';
+        if (this.context().selector && this.context().value !== null) return 'Choose a value';
         if (typeof input.value === 'string' && this.context().choices?.includes(input.value))
             return 'Choose a value';
         return 'Unknown value — choose to replace';

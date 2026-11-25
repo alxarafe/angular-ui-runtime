@@ -14,6 +14,7 @@ import {
 import type { FieldRendererContext, FieldValue } from '../field-types/renderer-context.js';
 import { ThemeResolver } from '../theme/theme-runtime.js';
 import type { EditingInput } from '../state/document-state.js';
+import type { ChoicePageDirection } from '../selector/choice-options.js';
 
 /** Lossless opt-in bridge; legacy renderers and valueChange remain unchanged. */
 @Component({
@@ -39,7 +40,7 @@ import type { EditingInput } from '../state/document-state.js';
                     [id]="textId()"
                     [value]="text()"
                     [disabled]="context().disabled"
-                    [readOnly]="!!context().readOnly"
+                    [readOnly]="!!context().readOnly || !!context().selector?.busy"
                     [attr.aria-describedby]="context().describedBy?.join(' ') || null"
                     [attr.aria-invalid]="context().invalid || null"
                     (input)="type($event)"
@@ -47,14 +48,47 @@ import type { EditingInput } from '../state/document-state.js';
             }
         }
         <span>{{ status() }}</span>
-        <button
-            type="button"
-            [disabled]="blocked()"
-            (click)="emit({ kind: 'absent' })"
-            [attr.aria-label]="'Unset ' + context().label"
-        >
-            Unset
-        </button>
+        @if (context().selector; as page) {
+            <div
+                role="group"
+                [attr.aria-label]="context().label + ' pages'"
+                [attr.aria-busy]="page.busy || null"
+            >
+                <button
+                    type="button"
+                    [disabled]="blocked() || !page.previous"
+                    (click)="pageRequest('previous')"
+                >
+                    Previous choices
+                </button>
+                <button
+                    type="button"
+                    [disabled]="blocked() || !page.next"
+                    (click)="pageRequest('next')"
+                >
+                    Next choices
+                </button>
+                @if (page.pageLabel) {
+                    <span>{{ page.pageLabel }}</span>
+                }
+                @if (page.busy) {
+                    <span role="status">Loading choices</span>
+                }
+                @if (page.error) {
+                    <p role="alert" [id]="context().id + '-choices-error'">{{ page.error }}</p>
+                }
+            </div>
+        }
+        @if (!legacy()) {
+            <button
+                type="button"
+                [disabled]="blocked()"
+                (click)="emit({ kind: 'absent' })"
+                [attr.aria-label]="'Unset ' + context().label"
+            >
+                Unset
+            </button>
+        }
         <button
             type="button"
             [disabled]="blocked()"
@@ -79,7 +113,9 @@ export class DocumentInput {
     readonly context = input.required<FieldRendererContext>();
     readonly boolean = input(false);
     readonly enumeration = input(false);
+    readonly legacy = input(false);
     readonly editChange = output<EditingInput>();
+    readonly pageChange = output<ChoicePageDirection>();
     private readonly selection = viewChild('selection', { read: ViewContainerRef });
     private readonly resolver = inject(ThemeResolver);
     private rendered?: unknown;
@@ -92,7 +128,7 @@ export class DocumentInput {
             value:
                 documentInput?.kind === 'value' &&
                 typeof documentInput.value === 'string' &&
-                context.choices?.includes(documentInput.value)
+                this.known(documentInput.value)
                     ? documentInput.value
                     : null,
         };
@@ -126,8 +162,15 @@ export class DocumentInput {
             input?.kind === 'raw' ||
             (input?.kind === 'value' &&
                 input.value !== null &&
-                (typeof input.value !== 'string' || !this.context().choices?.includes(input.value)))
+                (typeof input.value !== 'string' || !this.known(input.value)))
         );
+    }
+    private known(value: string): boolean {
+        const context = this.context();
+        return context.selector !== undefined
+            ? context.selector.options.some((option) => option.value === value) ||
+                  context.selector.current?.value === value
+            : !!context.choices?.includes(value);
     }
     textId(): string {
         return this.context().id + (this.enumeration() ? '-draft' : '');
@@ -158,7 +201,15 @@ export class DocumentInput {
         );
     }
     blocked(): boolean {
-        return !!this.context().disabled || !!this.context().readOnly;
+        return (
+            !!this.context().disabled ||
+            !!this.context().readOnly ||
+            !!this.context().selector?.busy
+        );
+    }
+    pageRequest(direction: ChoicePageDirection): void {
+        if (!this.blocked() && this.context().selector?.[direction])
+            this.pageChange.emit(direction);
     }
     text(): string {
         const slot = this.context().documentInput;
