@@ -195,9 +195,9 @@ before that confirmation.
 
 ## Typed menus and navigation (MENU)
 
-The future public contract must express ordered collections of named menus, with
+The [implemented typed-menu subsystem](menus.md) expresses ordered collections of named menus, with
 stable unique menu identity, accessible label and semantic kind: primary,
-secondary, account/user. Multiple menus may share any kind; there is no fixed
+secondary, account. Multiple menus may share any kind; there is no fixed
 maximum count. Identity, purpose and placement are separate. Items have stable
 identity within their menu, accessible label, ordered children where present and
 an opaque application action/navigation reference. Duplicate identities and cycles
@@ -219,8 +219,9 @@ registry, navigation data store or implicit replacement for fallback menus.
 The implemented alpha.3 single-tree presentation port now supports optional
 synchronous native-link cancellation by the consumer, with no router dependency.
 See [link activation](theme-composition-v1.md#optional-synchronous-link-activation-alpha3).
-This is partial navigation-adapter evidence, not implementation of the future
-MenuDefinition, multi-menu registry, placement or overflow requirements above.
+AUR-MENU-001 adds host-owned typed menu definitions, placement and overflow in
+opt-in shell mode. MENU-003 visual certification and independent MENU-004 consumer
+evidence remain incomplete; no separate menu registry is introduced.
 
 ## Forms and layouts (FORM)
 

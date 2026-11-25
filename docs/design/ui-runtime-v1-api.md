@@ -1,5 +1,15 @@
 # UI Runtime 1.0 API and internal contract design
 
+AUR-MENU-001 publishes `MenuDefinition`, `MenuItem`, `MenuKind`, `MenuPlacement`,
+`MenuSelection`, native-link callback types, placement diagnostics, `snapshotMenus`
+and `composeMenus` through the existing shell's opt-in typed-menu mode. The
+[operational menu contract](../contracts/menus.md) supersedes the provisional menu
+interfaces below: published items use optional `disabled` rather than required
+`enabled`; placements use `region` rather than `regionId`. Existing named shell
+selectors express placement capability; no `ThemeComponents.menus` entry or second
+registry is required. Host-owned default views and overflow retain ownership across
+theme replacement. Mandatory artifacts and legacy navigation bindings stay unchanged.
+
 AUR-STATE-SAVE-001 publishes `DocumentSession`, wrapping the existing immutable
 STATE core and `validateDocument`. Its [operational contract](../contracts/document-state.md#operational-save-lifecycle-aur-state-save-001)
 is authoritative over the older generic session/submission proposals below.
