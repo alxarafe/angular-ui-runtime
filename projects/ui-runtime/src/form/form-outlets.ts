@@ -172,6 +172,10 @@ export class FormFieldOutlet {
                                   'boolean',
                                   () => this.field().artifact === 'field.BOOLEAN',
                               ),
+                              inputBinding(
+                                  'enumeration',
+                                  () => this.field().artifact === 'field.ENUM',
+                              ),
                               outputBinding<EditingInput>('editChange', (input) => {
                                   if (
                                       !this.boundContext().disabled &&

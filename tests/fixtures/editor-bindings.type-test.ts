@@ -5,6 +5,7 @@ import {
     type DetailGridEdit,
     type DetailGridChange,
     type EditingInput,
+    type DocumentBindingOptions,
     bindDocumentEditor,
     applyDocumentFieldIntent,
     applyDocumentCollectionIntent,
@@ -39,6 +40,16 @@ const wrong: FormFieldChange = edit;
 // @ts-expect-error New cell edits do not masquerade as scalar/structural intents.
 const wrongGrid: DetailGridChange = cell;
 const input: EditingInput = lossless.documentInput!;
+const enumCollection: DocumentBindingOptions['collections'][string] = {
+    label: 'Choices',
+    columns: [{ id: 'status', field: 'status', label: 'Status', artifact: 'field.ENUM' }],
+    fields: { status: { choices: ['', 'OPEN'], readOnly: true, describedBy: ['help'] } },
+};
+const invalidCollection: DocumentBindingOptions['collections'][string] = {
+    ...enumCollection,
+    // @ts-expect-error Collection presentation must not supply another mutable document input.
+    fields: { status: { documentInput: { kind: 'raw', text: 'draft' } } },
+};
 void [
     legacy,
     lossless,
@@ -48,6 +59,8 @@ void [
     wrong,
     wrongGrid,
     input,
+    enumCollection,
+    invalidCollection,
     bindDocumentEditor,
     applyDocumentFieldIntent,
     applyDocumentCollectionIntent,

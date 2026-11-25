@@ -66,6 +66,45 @@ test('ENUM distinguishes null, empty and sentinel-looking strings and rejects in
     }
 });
 
+test('lossless ENUM placeholder never emits and explicit indexed choices retain exact text', () => {
+    const injector = Injector.create({ providers: [] });
+    try {
+        for (const input of [
+            { kind: 'absent' },
+            { kind: 'value', value: null },
+            { kind: 'value', value: 'UNKNOWN' },
+            { kind: 'raw', text: 'OPEN' },
+            { kind: 'raw', text: 'invalid\ud800' },
+        ]) {
+            const renderer = runInInjectionContext(injector, () => new DefaultEnumRenderer());
+            const context = {
+                id: 'enum',
+                label: 'Enum',
+                value: null,
+                documentInput: input,
+                choices: ['', ' spaced ', 'e\u0301', 'é'],
+            };
+            Object.defineProperty(renderer, 'context', { value: () => context });
+            const received = [];
+            renderer.valueChange.subscribe((value) => received.push(value));
+            assert(renderer.placeholder().length);
+            renderer.selectIndex(0);
+            assert.deepEqual(received, []);
+            for (const index of [1, 2, 3, 4]) renderer.selectIndex(index);
+            assert.deepEqual(received, context.choices);
+            assert.deepEqual(context.documentInput, input);
+            context.readOnly = true;
+            renderer.selectIndex(1);
+            context.readOnly = false;
+            context.disabled = true;
+            renderer.selectIndex(1);
+            assert.equal(received.length, context.choices.length);
+        }
+    } finally {
+        injector.destroy();
+    }
+});
+
 test('the canonical INTEGER renderer keeps exact strings and null without numeric coercion', () => {
     const injector = Injector.create({ providers: [] });
     try {

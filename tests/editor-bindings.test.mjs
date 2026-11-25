@@ -117,6 +117,61 @@ test('projection keeps absence/null/empty/boolean/raw distinct and never changes
     applyDocumentFieldIntent(session, { id: 'empty', path: path('empty'), value: '' });
     assert.deepEqual(session.state.current.properties.empty.input, { kind: 'value', value: '' });
 });
+test('ENUM binding retains exact states and keyed cell choices without inferring defaults or edits', () => {
+    const { session, options } = fixture();
+    const choices = ['', 'OPEN', ' spaced ', 'e\u0301', 'é'];
+    const enumPlan = {
+        kind: 'field',
+        definition: { type: 'ENUM', required: false, nullable: true, choices },
+    };
+    options.definition.fields.find((f) => f.id === 'empty').artifact = 'field.ENUM';
+    options.plan.properties.empty = enumPlan;
+    options.fields.empty.choices = choices;
+    options.plan.properties.rows.row.properties.text = enumPlan;
+    options.collections.rows.columns[0].artifact = 'field.ENUM';
+    options.collections.rows.fields = { text: { choices, describedBy: ['row-help'] } };
+    const cellPath = [...path('rows'), rowKey('b'), prop('text')];
+    for (const input of [
+        { kind: 'absent' },
+        { kind: 'value', value: null },
+        ...['', 'OPEN', ' spaced ', 'e\u0301', 'é', 'UNKNOWN', false].map((value) => ({
+            kind: 'value',
+            value,
+        })),
+        { kind: 'raw', text: 'malformed\ud800' },
+        { kind: 'raw', text: '' },
+        { kind: 'raw', text: 'OPEN' },
+    ]) {
+        applyDocumentFieldIntent(session, { id: 'empty', path: path('empty'), input });
+        applyDocumentCollectionIntent(session, {
+            collectionId: 'rows',
+            collectionPath: path('rows'),
+            key: 'b',
+            field: 'text',
+            path: cellPath,
+            input,
+        });
+        const before = session.state;
+        const bound = bindDocumentEditor(session, options);
+        const cell = bound.collectionContexts.rows.rows.find((row) => row.key === 'b').contexts
+            .text;
+        assert.deepEqual(bound.contexts.empty.documentInput, input);
+        assert.deepEqual(cell.documentInput, input);
+        assert.deepEqual(cell.choices, choices);
+        assert.deepEqual(cell.describedBy, ['row-help']);
+        assert.equal(session.state, before);
+        assert.deepEqual(
+            session.state.current.properties.rows.rows.map((row) => row.key),
+            ['a', 'b'],
+        );
+        assert.equal(
+            cell.invalid,
+            input.kind === 'raw'
+                ? !choices.includes(input.text)
+                : input.kind === 'value' && input.value !== null && !choices.includes(input.value),
+        );
+    }
+});
 test('keyed structural and nested cell intents reuse state; malformed/stale targets cannot edit', () => {
     const { session, options } = fixture();
     const collectionPath = path('rows');

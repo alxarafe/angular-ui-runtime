@@ -4,9 +4,13 @@
     #control
     [id]="context().id"
     [disabled]="context().disabled || context().readOnly"
+    [attr.aria-describedby]="context().describedBy?.join(' ') || null"
+    [attr.aria-invalid]="context().invalid || null"
     (change)="selectIndex(control.selectedIndex)"
 >
-    <option [selected]="context().value === null">Not set</option>
+    <option [selected]="context().value === null" [disabled]="!!context().documentInput">
+        {{ placeholder() }}
+    </option>
     @for (choice of context().choices ?? []; track $index) {
     <option [value]="choice" [selected]="choice === text() && context().value !== null">
         {{ choice === '' ? '(empty string)' : choice }}

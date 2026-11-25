@@ -39,6 +39,13 @@ export interface DocumentBindingOptions {
             {
                 readonly label: string;
                 readonly columns: readonly DetailGridColumn[];
+                /** Per-property presentation only; document identity/input remain session-owned. */
+                readonly fields?: Readonly<
+                    Record<
+                        string,
+                        Omit<FieldRendererContext, 'id' | 'label' | 'value' | 'documentInput'>
+                    >
+                >;
             }
         >
     >;
@@ -164,6 +171,7 @@ export function bindDocumentEditor(
                             [
                                 column.field,
                                 field([...path, { kind: 'property', name: column.field }], {
+                                    ...base.fields?.[column.field],
                                     id: descriptor.id + '-' + row.key + '-' + column.id,
                                     label: column.label,
                                 }),

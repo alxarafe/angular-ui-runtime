@@ -4,6 +4,7 @@ import {
     DocumentSession,
     createDocumentState,
     FormComposition,
+    ThemePanelOutlet,
     ThemeService,
     bindDocumentEditor,
     applyDocumentFieldIntent,
@@ -21,7 +22,13 @@ import {
     type DetailGridEdit,
     type DetailGridChange,
     type DocumentSubmission,
+    type EditingInput,
 } from '@alxarafe/ui-runtime';
+const enumChoices = ['', 'OPEN', 'Not set', ' spaced ', 'e\u0301', 'é'] as const;
+const enumDef = {
+    kind: 'field' as const,
+    definition: { type: 'ENUM' as const, required: false, nullable: true, choices: enumChoices },
+};
 const property = (name: string) => ({ kind: 'property' as const, name });
 const key = (key: string) => ({ kind: 'row' as const, key });
 const path = (name: string): ValuePath => [property(name)];
@@ -46,7 +53,11 @@ const collection = (rows: readonly DocumentRow[]): DocumentCollection => ({
 });
 const row = (key: string, value = '1', children: readonly DocumentRow[] = []): DocumentRow => ({
     key,
-    value: object({ quantity: field(value, { type: 'INTEGER' }), nested: collection(children) }),
+    value: object({
+        quantity: field(value, { type: 'INTEGER' }),
+        choice: field('OPEN'),
+        nested: collection(children),
+    }),
 });
 const document = object({
     title: field(''),
@@ -58,6 +69,9 @@ const document = object({
     server: field('SERVER_ONE'),
     fixed: { ...field('fixed'), readOnly: true },
     disabled: { ...field('disabled'), disabled: true },
+    choice: field('OPEN'),
+    enumFixed: { ...field('OPEN'), readOnly: true },
+    enumDisabled: { ...field('OPEN'), disabled: true },
     details: object({
         first: collection([row('a', '1', [row('n', 'bad')]), row('b', '2')]),
         second: collection([row('x', '3')]),
@@ -80,12 +94,17 @@ const leafRowPlan = {
     kind: 'object' as const,
     properties: {
         quantity: integerDef,
+        choice: enumDef,
         nested: { kind: 'collection' as const, row: { kind: 'object' as const, properties: {} } },
     },
 };
 const rowPlan = {
     kind: 'object' as const,
-    properties: { quantity: integerDef, nested: { kind: 'collection' as const, row: leafRowPlan } },
+    properties: {
+        quantity: integerDef,
+        choice: enumDef,
+        nested: { kind: 'collection' as const, row: leafRowPlan },
+    },
 };
 const plan: DocumentBindingOptions['plan'] = {
     kind: 'object',
@@ -111,6 +130,9 @@ const plan: DocumentBindingOptions['plan'] = {
         },
         fixed: stringDef,
         disabled: stringDef,
+        choice: enumDef,
+        enumFixed: enumDef,
+        enumDisabled: enumDef,
         details: {
             kind: 'object',
             properties: {
@@ -130,10 +152,13 @@ const descriptors = [
     ['server', 'Server check', 'STRING'],
     ['fixed', 'Read only', 'STRING'],
     ['disabled', 'Disabled', 'STRING'],
+    ['choice', 'Status', 'ENUM'],
+    ['enumFixed', 'Fixed status', 'ENUM'],
+    ['enumDisabled', 'Disabled status', 'ENUM'],
 ] as const;
 @Component({
     selector: 'qa-testbed',
-    imports: [FormComposition],
+    imports: [FormComposition, ThemePanelOutlet],
     template: `<h1>Integrated document editor</h1>
         <div class="toolbar">
             @for (id of themes; track id) {
@@ -144,6 +169,15 @@ const descriptors = [
             ><button (click)="commit()">Committed</button
             ><button (click)="accept()">Accept authoritative</button
             ><button (click)="discard()">Discard</button>
+            <button (click)="enumInput({ kind: 'value', value: 'UNKNOWN' })">
+                Use unknown ENUM
+            </button>
+            <button (click)="enumInput({ kind: 'raw', text: 'invalid draft' })">
+                Use raw ENUM
+            </button>
+            <button (click)="enumInput({ kind: 'value', value: false })">
+                Use invalid ENUM type
+            </button>
         </div>
         <p role="status" data-testid="editor-message">{{ message() }}</p>
         <output data-testid="editor-save">{{ session.save.kind }}</output><output
@@ -165,22 +199,32 @@ const descriptors = [
                 }
             </ul>
         </section>
-        <aur-form
-            [definition]="definition()"
-            [layout]="layout"
-            [contexts]="binding().contexts"
-            [collectionContexts]="binding().collectionContexts"
-            (fieldEdit)="edit($event)"
-            (collectionEdit)="cell($event)"
-            (collectionChange)="structure($event)"
-        />
+        <aur-theme-panel
+            ><aur-form
+                [definition]="definition()"
+                [layout]="layout"
+                [contexts]="binding().contexts"
+                [collectionContexts]="binding().collectionContexts"
+                (fieldEdit)="edit($event)"
+                (fieldChange)="legacy()"
+                (collectionEdit)="cell($event)"
+                (collectionChange)="structure($event)"
+        /></aur-theme-panel>
         @if (confirming()) {
             <section role="dialog" aria-label="Discard changes">
                 <button (click)="answer(false)">Cancel discard</button
                 ><button (click)="answer(true)">Confirm discard</button>
             </section>
         }
-        <output data-testid="editor-snapshot">{{ encode(session.state.current) }}</output>`,
+        <output data-testid="editor-snapshot">{{ encode(session.state.current) }}</output>
+        <output data-testid="enum-events">{{
+            encode({
+                fields: fieldEdits(),
+                cells: gridEdits(),
+                legacy: legacyEdits(),
+                last: lastEdit(),
+            })
+        }}</output>`,
     styles: [
         ':host{display:block;min-width:0;padding:.5rem;box-sizing:border-box}.toolbar{display:flex;flex-wrap:wrap;gap:.25rem}button{font:inherit;max-width:100%;white-space:normal;overflow-wrap:anywhere}output{display:block;overflow-wrap:anywhere}ul{padding-inline-start:1rem}',
     ],
@@ -200,6 +244,21 @@ export class EditorTestbed implements OnDestroy {
     private readonly unsubscribe = this.session.subscribe(() => this.tick.update((n) => n + 1));
     readonly form = viewChild(FormComposition);
     readonly message = signal('');
+    readonly fieldEdits = signal(0);
+    readonly gridEdits = signal(0);
+    readonly legacyEdits = signal(0);
+    readonly lastEdit = signal<FormFieldEdit | DetailGridEdit | null>(null);
+    legacy(): void {
+        this.legacyEdits.update((n) => n + 1);
+    }
+    enumInput(input: EditingInput): void {
+        this.session.change({ kind: 'field', path: path('choice'), input });
+        this.session.change({
+            kind: 'field',
+            path: [...first, key('a'), property('choice')],
+            input,
+        });
+    }
     readonly confirming = signal(false);
     private confirmation?: (confirmed: boolean) => void;
     private focus?: HTMLElement;
@@ -232,17 +291,31 @@ export class EditorTestbed implements OnDestroy {
             definition: this.definition(),
             plan,
             fields: Object.fromEntries(
-                descriptors.map(([id, label]) => [id, { id: 'editor-' + id, label }]),
+                descriptors.map(([id, label, type]) => [
+                    id,
+                    {
+                        id: 'editor-' + id,
+                        label,
+                        ...(type === 'ENUM' ? { choices: enumChoices } : {}),
+                    },
+                ]),
             ),
             collections: {
                 first: {
                     label: 'First details',
+                    fields: { choice: { choices: enumChoices } },
                     columns: [
                         {
                             id: 'quantity',
                             field: 'quantity',
                             label: 'First quantity',
                             artifact: 'field.INTEGER',
+                        },
+                        {
+                            id: 'choice',
+                            field: 'choice',
+                            label: 'Row status',
+                            artifact: 'field.ENUM',
                         },
                     ],
                 },
@@ -297,6 +370,9 @@ export class EditorTestbed implements OnDestroy {
                                     'server',
                                     'fixed',
                                     'disabled',
+                                    'choice',
+                                    'enumFixed',
+                                    'enumDisabled',
                                 ].map(path),
                             },
                         ],
@@ -352,12 +428,17 @@ export class EditorTestbed implements OnDestroy {
         );
     }
     edit(intent: FormFieldEdit): void {
+        this.fieldEdits.update((n) => n + 1);
+        this.lastEdit.set(intent);
         applyDocumentFieldIntent(this.session, intent);
     }
     cell(intent: DetailGridEdit): void {
+        this.gridEdits.update((n) => n + 1);
+        this.lastEdit.set(intent);
         applyDocumentCollectionIntent(this.session, intent);
     }
     structure(intent: DetailGridChange): void {
+        if (intent.kind === 'cell') this.legacy();
         applyDocumentCollectionIntent(
             this.session,
             intent,

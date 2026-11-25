@@ -59,11 +59,23 @@ export class DefaultTimeRenderer extends FieldRendererBase {
     selector: 'aur-default-enum',
     host: { class: 'aur-default-field' },
     templateUrl: './enum.html',
+    styles: [':host select { min-height: 2.6em; }'],
 })
 export class DefaultEnumRenderer extends FieldRendererBase {
+    readonly placeholder = computed(() => {
+        const input = this.context().documentInput;
+        if (!input) return 'Not set';
+        if (input.kind === 'absent') return 'Absent — choose a value';
+        if (input.kind === 'raw') return 'Draft — choose to replace';
+        if (input.value === null) return 'Null — choose a value';
+        if (typeof input.value === 'string' && this.context().choices?.includes(input.value))
+            return 'Choose a value';
+        return 'Unknown value — choose to replace';
+    });
     selectIndex(index: number): void {
-        if (index === 0) this.update(null);
-        else {
+        if (index === 0) {
+            if (!this.context().documentInput) this.update(null);
+        } else {
             const value = this.context().choices?.[index - 1];
             if (value !== undefined) this.update(value);
         }
