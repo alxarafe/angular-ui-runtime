@@ -1,3 +1,4 @@
+import type { EditingInput } from '../state/document-state.js';
 /**
  * SPDX-License-Identifier: Apache-2.0
  * Extracted from alxarafe/erbas-client: app/src/app/core-fe/field-types/renderer-context.ts
@@ -21,6 +22,11 @@ export interface FieldRendererContext {
     readonly control?: ControlRequest;
     /** Application-owned accessible feedback IDs; no validation semantics. */
     readonly describedBy?: readonly string[];
+    /** Opt-in lossless document editing; value is only a legacy display projection. */
+    readonly documentInput?: EditingInput;
+    readonly invalid?: boolean;
+    /** Host-rendered accessible messages; validation remains outside the renderer. */
+    readonly feedback?: readonly string[];
 }
 export interface FieldRenderer {
     readonly context: InputSignal<FieldRendererContext>;

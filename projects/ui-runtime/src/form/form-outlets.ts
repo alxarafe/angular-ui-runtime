@@ -1,3 +1,6 @@
+import { documentNodeProblem } from '../state/document-state.js';
+import { DocumentInput } from '../editor/document-input.js';
+import type { EditingInput } from '../state/document-state.js';
 /** SPDX-License-Identifier: Apache-2.0 */
 import {
     Component,
@@ -17,17 +20,14 @@ import {
     outputBinding,
     viewChild,
 } from '@angular/core';
-import type {
-    FieldValue,
-    FieldRenderer,
-    FieldRendererContext,
-} from '../field-types/renderer-context.js';
+import type { FieldValue, FieldRendererContext } from '../field-types/renderer-context.js';
 import { ThemeRegistry, ThemeResolver } from '../theme/theme-runtime.js';
 import { captureRetainedFocus } from '../structure/retained-focus.js';
 import { resolveFormFieldRenderer } from './form-field-renderer.js';
 import type {
     FormFieldDefinition,
     FormFieldChange,
+    FormFieldEdit,
     FormPresentationContext,
 } from './form-definition.js';
 
@@ -99,7 +99,14 @@ export class FormFrame {
 }
 @Component({
     selector: 'aur-form-field',
-    template: '<ng-container #target />',
+    template: `<ng-container #target />
+        @if (context().feedback?.length) {
+            <div [id]="context().id + '-feedback'" aria-live="polite">
+                @for (message of context().feedback; track $index) {
+                    <p>{{ message }}</p>
+                }
+            </div>
+        }`,
     host: {
         '[attr.data-aur-field]': 'field().id',
         role: 'group',
@@ -111,21 +118,37 @@ export class FormFieldOutlet {
     readonly context = input.required<FieldRendererContext>();
     readonly readOnly = input(false);
     readonly fieldChange = output<FormFieldChange>();
+    readonly fieldEdit = output<FormFieldEdit>();
     private readonly registry = inject(ThemeRegistry);
-    private readonly binding = computed(() =>
-        resolveFormFieldRenderer(
-            this.field(),
-            { ...this.context(), readOnly: this.readOnly() || this.context().readOnly },
-            this.registry,
-            this.resolver,
-        ),
-    );
+    private readonly binding = computed(() => {
+        const context = {
+            ...this.context(),
+            readOnly: this.readOnly() || this.context().readOnly,
+            describedBy: [
+                ...(this.context().describedBy ?? []),
+                ...(this.context().feedback?.length ? [this.context().id + '-feedback'] : []),
+            ],
+        };
+        if (
+            context.documentInput !== undefined &&
+            (this.field().kind === 'control' ||
+                documentNodeProblem({
+                    kind: 'field',
+                    equality: { type: 'exact' },
+                    input: context.documentInput,
+                }))
+        )
+            throw new Error('Unsupported document editing context');
+        return context.documentInput === undefined
+            ? resolveFormFieldRenderer(this.field(), context, this.registry, this.resolver)
+            : { component: DocumentInput, context };
+    });
     private readonly boundContext = computed(() => this.binding().context);
     private readonly target = viewChild('target', { read: ViewContainerRef });
     private readonly root = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly resolver = inject(ThemeResolver);
     private readonly injector = inject(Injector);
-    private rendered?: Type<FieldRenderer>;
+    private rendered?: Type<unknown>;
     private generation = 0;
     constructor() {
         effect(() => {
@@ -140,14 +163,41 @@ export class FormFieldOutlet {
             const logicalId = active?.id;
             const generation = ++this.generation;
             target.clear();
-            target.createComponent(component, {
+            target.createComponent(component as Type<unknown>, {
                 bindings: [
                     inputBinding('context', this.boundContext),
-                    outputBinding<FieldValue>('valueChange', (value) => {
-                        const field = this.field();
-                        if (!this.boundContext().disabled && !this.boundContext().readOnly)
-                            this.fieldChange.emit({ id: field.id, path: field.path, value });
-                    }),
+                    ...(component === DocumentInput
+                        ? [
+                              inputBinding(
+                                  'boolean',
+                                  () => this.field().artifact === 'field.BOOLEAN',
+                              ),
+                              outputBinding<EditingInput>('editChange', (input) => {
+                                  if (
+                                      !this.boundContext().disabled &&
+                                      !this.boundContext().readOnly
+                                  )
+                                      this.fieldEdit.emit({
+                                          id: this.field().id,
+                                          path: this.field().path,
+                                          input,
+                                      });
+                              }),
+                          ]
+                        : [
+                              outputBinding<FieldValue>('valueChange', (value) => {
+                                  const field = this.field();
+                                  if (
+                                      !this.boundContext().disabled &&
+                                      !this.boundContext().readOnly
+                                  )
+                                      this.fieldChange.emit({
+                                          id: field.id,
+                                          path: field.path,
+                                          value,
+                                      });
+                              }),
+                          ]),
                 ],
             });
             this.rendered = component;

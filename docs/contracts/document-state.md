@@ -1,5 +1,12 @@
 # Immutable document editing core (AUR-STATE-001-CORE)
 
+AUR-EDITOR-BINDINGS-001 now connects these implemented public APIs through
+[document editor bindings](editor-bindings.md). That contract supersedes historical
+statements below that form/grid session integration and validation feedback are
+entirely pending. It adds opt-in lossless editing channels, derived contexts and
+keyed reveal without replacing the existing state/validation engines. Full catalogue,
+consumer and visual acceptance remain separate.
+
 This increment exports framework-independent functions and readonly data types from
 `@alxarafe/ui-runtime`. The state modules have no Angular runtime dependencies.
 They own accepted and current values, editing operations, revision and derived dirty

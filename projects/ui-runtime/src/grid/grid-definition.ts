@@ -1,3 +1,4 @@
+import type { EditingInput } from '../state/document-state.js';
 /** SPDX-License-Identifier: Apache-2.0 */
 import type { FieldRendererContext, FieldValue } from '../field-types/renderer-context.js';
 import type { FormFieldDefinition, ValuePath } from '../form/form-definition.js';
@@ -45,6 +46,7 @@ export interface DetailGridContext extends Omit<
     'columns' | 'rows' | 'selectable'
 > {
     readonly path: ValuePath;
+    readonly message?: string;
     readonly columns: readonly DetailGridColumn[];
     readonly rows: readonly DetailGridRow[];
     readonly ordered: boolean;
@@ -75,6 +77,15 @@ export type DetailGridChange = {
     | { readonly kind: 'remove-row'; readonly key: string }
     | { readonly kind: 'move-row'; readonly key: string; readonly before: string | null }
 );
+/** Lossless cell editing is separate from the legacy scalar/structural channel. */
+export interface DetailGridEdit {
+    readonly collectionId: string;
+    readonly collectionPath: ValuePath;
+    readonly key: string;
+    readonly field: string;
+    readonly path: ValuePath;
+    readonly input: EditingInput;
+}
 export function gridIdentity(value: unknown): asserts value is string {
     if (typeof value !== 'string' || !value.trim())
         throw new Error('Invalid grid identity or label');
@@ -182,6 +193,7 @@ export function validateGrid(context: ListGridContext, detail = false): void {
     }
     if (detail) {
         const collection = context as DetailGridContext;
+        if (collection.message !== undefined) gridIdentity(collection.message);
         snapshotGridPath(collection.path);
         for (const flag of [
             collection.ordered,

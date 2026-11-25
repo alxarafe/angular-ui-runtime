@@ -1,5 +1,6 @@
+import { formPathKey } from '../form/value-path.js';
 /** SPDX-License-Identifier: Apache-2.0 */
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, output } from '@angular/core';
 import { ThemeService } from '../theme/theme-runtime.js';
 import { FormFrame, FormFieldOutlet } from '../form/form-outlets.js';
 import type { FieldRendererContext, FieldValue } from '../field-types/renderer-context.js';
@@ -9,6 +10,7 @@ import {
     snapshotGridPath,
     validateGrid,
     type DetailGridChange,
+    type DetailGridEdit,
     type DetailGridColumn,
     type DetailGridContext,
     type DetailGridRow,
@@ -125,7 +127,17 @@ export class ListGrid {
     template: `<aur-form-frame
         presentation="detailGrid"
         [context]="{ id: grid().id, label: grid().label }"
-        ><div class="scroll" role="region" [attr.aria-label]="grid().label" tabindex="0">
+    >
+        @if (grid().message) {
+            <p [id]="grid().id + '-message'">{{ grid().message }}</p>
+        }
+        <div
+            [attr.aria-describedby]="grid().message ? grid().id + '-message' : null"
+            class="scroll"
+            role="region"
+            [attr.aria-label]="grid().label"
+            tabindex="0"
+        >
             <table>
                 <caption>
                     {{
@@ -149,6 +161,7 @@ export class ListGrid {
                                         [field]="field(row, column)"
                                         [context]="cell(row, column)"
                                         (fieldChange)="edit(row.key, column.field, $event.value)"
+                                        (fieldEdit)="editInput(row.key, column.field, $event.input)"
                                     />
                                 </td>
                             }
@@ -211,6 +224,7 @@ export class DetailGrid {
     readonly context = input.required<DetailGridContext>();
     readonly readOnly = input(false);
     readonly gridChange = output<DetailGridChange>();
+    readonly gridEdit = output<DetailGridEdit>();
     protected readonly theme = inject(ThemeService);
     readonly grid = computed(() => {
         validateGrid(this.context(), true);
@@ -226,6 +240,41 @@ export class DetailGrid {
     protected rowLabel(row: DetailGridRow): string {
         return this.rowLabels().get(row.key)!;
     }
+    private readonly root = inject<ElementRef<HTMLElement>>(ElementRef, { optional: true });
+    /** Exact typed path lookup; no CSS selector interpolation or positional row identity. */
+    revealPath(path: ValuePath): boolean {
+        const root = this.root?.nativeElement;
+        if (!root) return false;
+        const prefix = this.grid().path;
+        if (
+            path.length < prefix.length ||
+            formPathKey(path.slice(0, prefix.length)) !== formPathKey(prefix)
+        )
+            return false;
+        const row = path[prefix.length],
+            field = path[prefix.length + 1];
+        if (path.length === prefix.length) {
+            root.querySelector<HTMLElement>('.scroll')?.focus();
+            return true;
+        }
+        if (row?.kind !== 'row' || !this.grid().rows.some((item) => item.key === row.key))
+            return false;
+        const column =
+            field?.kind === 'property'
+                ? this.grid().columns.find((item) => item.field === field.name)
+                : undefined;
+        if (field && !column) return false;
+        if (path.length > prefix.length + 2) return false;
+        const id =
+            'aur-cell-' +
+            encodeURIComponent(
+                JSON.stringify([this.grid().id, row.key, (column ?? this.grid().columns[0]!).id]),
+            );
+        const controls = [...root.querySelectorAll<HTMLElement>('input,select,textarea,button')];
+        const target = controls.find((item) => item.id === id);
+        target?.focus();
+        return !!target;
+    }
     private path(key: string, field: string): ValuePath {
         return Object.freeze([
             ...snapshotGridPath(this.grid().path),
@@ -235,6 +284,27 @@ export class DetailGrid {
     }
     field(row: DetailGridRow, column: DetailGridColumn): FormFieldDefinition {
         return { ...column, path: this.path(row.key, column.field) };
+    }
+    editInput(
+        key: string,
+        field: string,
+        input: import('../state/document-state.js').EditingInput,
+    ): void {
+        const row = this.grid().rows.find((row) => row.key === key);
+        const column = this.grid().columns.find((column) => column.field === field);
+        if (!row || !column) throw new Error('Unknown grid cell');
+        const context = this.cell(row, column);
+        if (!context.disabled && !context.readOnly)
+            this.gridEdit.emit(
+                Object.freeze({
+                    collectionId: this.grid().id,
+                    collectionPath: snapshotGridPath(this.grid().path),
+                    key,
+                    field,
+                    path: this.path(key, field),
+                    input: Object.freeze({ ...input }),
+                }),
+            );
     }
     cell(row: DetailGridRow, column: DetailGridColumn): FieldRendererContext {
         const options = row.contexts?.[column.field];

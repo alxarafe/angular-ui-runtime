@@ -1,3 +1,4 @@
+import type { EditingInput } from '../state/document-state.js';
 /** SPDX-License-Identifier: Apache-2.0 */
 import type { InputSignal, Type } from '@angular/core';
 import type { FieldArtifact } from '../theme/theme-definition.js';
@@ -84,6 +85,12 @@ export interface FormFieldChange {
     readonly id: string;
     readonly path: ValuePath;
     readonly value: FieldValue;
+}
+/** Opt-in lossless channel. It never also emits fieldChange for the same edit. */
+export interface FormFieldEdit {
+    readonly id: string;
+    readonly path: ValuePath;
+    readonly input: EditingInput;
 }
 /** Visual state only. This is not a document editing or dirty-state model. */
 export interface FormViewState {
