@@ -1,5 +1,18 @@
+import { MenuView } from '../menu/menu-view.js';
+import {
+    composeMenus,
+    type MenuDefinition,
+    type MenuPlacement,
+    type MenuSelection,
+    type MenuLinkActivationHandler,
+    type MenuDiagnostic,
+} from '../menu/menu-definition.js';
 import {
     Component,
+    ComponentRef,
+    ElementRef,
+    computed,
+    signal,
     EmbeddedViewRef,
     Injector,
     Renderer2,
@@ -107,7 +120,30 @@ interface OwnedProjection {
 /** Opt-in shell host. Application views outlive replaceable shell/panel instances. */
 @Component({
     selector: 'aur-theme-shell',
-    template: '<ng-container #owned /><ng-container #target />',
+    template: `<ng-container #owned /><ng-container #target />
+        @if (menus() !== undefined && fallbackCount()) {
+            <button
+                type="button"
+                #overflowToggle
+                [attr.aria-expanded]="overflowOpen()"
+                (click)="overflowOpen.set(!overflowOpen())"
+            >
+                More menus
+            </button>
+        }
+        <section
+            aria-label="More menus"
+            [hidden]="!overflowOpen() || !fallbackCount()"
+            (keydown.escape)="closeOverflow($event)"
+        >
+            @if (menus() !== undefined && fallbackCount()) {
+                <button type="button" (click)="closeOverflow()">Close menus</button>
+            }
+            <div #overflow></div>
+        </section>`,
+    styles: [
+        ':host{display:block;min-width:0;overflow-wrap:anywhere}button{font:inherit;min-height:2.75rem;max-width:100%;white-space:normal;padding:.5rem}button:focus-visible{outline:3px solid currentColor;outline-offset:2px}[hidden]{display:none!important}section{min-width:0;max-width:100%}',
+    ],
     host: { '[class]': 'theme.current().cssClass' },
 })
 export class ThemeShellOutlet {
@@ -118,6 +154,26 @@ export class ThemeShellOutlet {
     readonly navigation = input<readonly ThemeNavigationItem[]>([]);
     readonly linkActivation = input<ThemeLinkActivationHandler>();
     readonly navigationSelected = output<ThemeNavigationSelection>();
+    /** undefined selects legacy mode; even [] explicitly selects typed-menu mode. */
+    readonly menus = input<readonly MenuDefinition[]>();
+    readonly menuPlacements = input<readonly MenuPlacement[]>([]);
+    readonly menuSelected = output<MenuSelection>();
+    readonly menuLinkActivation = input<MenuLinkActivationHandler>();
+    readonly menuDiagnostics = output<readonly MenuDiagnostic[]>();
+    protected readonly overflowOpen = signal(false);
+    protected readonly fallbackCount = signal(0);
+    private readonly overflow = viewChild<ElementRef<HTMLElement>>('overflow');
+    private readonly overflowToggle = viewChild<ElementRef<HTMLButtonElement>>('overflowToggle');
+    private readonly menuViews = new Map<string, ComponentRef<MenuView>>();
+    private readonly legacyNavigation = computed(() =>
+        this.menus() === undefined ? this.navigation() : [],
+    );
+    protected closeOverflow(event?: Event): void {
+        event?.preventDefault();
+        this.overflowOpen.set(false);
+        this.overflowToggle()?.nativeElement.focus();
+    }
+
     protected readonly theme = inject(ThemeService);
     private readonly resolver = inject(ThemeResolver);
     private readonly renderer = inject(Renderer2);
@@ -127,18 +183,35 @@ export class ThemeShellOutlet {
     private readonly views = new Map<string, OwnedProjection>();
     private sourceOrder: readonly string[] = [];
     private rendered?: Type<unknown>;
+    private menuLayout = '';
 
     constructor() {
         effect(() => {
             const owned = this.owned(),
                 target = this.target();
-            if (!owned || !target) return;
+            if (!owned || !target || !this.overflow()) return;
             const component = this.resolver.resolve(ThemeArtifact.Shell);
             const selectors = structureSelectors(
                 component,
                 ThemeArtifact.Shell,
-                !!this.linkActivation(),
+                this.menus() === undefined && !!this.linkActivation(),
             );
+            const suppliedMenus = this.menus();
+            const menuLink = this.menuLinkActivation();
+            const available = selectors.flatMap((selector) => {
+                const name = REGION_SELECTOR.exec(selector)?.slice(1).find(Boolean);
+                return name && !Object.hasOwn(this.regions(), name) ? [name] : [];
+            });
+            // Admit the entire tree before changing any mounted views.
+            const composition = composeMenus(suppliedMenus ?? [], this.menuPlacements(), available);
+            const diagnostics: readonly MenuDiagnostic[] =
+                suppliedMenus !== undefined && this.navigation().length
+                    ? [
+                          ...composition.diagnostics,
+                          Object.freeze({ code: 'mixed-navigation' as const }),
+                      ]
+                    : composition.diagnostics;
+            this.menuDiagnostics.emit(Object.freeze(diagnostics));
             const sources = new Map<string, TemplateRef<unknown>>();
             for (const [name, template] of [
                 ['heading', this.heading()],
@@ -155,11 +228,33 @@ export class ThemeShellOutlet {
                 keys.length !== this.sourceOrder.length ||
                 keys.some((key, index) => key !== this.sourceOrder[index]) ||
                 [...sources].some(([key, template]) => this.views.get(key)?.template !== template);
-            if (!changed && component === this.rendered) return;
+            const layout = JSON.stringify([
+                suppliedMenus !== undefined,
+                composition.menus.map((entry) => [entry.menu.id, entry.region]),
+            ]);
+            if (!changed && component === this.rendered && layout === this.menuLayout) {
+                for (const entry of composition.menus) {
+                    this.menuViews.get(entry.menu.id)?.setInput('menu', entry.menu);
+                    this.menuViews.get(entry.menu.id)?.setInput('linkActivation', menuLink);
+                }
+                return;
+            }
+            const focused = this.overflow()!.nativeElement.ownerDocument.activeElement;
+            if (
+                composition.menus.some(
+                    (entry) =>
+                        entry.region === null &&
+                        this.menuViews.get(entry.menu.id)?.location.nativeElement.contains(focused),
+                )
+            )
+                this.overflowOpen.set(true);
 
             const retainedRoots = [...this.views]
                 .filter(([key, entry]) => sources.get(key) === entry.template)
                 .map(([, entry]) => entry.wrapper);
+            retainedRoots.push(
+                ...[...this.menuViews.values()].map((ref) => ref.location.nativeElement),
+            );
             const restoreFocus = captureRetainedFocus(target, retainedRoots, this.injector);
             target.clear();
             for (const [key, entry] of this.views) {
@@ -188,19 +283,57 @@ export class ThemeShellOutlet {
                     this.views.get(key)!.wrapper,
                 );
             }
+            const active = new Set(composition.menus.map((entry) => entry.menu.id));
+            for (const [id, ref] of this.menuViews) {
+                if (active.has(id)) continue;
+                const index = owned.indexOf(ref.hostView);
+                if (index >= 0) owned.remove(index);
+                this.menuViews.delete(id);
+            }
+            let fallbacks = 0;
+            for (const entry of composition.menus) {
+                let ref = this.menuViews.get(entry.menu.id);
+                if (!ref) {
+                    ref = owned.createComponent(MenuView, {
+                        bindings: [
+                            outputBinding<MenuSelection>('selected', (value) =>
+                                this.menuSelected.emit(value),
+                            ),
+                        ],
+                    });
+                    this.menuViews.set(entry.menu.id, ref);
+                }
+                ref.setInput('menu', entry.menu);
+                ref.setInput('linkActivation', menuLink);
+                const node = ref.location.nativeElement;
+                if (entry.region === null) {
+                    this.renderer.appendChild(this.overflow()!.nativeElement, node);
+                    fallbacks++;
+                } else {
+                    projection[
+                        selectors.indexOf(`[${THEME_REGION_ATTRIBUTE}="${entry.region}"]`)
+                    ].push(node);
+                }
+            }
+            this.fallbackCount.set(fallbacks);
             target.createComponent(component, {
                 projectableNodes: projection,
                 bindings: [
-                    inputBinding(THEME_SHELL_BINDINGS.navigation, this.navigation),
-                    ...linkActivationBindings(component, this.linkActivation),
+                    inputBinding(THEME_SHELL_BINDINGS.navigation, this.legacyNavigation),
+                    ...linkActivationBindings(component, () =>
+                        this.menus() === undefined ? this.linkActivation() : undefined,
+                    ),
                     outputBinding<ThemeNavigationSelection>(
                         THEME_SHELL_BINDINGS.navigationSelected,
-                        (value) => this.navigationSelected.emit(value),
+                        (value) => {
+                            if (this.menus() === undefined) this.navigationSelected.emit(value);
+                        },
                     ),
                 ],
             });
             this.rendered = component;
             this.sourceOrder = keys;
+            this.menuLayout = layout;
             restoreFocus();
         });
     }

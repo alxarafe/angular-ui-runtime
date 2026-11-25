@@ -1,3 +1,4 @@
+import { MenusTestbed, MENU_THEMES } from './menus';
 import { DocumentProtectionTestbed } from './document-protection';
 import { DocumentSaveTestbed } from './document-save';
 import { StateTestbed } from './state';
@@ -17,31 +18,36 @@ const validation = new URLSearchParams(location.search).get('scenario') === 'val
 const documentValidation =
     new URLSearchParams(location.search).get('scenario') === 'document-validation';
 const grid = new URLSearchParams(location.search).get('scenario') === 'grid';
+const menus = new URLSearchParams(location.search).get('scenario') === 'menus';
 bootstrapApplication(
-    new URLSearchParams(location.search).get('scenario') === 'document-protection'
-        ? DocumentProtectionTestbed
-        : save
-          ? DocumentSaveTestbed
-          : documentValidation
-            ? DocumentValidationTestbed
-            : validation
-              ? ValidationTestbed
-              : state
-                ? StateTestbed
-                : grid
-                  ? GridTestbed
-                  : form
-                    ? FormTestbed
-                    : new URLSearchParams(location.search).get('scenario') === 'navigation'
-                      ? NavigationTestbed
-                      : DefaultThemeTestbed,
+    menus
+        ? MenusTestbed
+        : new URLSearchParams(location.search).get('scenario') === 'document-protection'
+          ? DocumentProtectionTestbed
+          : save
+            ? DocumentSaveTestbed
+            : documentValidation
+              ? DocumentValidationTestbed
+              : validation
+                ? ValidationTestbed
+                : state
+                  ? StateTestbed
+                  : grid
+                    ? GridTestbed
+                    : form
+                      ? FormTestbed
+                      : new URLSearchParams(location.search).get('scenario') === 'navigation'
+                        ? NavigationTestbed
+                        : DefaultThemeTestbed,
     {
         providers: provideThemeRuntime(
-            grid || state || validation || documentValidation || save
-                ? GRID_THEMES
-                : form
-                  ? FORM_THEMES
-                  : DEFAULT_PACKAGE_THEMES,
+            menus
+                ? MENU_THEMES
+                : grid || state || validation || documentValidation || save
+                  ? GRID_THEMES
+                  : form
+                    ? FORM_THEMES
+                    : DEFAULT_PACKAGE_THEMES,
             grid || form || state || validation || documentValidation || save ? FORM_CONTROLS : [],
         ),
     },

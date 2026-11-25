@@ -91,7 +91,8 @@ Every shell must declare the content selector and one catch-all `<ng-content />`
 Unclaimed supplied wrappers go to that catch-all once, in heading/content/footer
 then region input order. Themes must keep it visible and accessible, especially
 for actions. Assignment cannot prove that CSS does not hide or obscure a region.
-This is not the proposed 1.0 typed-menu overflow implementation.
+Typed-menu mode now uses these named selectors for menu placement; its mandatory
+overflow remains outside replaceable shell content. See [typed menus](menus.md).
 
 Example shell (imports from Angular/public UI Runtime only):
 
@@ -137,11 +138,14 @@ cannot dispatch or navigate; current links expose `aria-current`. Meaningful nav
 labels, keyboard reachability, visible focus and no duplicate/missing items remain
 theme obligations.
 
-Proposed 1.0 `MenuDefinition`, `MenuSelection`, placements and `menus` components
-are unchanged and unpublished. This compatibility tree neither limits multi-menu
-design nor implements its overflow. A future optional adapter may project host
-data, without rendering a menu through two paths. Form/grid ports and optional
-library defaults are unaffected.
+AUR-MENU-001 now publishes [typed multiple menus](menus.md) through opt-in
+`ThemeShellOutlet.menus`. Existing single-tree navigation remains unchanged when
+that input is undefined. In typed mode the host supplies empty legacy navigation;
+its owned menu views use explicit named shell regions or host overflow. Existing
+`regions` templates take precedence over menu assignments. No new mandatory theme
+artifact or theme registry is introduced, and no shell extension facility stores
+menu data. The host default menu presentation inherits theme CSS without requiring
+third-party navigation components to implement the typed contract.
 
 ### Optional synchronous link activation (alpha.3)
 
@@ -243,8 +247,8 @@ approved visual baselines or proof of all 1.0 requirements.
 All 14 required keys, protected complete default, one-hop resolution,
 `activate(id): boolean`, field bindings and provider isolation remain unchanged.
 These invariants remain intact in alpha.3. Independent Default and optional theme
-packages now exist; see [package versioning](package-versioning.md). Full 1.0
-menu/overflow and cross-consumer acceptance remain open.
+packages now exist; see [package versioning](package-versioning.md). Typed menus and functional overflow are implemented; full visual review and
+cross-consumer acceptance remain open.
 
 Before real default-theme extraction, a separate task must adapt its imports,
 replace router-specific navigation with consumer handling, project consumer-owned

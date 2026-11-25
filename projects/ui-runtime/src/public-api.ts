@@ -139,3 +139,16 @@ export type {
 export type { DiscardRequest, ConfirmDiscard, DiscardResult } from './state/document-session.js';
 export { NavigationProtection, protectBeforeUnload } from './state/navigation-protection.js';
 export type { BeforeUnloadTarget } from './state/navigation-protection.js';
+export { snapshotMenus, composeMenus } from './menu/menu-definition.js';
+export type {
+    MenuKind,
+    MenuItem,
+    MenuDefinition,
+    MenuPlacement,
+    MenuSelection,
+    MenuLinkActivation,
+    MenuLinkActivationHandler,
+    MenuDiagnostic,
+    ComposedMenu,
+    MenuComposition,
+} from './menu/menu-definition.js';

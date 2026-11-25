@@ -23,6 +23,19 @@ Eleven field identifiers are supported: `BOOLEAN`, `STRING`, `TEXT`, `INTEGER`, 
 
 Optional per-instance controls are declarative and preserve semantic/domain compatibility; they are not a general-purpose widget marketplace. `ThemeService.activate(id)` selects a known theme and returns `true`; an unknown theme returns `false` and selects `default`.
 
+## Typed menus
+
+`ThemeShellOutlet` accepts opt-in `[menus]`, `[menuPlacements]`,
+`[menuLinkActivation]`, `(menuSelected)` and `(menuDiagnostics)`. Public
+`MenuDefinition`, `MenuItem`, `MenuKind`, `MenuPlacement` and `MenuSelection` keep
+identity separate from semantic kind and region. `snapshotMenus()` validates and
+freezes complete ordered trees; `composeMenus()` derives exactly-once placement.
+Multiple primary, secondary and account menus are supported without a count limit.
+Unsupported/conflicting placements use a labelled host-owned overflow, independent
+of the active shell. Legacy single-tree navigation remains unchanged when `menus`
+is undefined; typed mode suppresses legacy navigation. See the [menu contract](contracts/menus.md)
+for admission, keyboard behavior, native links, diagnostics and integration limits.
+
 ## Forms and grids
 
 | Public API | Use |
@@ -74,8 +87,8 @@ Document validation collects field issues, definition/structure diagnostics and 
 ## Current limitations (not yet a 1.0 claim)
 
 - Save operations require application-managed transport, authoritative readback, UI-key reconciliation and server error mapping; no automatic retry, background edit merging or persistence is supplied.
-- No complete discard-confirmation/navigation/unload protection lifecycle.
-- No fully implemented typed multi-menu/overflow system.
+- DocumentSession provides confirmed discard, a framework-independent leave boundary and explicit unload integration; applications own Router/history adapters and dialogs.
+- Typed menu placement and overflow are implemented; full visual/assistive-technology certification and independent consumer evidence remain incomplete.
 - Some field renderers are intentionally simple; `BINARY` in the supplied default presentation is output-only, not a file upload control.
 - No runtime package manager for unknown themes; installation and application bundling are external.
 - Full 1.0 browser/visual/accessibility acceptance and independent consumer evidence are incomplete.
