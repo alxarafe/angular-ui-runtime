@@ -10,6 +10,7 @@ import {
     output,
     signal,
     viewChild,
+    viewChildren,
 } from '@angular/core';
 import { ThemeService } from '../theme/theme-runtime.js';
 import { validateFormContexts } from './form-contexts.js';
@@ -24,6 +25,7 @@ import type {
     FormDefinition,
     FormFieldContexts,
     FormFieldChange,
+    FormFieldEdit,
     FormLayout,
     FormViewState,
     ValuePath,
@@ -35,6 +37,7 @@ import {
     validateGrid,
     type FormCollectionContexts,
     type DetailGridChange,
+    type DetailGridEdit,
 } from '../grid/grid-definition.js';
 /** Application data is input/output only; the host owns solely visual navigation state. */
 @Component({
@@ -152,6 +155,7 @@ import {
                                                         [context]="boundContexts()[field.id]!"
                                                         [readOnly]="readOnly()"
                                                         (fieldChange)="fieldChange.emit($event)"
+                                                        (fieldEdit)="fieldEdit.emit($event)"
                                                     />
                                                 }
                                                 @for (
@@ -164,6 +168,7 @@ import {
                                                         "
                                                         [readOnly]="readOnly()"
                                                         (gridChange)="collectionChange.emit($event)"
+                                                        (gridEdit)="collectionEdit.emit($event)"
                                                     />
                                                 }
                                                 @if (
@@ -190,6 +195,7 @@ import {
                                 [context]="boundContexts()[field.id]!"
                                 [readOnly]="readOnly()"
                                 (fieldChange)="fieldChange.emit($event)"
+                                (fieldEdit)="fieldEdit.emit($event)"
                             />
                         }
                     </fieldset>
@@ -199,6 +205,7 @@ import {
                         [context]="boundCollections()[collection.id]!"
                         [readOnly]="readOnly()"
                         (gridChange)="collectionChange.emit($event)"
+                        (gridEdit)="collectionEdit.emit($event)"
                     />
                 }
                 @if (
@@ -291,6 +298,8 @@ export class FormComposition {
     readonly viewState = input<FormViewState>();
     readonly viewStateChange = output<FormViewState>();
     readonly fieldChange = output<FormFieldChange>();
+    readonly fieldEdit = output<FormFieldEdit>();
+    readonly collectionEdit = output<DetailGridEdit>();
     readonly actionSelected = output<string>();
     readonly composition = computed(() => composeForm(this.definition(), this.layout()));
     protected readonly boundContexts = computed(() => {
@@ -298,6 +307,7 @@ export class FormComposition {
         return this.contexts();
     });
     protected readonly theme = inject(ThemeService);
+    private readonly detailGrids = viewChildren(DetailGrid);
     private readonly localState = signal<FormViewState>({});
     private readonly state = computed(() => this.viewState() ?? this.localState());
     private readonly root = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -362,6 +372,32 @@ export class FormComposition {
     }
     protected dispatch(action: ContextAction): void {
         if (action.enabled) this.actionSelected.emit(action.id);
+    }
+    /** Reveal a header, keyed cell, row or collection, expanding its owning containers. */
+    revealPath(path: ValuePath): boolean {
+        if (!path.length) return false;
+        if (this.revealField(path)) return true;
+        const prefix = (base: ValuePath) =>
+            base.length <= path.length &&
+            formPathKey(path.slice(0, base.length)) === formPathKey(base);
+        const catalogue = (this.definition().collections ?? [])
+            .filter((item) => !item.excluded && prefix(item.path))
+            .sort((a, b) => b.path.length - a.path.length);
+        const collection = catalogue[0];
+        if (!collection) return false;
+        for (const tab of this.composition().tabs)
+            for (const section of tab.sections)
+                for (const group of section.groups)
+                    if (group.collections.some((item) => item.id === collection.id))
+                        this.expand(tab, section, false);
+        afterNextRender(
+            () =>
+                this.detailGrids()
+                    .find((grid) => grid.context().id === collection.id)
+                    ?.revealPath(path),
+            { injector: this.injector },
+        );
+        return true;
     }
     /** External validation/error hosts may reveal a path without importing a document engine. */
     revealField(path: ValuePath): boolean {

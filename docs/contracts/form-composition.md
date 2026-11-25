@@ -1,5 +1,12 @@
 # Reusable form composition (AUR-FORM-001)
 
+AUR-EDITOR-BINDINGS-001 now connects these implemented public APIs through
+[document editor bindings](editor-bindings.md). That contract supersedes historical
+statements below that form/grid session integration and validation feedback are
+entirely pending. It adds opt-in lossless editing channels, derived contexts and
+keyed reveal without replacing the existing state/validation engines. Full catalogue,
+consumer and visual acceptance remain separate.
+
 AUR-GRID-001 additively implements the collection extension described in
 [grid composition](grid-composition.md): `FormDefinition.collections`,
 `LayoutGroup.collections`, `collectionContexts` and `collectionChange`, plus
@@ -117,7 +124,7 @@ no temporary validation, dirty, save/discard or grid engine is included here.
 
 ## Existing theme engine, additive form port
 
-`ThemeDefinition.components?: Partial<ThemeComponents>` currently admits only `form`.
+`ThemeDefinition.components?: Partial<ThemeComponents>` admits `form`, `listGrid` and `detailGrid` presentation frames.
 `ThemeResolver.resolveComponent('form')` resolves active override → application
 `default` override → core default frame. `ThemeRegistry` validates standalone compiled
 components with the `context` input and exactly one catch-all projection, and freezes
@@ -131,8 +138,8 @@ host-owned content. The full catalogue, including excluded references, is never
 forwarded to frame presentation inputs.
 This deliberately refines D5's unpublished whole-document form port: visual frames
 cannot own field views, data or tab/collapse state. The unpublished document-aware
-`FormComponent` proposal is not exported or treated as implemented. Other proposed
-component keys (menus/listGrid/detailGrid) remain unimplemented and are rejected.
+`FormComponent` proposal is not exported or treated as implemented. The proposed whole-document component keys remain unpublished; typed menus use
+the independent opt-in shell contract.
 
 Legacy field renderers use the existing `resolve(artifact)` contract. Optional
 fields use `resolveControl(controlId, request)` in the same resolver, taking the
@@ -169,7 +176,7 @@ The default frame composes neutral form markup and styling; themes may wrap it w
 compatible presentation. A deliberately inaccessible custom frame is not made
 accessible by reflection, so real theme/browser acceptance is still required.
 
-## Future multiple detail collections (not implemented)
+## Historical multiple-collection design (implemented by AUR-GRID-001)
 
 Future form/document composition must support zero, one or multiple independently
 identified detail collections. No first-detail or single-detail slot is privileged.

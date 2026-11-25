@@ -223,6 +223,11 @@ AUR-MENU-001 adds host-owned typed menu definitions, placement and overflow in
 opt-in shell mode. MENU-003 visual certification and independent MENU-004 consumer
 evidence remain incomplete; no separate menu registry is introduced.
 
+AUR-EDITOR-BINDINGS-001 adds [session editor integration](editor-bindings.md):
+derived contexts, opt-in lossless input, current-snapshot validation feedback and
+keyed focus/reveal over the existing form/grid/session APIs. The installed technical
+fixture covers a deterministic editor, not full FIELD/FORM/GRID/VISUAL conformance.
+
 ## Forms and layouts (FORM)
 
 Use the hierarchy: form → ordered tabs → sections → groups → field
@@ -261,15 +266,14 @@ dirty/valid state. Removing or moving the wrong row after index changes is
 prohibited. Read-only cells cannot emit changes. No independent row CRUD request
 is required: adapters may save a complete header/lines aggregate atomically.
 
-Future forms MUST allow zero, one or multiple independently identified detail
+Forms allow zero, one or multiple independently identified detail
 collections, without a privileged first/single detail. Each collection has a stable
 identity and typed ValuePath, may occupy a different tab/section/group, and has its
 own columns, rows, effective permissions and editing capabilities. Collections of
 one logical document can share one parent session/save operation; independent
-resources may retain independent lifecycles. AUR-GRID-001 will implement rendering
-and editing; AUR-STATE-001 will provide the shared state boundary. Concrete collection
-placement APIs remain provisional until implementation evidence; AUR-FORM-001-R1
-adds no grids, collection editing, persistence or document-state implementation.
+resources may retain independent lifecycles. AUR-GRID-001 implements rendering and editing; AUR-STATE-001 and DocumentSession
+provide the shared editing boundary. AUR-EDITOR-BINDINGS-001 integrates these public
+contracts with validation feedback without introducing another editing engine.
 
 AUR-STATE-001-CORE implements the [immutable editing core](document-state.md):
 accepted/current snapshots, neutral keyed operations and exact derived dirty state.

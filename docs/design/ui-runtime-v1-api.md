@@ -1,5 +1,13 @@
 # UI Runtime 1.0 API and internal contract design
 
+AUR-EDITOR-BINDINGS-001 now publishes [document editor bindings](../contracts/editor-bindings.md)
+over the existing session/validation/form/grid APIs. `FieldRendererContext.documentInput`
+opts artifact fields into a lossless core bridge and separate typed edit events;
+it does not publish the historical `FieldEdit` proposal or change scalar valueChange.
+Current projection, accessible feedback and keyed reveal supersede integration gaps
+recorded below. Optional-control lossless capability and complete widget/consumer
+acceptance remain future work.
+
 AUR-MENU-001 publishes `MenuDefinition`, `MenuItem`, `MenuKind`, `MenuPlacement`,
 `MenuSelection`, native-link callback types, placement diagnostics, `snapshotMenus`
 and `composeMenus` through the existing shell's opt-in typed-menu mode. The

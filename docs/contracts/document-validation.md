@@ -1,5 +1,12 @@
 # Document validation aggregation (AUR-VALID-AGG-001)
 
+AUR-EDITOR-BINDINGS-001 now connects these implemented public APIs through
+[document editor bindings](editor-bindings.md). That contract supersedes historical
+statements below that form/grid session integration and validation feedback are
+entirely pending. It adds opt-in lossless editing channels, derived contexts and
+keyed reveal without replacing the existing state/validation engines. Full catalogue,
+consumer and visual acceptance remain separate.
+
 This increment publishes `validateDocument`, one framework-independent function
 that validates a complete `DocumentObject` against a separately supplied declarative
 validation plan. It reuses `validateField` for every semantic field and reuses the

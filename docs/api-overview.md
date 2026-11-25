@@ -48,6 +48,18 @@ for admission, keyboard behavior, native links, diagnostics and integration limi
 
 Forms support simple layouts as well as ordered tabs, sections and groups, with contextual actions, fallback placement, and programmatic diagnostics. Grids support stable row keys, independent collections, editing intents and optional row reordering. These are UI primitives; they do not fetch data or perform CRUD calls themselves.
 
+## Integrated document editors
+
+`bindDocumentEditor(session, options)` derives form/collection contexts and validation
+feedback from the current session. `applyDocumentFieldIntent` and
+`applyDocumentCollectionIntent` translate scalar/lossless and structural events to
+`session.change()`; callers supply added rows. `FieldRendererContext.documentInput`
+opts artifact fields into a lossless input bridge with separate `fieldEdit`,
+`gridEdit` and `collectionEdit` channels. Existing scalar outputs remain unchanged.
+`FormComposition.revealPath` and `DetailGrid.revealPath` support keyed field/row/
+collection targets. See [editor bindings](contracts/editor-bindings.md) for exact
+presence/raw semantics, accessible feedback, save/discard integration and limitations.
+
 ## Document state
 
 | Public API | Use |

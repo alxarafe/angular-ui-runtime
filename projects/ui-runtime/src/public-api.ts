@@ -152,3 +152,15 @@ export type {
     ComposedMenu,
     MenuComposition,
 } from './menu/menu-definition.js';
+export {
+    bindDocumentEditor,
+    applyDocumentFieldIntent,
+    applyDocumentCollectionIntent,
+} from './editor/document-bindings.js';
+export type {
+    DocumentBindingOptions,
+    DocumentEditorSnapshot,
+    EditorFeedback,
+} from './editor/document-bindings.js';
+export type { FormFieldEdit } from './form/form-definition.js';
+export type { DetailGridEdit } from './grid/grid-definition.js';
