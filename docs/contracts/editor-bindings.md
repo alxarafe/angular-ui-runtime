@@ -13,6 +13,12 @@ session snapshot and runs the existing `validateDocument({document: current, pla
 `DocumentBindingOptions` contains the existing form definition and validation plan,
 header presentation options (`fields`, keyed by form field ID), and collection
 presentation options (`collections`, keyed by collection ID, with label and columns).
+Each collection may also supply `fields`, a per-property presentation map (for
+example `{status: {choices: ['', 'OPEN']}}`). These options reuse the field context
+ports for choices, feedback IDs and edit restrictions; they cannot supply identity,
+labels, values or document inputs. Session-derived identity, input and inherited
+restrictions remain authoritative. Choices are supplied by the consumer, not inferred
+from validation plans or metadata.
 It does not infer definitions, authorization, defaults or business rules.
 
 The result contains `contexts`, `collectionContexts`, `validation` and ordered
@@ -77,11 +83,45 @@ One edit emits exactly one channel. Opted-in fields do not also emit scalar
 Without `documentInput`, existing renderers, valueChange, contexts and form/grid
 scalar event types remain unchanged. Optional-control fields do not currently
 support this opt-in bridge and reject it explicitly; legacy optional controls still
-work unchanged. The bridge currently uses neutral text/checkbox controls rather
-than semantic-specific widgets; it is not full FIELD catalogue widget acceptance.
-Theme CSS and structural frames remain effective, but custom legacy field renderers
+work unchanged. Apart from ENUM below, the bridge currently uses neutral
+text/checkbox controls rather than semantic-specific widgets; it is not full FIELD
+catalogue widget acceptance.
+Theme CSS and structural frames remain effective. Non-ENUM legacy field renderers
 are not asked to represent states their scalar port cannot express. No new mandatory
 theme artifact or peer dependency is introduced.
+
+### Lossless ENUM selection (AUR-EDITOR-ENUM-001)
+
+For `field.ENUM`, the bridge delegates choice selection to the active theme's
+existing ENUM artifact using `FieldRendererContext.choices`. A recognized string
+is selected exactly, including empty strings, whitespace and distinct Unicode
+sequences. Selection uses catalogue indexes rather than parsing option values;
+no normalization or scalar conversion occurs. One explicit selection emits one
+`FormFieldEdit` or keyed `DetailGridEdit`, without a legacy change event.
+
+The reference ENUM renderer understands the existing optional `documentInput`
+context: its disabled placeholder distinguishes absent, null, raw draft and unknown
+value states from declared choices. It never chooses the first declared value or
+emits an edit during rendering/refresh. The bridge projects unrecognized inputs to
+the chooser placeholder only; the session retains the original input. A separate
+labelled draft textbox displays unknown values (including invalid scalar types)
+and raw drafts. Typing explicitly produces raw text; even raw text matching a choice
+remains raw until the user selects a choice. Unset, Set null and Empty text remain
+separate explicit intents, even when invalid under the current validation plan.
+Unknown values can be corrected either by typing a draft or selecting a declared
+choice. Read-only/disabled fields suppress all editing channels, including synthetic
+events. The chooser and draft share field feedback associations and invalid state.
+
+Default, Alternative, Cyberpunk, Vintage and High Contrast reuse the existing
+ENUM artifact and CSS; High Contrast retains its larger inherited typography and
+controls. Select DOM/focus and raw draft focus survive their theme changes. No
+new renderer registry, state tree or validation engine is introduced. Legacy
+ENUM consumers without `documentInput` retain the existing `Not set`/null and
+scalar `valueChange` behavior. Third-party ENUM overrides still use the existing
+field port and must respect the lossless placeholder, feedback and permission
+context to provide equivalent presentation; the bridge owns the outward lossless
+event channel. This increment does not redesign optional controls or complete the
+remaining semantic widget catalogue.
 
 ## Validation, feedback and reveal
 
@@ -129,6 +169,10 @@ section reveal, nested rows, associated feedback, structural operations across t
 independent detail collections, save locks/rejection/reconciliation, discard and dirty
 switching through all five reference themes plus a structural frame at desktop/mobile
 widths. Existing legacy form/grid/menu/session tests remain independent.
+The editor scenario also exercises ENUM choice/state preservation, invalid draft
+correction, event counts, permissions, associated feedback, keyed row edits and
+theme focus retention at both widths. Unit/type probes cover the optional collection
+presentation map and its session-owned input boundary.
 
 This increment does not establish full FIELD/FORM/GRID/VISUAL acceptance. Remaining
 gaps include semantic widget completeness, optional-control lossless capabilities,
