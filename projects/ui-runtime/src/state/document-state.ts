@@ -302,6 +302,10 @@ function state(original: DocumentObject, current: DocumentObject, counter: numbe
     states.add(result);
     return result;
 }
+/** Internal admission for lifecycle coordinators; not exported from the package. */
+export function assertDocumentState(document: DocumentState): void {
+    if (!states.has(document)) fail();
+}
 /** Accepts a structurally admitted tree, not a semantically validated document. */
 export function createDocumentState(document: DocumentObject, initialRevision = 0): DocumentState {
     if (document?.kind !== 'object') fail();

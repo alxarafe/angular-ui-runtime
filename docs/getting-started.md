@@ -127,7 +127,7 @@ The library provides reusable presentation and local editing/validation utilitie
 - Effective permissions, contextual actions, routing, and navigation policies.
 - HTTP/API transport, authentication, persistence, transactions, and concurrency rules.
 - Server-side validation and mapping of backend errors to the UI.
-- Save/retry/conflict reconciliation, confirmation before discarding changes, and navigation protection (until these generic lifecycle facilities are implemented and accepted).
+- Connect `DocumentSession` to application-managed submission/readback and map accepted data to stable UI keys; see the [save lifecycle contract](contracts/document-state.md#operational-save-lifecycle-aur-state-save-001). Confirmation before discarding changes and navigation protection remain pending.
 
 Do not treat `validateField()` or `validateDocument()` as server authorization or successful persistence. A `pending` result still requires deferred server validation; successful local validation alone is not permission to claim a save succeeded.
 

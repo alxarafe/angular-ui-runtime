@@ -1,5 +1,14 @@
 # UI Runtime 1.0 API and internal contract design
 
+AUR-STATE-SAVE-001 publishes `DocumentSession`, wrapping the existing immutable
+STATE core and `validateDocument`. Its [operational contract](../contracts/document-state.md#operational-save-lifecycle-aur-state-save-001)
+is authoritative over the older generic session/submission proposals below.
+It implements locked editing, validated exact immutable submissions, attempt/local
+revision identity, definite rejection/conflict retention, complete authoritative
+acceptance with adapter-mapped UI keys, and locked reconciliation/recovery for
+committed or uncertain outcomes. Pending checks need explicit adapter confirmation.
+It adds no HTTP, version storage, business rules, discard or router guard.
+
 AUR-VALID-AGG-001 publishes [framework-independent document validation aggregation](../contracts/document-validation.md).
 `validateDocument` adds a purpose-built request/result contract and a declarative
 object/field/collection plan without changing `DocumentField` or `validateField`.
@@ -8,7 +17,8 @@ It reuses typed `ValuePath` stable row keys, retains per-field evidence and appl
 deeply frozen and detached; STATE snapshots, revision, dirty state and row identity
 are never modified. Explicit revalidation replaces any previous result. The proposed
 session/submission/reconciliation interfaces and application-owned root/row issues
-below remain unpublished; heterogeneous row schemas are not implemented.
+below remain historical proposals; the current save API is described above.
+Heterogeneous row schemas are not implemented.
 
 AUR-VALID-009 implements [safe pattern validation and deferred checks](../contracts/pattern-validation.md)
 in the existing boundary. Pending is distinct from valid; invalid results retain
@@ -39,9 +49,10 @@ pending obligations and aggregate validation below remain unpublished.
 AUR-STATE-001-CORE publishes the smaller [immutable editing core](../contracts/document-state.md).
 It refines the proposed generic tree into one absent/value/raw document model with
 explicit comparison semantics and effective capabilities. Original/current snapshots,
-neutral operations and derived dirty state are implemented; proposed FieldEdit,
-validation/save state and session/lifecycle interfaces below remain unpublished.
-The core has no `valid` default and no save, reconciliation or confirmation API.
+neutral operations and derived dirty state are implemented. Proposed FieldEdit
+remains unpublished and validation state stays separate; historical session interfaces are
+superseded by the operational DocumentSession described above.
+The core has no `valid` default; save coordination is a separate wrapper over it.
 
 AUR-GRID-001 now publishes the refined host-owned grid interfaces in
 [grid composition](../contracts/grid-composition.md). `ListGrid` and `DetailGrid`

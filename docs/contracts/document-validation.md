@@ -245,6 +245,8 @@ path ending in a property segment a field error. **This increment does not imple
 root/row business rules, an application issue plugin engine or transport-specific
 backend error mapping.**
 
-No submission protocol exists yet. Consequently this increment does not claim that
-saving is blocked. Deferred checks remain application-owned obligations until a
-future confirmation/reconciliation workflow is specified and implemented.
+The validator itself does not submit or block operations. AUR-STATE-SAVE-001 now
+composes it through [DocumentSession](document-state.md#operational-save-lifecycle-aur-state-save-001):
+submission validates the current immutable snapshot, blocks invalid/definition-error
+results and retains pending checks until explicit authoritative adapter confirmation.
+Validation results are unchanged; no cache or save state is added to validation.

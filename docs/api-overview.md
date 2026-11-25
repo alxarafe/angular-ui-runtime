@@ -42,9 +42,23 @@ Forms support simple layouts as well as ordered tabs, sections and groups, with 
 | `createDocumentState(document)` | Establish defensively copied immutable accepted/current snapshots |
 | `applyDocumentChange(state, change)` | Apply typed field, add-row, remove-row or move-row changes |
 | `resetDocumentState(state)` | Restore accepted values in memory |
+| `DocumentSession` | Coordinate validated submission, edit locks, adapter outcomes and authoritative recovery |
 | `exactNumericEqual()` | Compare supported numeric texts exactly under declared semantics |
 
 Document nodes include fields, nested objects and keyed ordered/unordered collections. Dirty-state detection distinguishes absent, null and raw drafts, and uses exact numeric comparison where declared. The local `revision` is **not** a server concurrency token. `resetDocumentState()` is a primitive; it does not ask the user to confirm abandoning edits.
+
+`DocumentSession` wraps an admitted `DocumentState`; use `change()` for edits in that
+lifetime. `submit(plan)` calls the existing validator over the current snapshot and
+returns blocked evidence or an immutable submission with exact parsed values, typed
+paths/deferred checks, attempt identity and local revision. It locks field/structural
+edits and duplicate submission. `resolve()` accepts adapter outcomes; rejection and
+conflict retain edits, while uncertain/committed results require locked recovery.
+`recover()` requires an authoritative complete tree mapped to the submitted UI keys.
+Deferred checks require explicit confirmation; ID/version-only responses cannot
+establish clean accepted snapshots. Stale attempts from another session are ignored.
+See the [operational save contract](contracts/document-state.md#operational-save-lifecycle-aur-state-save-001)
+for the public types, ownership and failure transitions. No HTTP or router dependency
+is introduced. A clean dirty comparison alone does not establish save completion.
 
 ## Validation
 
@@ -59,7 +73,7 @@ Document validation collects field issues, definition/structure diagnostics and 
 
 ## Current limitations (not yet a 1.0 claim)
 
-- No generic completed save lifecycle, duplicate-submit guard, server reconciliation, optimistic-conflict workflow, or server error mapping.
+- Save operations require application-managed transport, authoritative readback, UI-key reconciliation and server error mapping; no automatic retry, background edit merging or persistence is supplied.
 - No complete discard-confirmation/navigation/unload protection lifecycle.
 - No fully implemented typed multi-menu/overflow system.
 - Some field renderers are intentionally simple; `BINARY` in the supplied default presentation is output-only, not a file upload control.

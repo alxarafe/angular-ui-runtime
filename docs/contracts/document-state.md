@@ -186,3 +186,129 @@ components at desktop/mobile sizes, dirty invalid-looking numeric drafts, reorde
 both collections, semantic reversion, add/remove and theme switching. Only tested
 parts of STATE-001/STATE-002 are claimed; STATE-003–STATE-006 and the remaining
 document-validation acceptance requirements remain pending.
+
+## Operational save lifecycle (AUR-STATE-SAVE-001)
+
+`DocumentSession` coordinates one editing lifetime over the existing immutable
+`DocumentState` and `validateDocument`. It is framework-independent, performs no I/O
+and owns no backend IDs, versions, authorization, defaults or persistence policy.
+It introduces no second document tree or validation engine. Earlier sections describe
+the original core increment; the lifecycle below supersedes their save-related gaps.
+
+### Public API and ownership
+
+```ts
+const session = new DocumentSession(createDocumentState(acceptedDocument));
+session.change({ kind: 'field', path, input: { kind: 'value', value: exactText } });
+const result = session.submit(plan);
+if (result.kind === 'ready') {
+    const submission = result.submission;
+    // The application dispatches its own command from submission.document.
+    // After an authoritative response and UI-key mapping:
+    session.resolve(submission, {
+        kind: 'accepted', document: authoritativeDocument, checksConfirmed: true,
+    });
+}
+```
+
+The class exposes readonly getters `state`, `save` and `locked`, and methods
+`change`, `submit`, `resolve` and `recover`. The session is the mutable coordinator;
+its document states, submissions, validation evidence, outcomes exposed through
+`save` and rejection feedback are immutable snapshots. Retain it outside replaceable
+views and update application signals after each operation. Bind `locked` to renderer
+and collection capabilities so the UI reflects the same lock enforced by `change`.
+
+All edits within this lifetime must go through `change`, which delegates directly
+to `applyDocumentChange`. The standalone STATE primitives remain unchanged and do
+not acquire a global lock. Calling a standalone primitive on a retained snapshot
+creates a different state; it cannot replace the session's private state. There is
+no reset, discard, state-replacement or route-guard method on this coordinator.
+Constructing a session requires an actual state admitted by the existing STATE core,
+not a spread/JSON reconstruction. A new session denotes a new lifetime.
+
+`submit(plan): DocumentSubmitResult` validates the exact current snapshot internally,
+using the current plan and the existing aggregation API. It never trusts an old or
+caller-constructed validation result. `blocked` returns its frozen validation evidence
+for invalid values/definitions, with no attempt, lock, edit or revision change.
+`ready` exposes a frozen `DocumentSubmission` with `id`, submitted local `revision`,
+complete parsed `document` and the full immutable `validation` result. Parsed slots
+replace valid raw slots only in the submission; the editing draft remains untouched.
+Absence/null, exact numeric/temporal text, typed field paths, nested keyed collection
+order and deferred checks are preserved. The local revision is not a server version.
+
+IDs distinguish session/attempt pairs in this loaded runtime. The submission object
+itself is the opaque in-memory response token; pass that same object back. Do not
+reconstruct tokens by ID or serialize them as persistence identities. No global or
+durable request-ID service is promised. Attempts do not advance the document revision.
+A revision with no remaining safe increment is rejected before an operation can be sent.
+
+### States and outcomes
+
+| Current state / operation | Result |
+| --- | --- |
+| `idle`, valid or pending `submit` | `saving`; immutable attempt created. |
+| Any locked state, edit or duplicate submit | Throws without changing draft, revision or active attempt. |
+| `saving`, `rejected` with reason `validation`, `transport` or `conflict` | `idle` with frozen rejection feedback; retain the exact original/current state object, revision and keys. |
+| Active attempt, `accepted` with complete mapped document | New deeply frozen original/current snapshots, clean dirty comparison, revision +1, `idle`; clear previous feedback. |
+| Active attempt, `committed` | `reconciling`; retain draft and lock while the adapter reads authoritative values. |
+| Active attempt, `uncertain` | `recovery`; retain draft and lock, never resubmit automatically. |
+| Partial, malformed, raw-input or unmapped accepted tree | `recovery` with `invalid-acceptance`; retain the existing state. |
+| Accepted tree without explicit confirmation of outstanding checks | `recovery` with `unconfirmed-checks`. |
+| Readback failure/rejection after committed or uncertain outcome | `recovery` with `reconciliation-failed`; never unlock for blind retry. |
+| Stale, forged, foreign-session or completed token | `resolve`/`recover` return false before inspecting the payload; no change. |
+
+`resolve(submission, outcome)` returns true when a response belongs to the active
+attempt, including when an inadequate acceptance moves to recovery. True is not a
+persistence-success flag; inspect `save`. Only an authoritative accepted snapshot
+can complete the lifecycle. `recover(submission, document, checksConfirmed = false)`
+is explicit adapter-managed readback from `reconciling` or `recovery`; the same
+acceptance checks apply, and repeated inadequate recovery retains the lock.
+
+A definite `transport` rejection means the adapter knows the write did not commit.
+Timeouts, lost responses and possibly committed operations must use `uncertain`.
+After `committed`/`uncertain`, a transport failure means failed readback, not permission
+to send the original operation again. The coordinator neither retries nor calls HTTP.
+Even a numerically unchanged submitted document may need recovery: `state.dirty` is
+only effective-content equality, never evidence of persistence success. Overall
+completion requires `save.kind === 'idle'` without a rejection. Pending evidence on
+an old submission remains pending forever; the adapter explicitly acknowledges
+all its deferred checks using `checksConfirmed: true` when providing acceptance.
+Local validity alone is never server confirmation.
+
+### Authoritative documents, identity and feedback
+
+Acceptance requires a complete structurally admitted object with no raw inputs.
+An ID/version-only response is insufficient. The adapter must read back or safely
+reconstruct the authoritative document according to its own protocol. The accepted
+tree must have the submitted property names, node kinds, comparison semantics,
+collection orderedness and exactly the same UI row keys within each collection,
+including nested rows. Row values and authoritative ordering may change; capabilities
+may reflect updated effective policy. No field, row or unknown structural shape is
+guessed, merged or silently discarded. A changed schema or row membership needs an
+explicit new editing lifetime after application-managed readback.
+
+When persistence IDs regenerate, adapters map accepted rows to the submitted stable
+UI keys before calling AUR. The library compares by these keys, never by index,
+server ID or value similarity. A server ID with domain meaning remains a field value.
+New original/current trees are independent defensive copies; mutating an adapter's
+response after reconciliation cannot change accepted data or earlier snapshots.
+AUR structurally admits authoritative values; the adapter asserts their authority,
+and local revalidation remains explicit rather than inventing a backend validator.
+
+`DocumentSaveIssue` holds an application code/message and typed `ValuePath`, including
+root (`[]`), row and field paths. `rejected` feedback is copied and frozen and never
+modifies validation evidence or edits. Display it in application-owned accessible
+feedback; sanitize application messages and avoid protected-data disclosure. An
+explicit successful edit clears old rejection feedback; the application revalidates
+and remaps server issues as needed. No error-mapping plugin or business-rule engine
+is introduced. Touched state and focus remain application/view responsibilities.
+
+Unit tests in `tests/document-session.test.mjs` and compile-time API assertions cover
+transitions, exact values, raw/absent/null inputs, locks, duplicate submissions,
+immutable snapshots, nested/reordered collections, conflicts, stale/session tokens,
+inadequate acceptance and recovery. The installed APF scenario
+`/default-theme/?scenario=document-save` and Chromium `document-save.spec.mjs` cover
+manual synthetic-adapter responses at desktop/mobile sizes and preservation during
+five packaged themes plus a structural frame. This implements the generic STATE-003
+lock-and-reconcile behavior; external adapter conformance, full visual/accessibility
+review, touched/error integration and STATE-004–STATE-006 remain outside this increment.

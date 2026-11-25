@@ -127,3 +127,12 @@ export type {
     DocumentState,
     DocumentChange,
 } from './state/document-state.js';
+
+export { DocumentSession } from './state/document-session.js';
+export type {
+    DocumentSaveIssue,
+    DocumentSubmission,
+    DocumentSaveOutcome,
+    DocumentSaveState,
+    DocumentSubmitResult,
+} from './state/document-session.js';
