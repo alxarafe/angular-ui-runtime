@@ -1,3 +1,4 @@
+import { AcceptanceExtension } from './acceptance-extension';
 /** Integrated installed-package editor QA; synthetic adapter, no I/O or business policy. */
 import {
     Component,
@@ -5,6 +6,7 @@ import {
     computed,
     effect,
     inject,
+    input,
     signal,
     viewChild,
     OnDestroy,
@@ -13,6 +15,7 @@ import {
     DocumentSession,
     createDocumentState,
     FormComposition,
+    FormSlot,
     FeedbackSummary,
     ThemePanelOutlet,
     ThemeService,
@@ -168,11 +171,24 @@ const descriptors = [
 ] as const;
 @Component({
     selector: 'qa-testbed',
-    imports: [FormComposition, ThemePanelOutlet, FeedbackSummary],
+    imports: [FormComposition, FormSlot, ThemePanelOutlet, FeedbackSummary, AcceptanceExtension],
     template: `<h1>Integrated document editor</h1>
         <div class="toolbar">
-            @for (id of themes; track id) {
-                <button (click)="theme.activate(id)">{{ id }}</button>
+            @if (!integrated()) {
+                @for (id of themes; track id) {
+                    <button (click)="theme.activate(id)">{{ id }}</button>
+                }
+            }
+            @if (integrated()) {
+                <button (click)="tick.update(increment)">Refresh editor contexts</button>
+                <button (click)="editorReadOnly.set(!editorReadOnly())">
+                    Toggle editor read-only
+                </button>
+                <button (click)="extensionDisabled.set(!extensionDisabled())">
+                    Toggle extension disabled
+                </button>
+                <button (click)="reveal(unknownPath)">Reveal unknown path</button>
+                <button (click)="reject('validation')">Reject validation</button>
             }
             <button (click)="submit()" [disabled]="session.locked">Save</button
             ><button (click)="reject()">Reject conflict</button
@@ -202,14 +218,38 @@ const descriptors = [
         <aur-theme-panel
             ><aur-form
                 [definition]="definition()"
-                [layout]="layout"
+                [layout]="layout()"
                 [contexts]="binding().contexts"
                 [collectionContexts]="binding().collectionContexts"
                 (fieldEdit)="edit($event)"
                 (fieldChange)="legacy()"
                 (collectionEdit)="cell($event)"
                 (collectionChange)="structure($event)"
-        /></aur-theme-panel>
+                [readOnly]="integrated() && (editorReadOnly() || session.locked)"
+                (actionSelected)="actions.update(append($event))"
+            >
+                <ng-template aurFormSlot="extension" let-readOnly="readOnly">
+                    <qa-acceptance-extension
+                        [readOnly]="readOnly"
+                        [disabled]="extensionDisabled()"
+                        (changed)="extensionEdits.update(increment)"
+                    />
+                </ng-template> </aur-form
+        ></aur-theme-panel>
+        @if (integrated()) {
+            <output data-testid="integration-editor-events">{{
+                encode({
+                    fields: fieldEdits(),
+                    cells: gridEdits(),
+                    structures: structures(),
+                    legacy: legacyEdits(),
+                    actions: actions(),
+                    extension: extensionEdits(),
+                    lifetime: extensionLifetime(),
+                    focus: focusResults(),
+                })
+            }}</output>
+        }
         <dialog
             #discardDialog
             aria-label="Discard changes"
@@ -232,6 +272,22 @@ const descriptors = [
     ],
 })
 export class EditorTestbed implements OnDestroy {
+    readonly integrated = input(false);
+    readonly editorReadOnly = signal(false);
+    readonly extensionDisabled = signal(false);
+    readonly extensionEdits = signal(0);
+    readonly structures = signal(0);
+    readonly actions = signal<readonly string[]>([]);
+    readonly focusResults = signal<readonly boolean[]>([]);
+    readonly increment = (n: number) => n + 1;
+    readonly unknownPath: ValuePath = [{ kind: 'property', name: 'unknown' }];
+    append(value: string): (items: readonly string[]) => readonly string[] {
+        return (items) => [...items, value];
+    }
+    extensionLifetime(): string {
+        return `${AcceptanceExtension.created}/${AcceptanceExtension.destroyed}`;
+    }
+
     readonly session = new DocumentSession(createDocumentState(document));
     readonly theme = inject(ThemeService);
     readonly themes = [
@@ -280,6 +336,16 @@ export class EditorTestbed implements OnDestroy {
         return {
             id: 'integrated-editor',
             label: 'Document editor',
+            ...(this.integrated()
+                ? {
+                      actions: [
+                          { id: 'inspect-root', label: 'Inspect document', enabled: true },
+                          { id: 'inspect-extension', label: 'Inspect extension', enabled: true },
+                          { id: 'inspect-tab', label: 'Inspect additional tab', enabled: true },
+                          { id: 'blocked', label: 'Unavailable contextual action', enabled: false },
+                      ],
+                  }
+                : {}),
             fields: descriptors.map(([id, , type]) => ({
                 id,
                 path: path(id),
@@ -353,7 +419,7 @@ export class EditorTestbed implements OnDestroy {
             },
         });
     });
-    readonly layout: FormLayout = {
+    private readonly baselineLayout: FormLayout = {
         actions: [],
         tabs: [
             {
@@ -428,11 +494,65 @@ export class EditorTestbed implements OnDestroy {
             },
         ],
     };
+    readonly layout = computed<FormLayout>(() => {
+        if (!this.integrated()) return this.baselineLayout;
+        const general = this.baselineLayout.tabs[0]!;
+        return {
+            actions: [{ id: 'inspect-root' }],
+            tabs: [
+                {
+                    ...general,
+                    label: 'General information',
+                    sections: [
+                        {
+                            ...general.sections[0]!,
+                            groups: general.sections[0]!.groups.map((group) => ({
+                                ...group,
+                                fields: group.fields.filter(
+                                    (value) =>
+                                        value[0]?.kind !== 'property' || value[0].name !== 'server',
+                                ),
+                            })),
+                        },
+                        ...this.baselineLayout.tabs[1]!.sections,
+                    ],
+                },
+                { ...this.baselineLayout.tabs[2]!, label: 'Detail information' },
+                {
+                    id: 'additional',
+                    label: 'Additional content',
+                    actions: [{ id: 'inspect-tab' }],
+                    sections: [
+                        {
+                            id: 'additional',
+                            label: 'Additional section',
+                            collapsible: true,
+                            initiallyCollapsed: false,
+                            actions: [{ id: 'inspect-extension' }, { id: 'blocked' }],
+                            groups: [
+                                {
+                                    id: 'mixed',
+                                    label: 'Mixed application content',
+                                    fields: [path('server')],
+                                    slots: [{ id: 'extension' }],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        };
+    });
     readonly encode = JSON.stringify;
     readonly reveal = (path: ValuePath): Promise<boolean> =>
         new Promise((resolve) => {
             const form = this.form();
-            if (form) form.revealPath(path, resolve);
+            if (form)
+                form.revealPath(path, (focused) => {
+                    if (this.integrated())
+                        this.focusResults.update((results) => [...results, focused]);
+                    resolve(focused);
+                });
             else resolve(false);
         });
     label(path: ValuePath): string {
@@ -453,6 +573,7 @@ export class EditorTestbed implements OnDestroy {
         applyDocumentCollectionIntent(this.session, intent);
     }
     structure(intent: DetailGridChange): void {
+        this.structures.update(this.increment);
         if (intent.kind === 'cell') this.legacy();
         applyDocumentCollectionIntent(
             this.session,
@@ -465,13 +586,20 @@ export class EditorTestbed implements OnDestroy {
         this.message.set(result.kind);
         if (result.kind === 'ready') this.attempt = result.submission;
     }
-    reject(): void {
+    reject(reason: 'validation' | 'conflict' = 'conflict'): void {
         if (this.attempt)
             this.session.resolve(this.attempt, {
                 kind: 'rejected',
-                reason: 'conflict',
+                reason,
                 issues: [
-                    { path: [], code: 'conflict', message: 'Synthetic version conflict' },
+                    {
+                        path: [],
+                        code: reason,
+                        message:
+                            reason === 'conflict'
+                                ? 'Synthetic version conflict'
+                                : 'Synthetic validation rejection',
+                    },
                     { path: path('title'), code: 'title', message: 'Synthetic header rejection' },
                     { path: nested, code: 'collection', message: 'Synthetic collection rejection' },
                     {
