@@ -36,6 +36,7 @@ import {
     type DetailGridChange,
     type DocumentSubmission,
     type EditingInput,
+    type TemporalConstraints,
 } from '@alxarafe/ui-runtime';
 const enumChoices = ['', 'OPEN', 'Not set', ' spaced ', 'e\u0301', 'é'] as const;
 const enumDef = {
@@ -238,6 +239,33 @@ const descriptors = [
             ><button (click)="commit()">Committed</button
             ><button (click)="accept()">Accept authoritative</button
             ><button (click)="discard()">Discard</button>
+            <button (click)="dateRange.set(undefined)">DATE no bounds</button>
+            <button (click)="dateRange.set({ minimum: { value: '2024-02-28' } })">
+                DATE minimum only
+            </button>
+            <button (click)="dateRange.set({ maximum: { value: '2024-03-01' } })">
+                DATE maximum only
+            </button>
+            <button
+                (click)="
+                    dateRange.set({
+                        minimum: { value: '2024-02-28' },
+                        maximum: { value: '2024-03-01' },
+                    })
+                "
+            >
+                DATE combined bounds
+            </button>
+            <button
+                (click)="
+                    dateRange.set({
+                        minimum: { value: '2024-02-28', exclusive: true },
+                        maximum: { value: '2024-03-01', exclusive: true },
+                    })
+                "
+            >
+                DATE exclusive bounds
+            </button>
             <button (click)="dateInput({ kind: 'value', value: '2025-02-29' })">
                 Use invalid DATE
             </button>
@@ -322,6 +350,28 @@ const descriptors = [
 })
 export class EditorTestbed implements OnDestroy {
     readonly integrated = input(false);
+    readonly dateRange = signal<TemporalConstraints | undefined>(dateDef.definition.constraints);
+    readonly validationPlan = computed<DocumentBindingOptions['plan']>(() => {
+        const date = {
+            ...dateDef,
+            definition: { ...dateDef.definition, constraints: this.dateRange() },
+        };
+        const rows = { ...rowPlan, properties: { ...rowPlan.properties, date } };
+        return {
+            ...plan,
+            properties: {
+                ...plan.properties,
+                date,
+                details: {
+                    kind: 'object',
+                    properties: {
+                        first: { kind: 'collection', row: rows },
+                        second: { kind: 'collection', row: rows },
+                    },
+                },
+            },
+        };
+    });
     readonly editorReadOnly = signal(false);
     readonly extensionDisabled = signal(false);
     readonly extensionEdits = signal(0);
@@ -421,7 +471,7 @@ export class EditorTestbed implements OnDestroy {
         this.tick();
         return bindDocumentEditor(this.session, {
             definition: this.definition(),
-            plan,
+            plan: this.validationPlan(),
             fields: Object.fromEntries(
                 descriptors.map(([id, label, type]) => [
                     id,
@@ -647,7 +697,7 @@ export class EditorTestbed implements OnDestroy {
         );
     }
     submit(): void {
-        const result = this.session.submit(plan);
+        const result = this.session.submit(this.validationPlan());
         this.message.set(result.kind);
         if (result.kind === 'ready') this.attempt = result.submission;
     }

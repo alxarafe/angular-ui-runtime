@@ -14,7 +14,7 @@ import {
 import type { FieldRendererContext, FieldValue } from '../field-types/renderer-context.js';
 import { ThemeResolver } from '../theme/theme-runtime.js';
 import type { EditingInput } from '../state/document-state.js';
-import { parseTemporal } from '../validation/temporal-values.js';
+import { dateInputBounds, parseTemporal } from '../validation/temporal-values.js';
 import type { ChoicePageDirection } from '../selector/choice-options.js';
 
 /** Lossless opt-in bridge; legacy renderers and valueChange remain unchanged. */
@@ -64,8 +64,8 @@ import type { ChoicePageDirection } from '../selector/choice-options.js';
                 type="date"
                 [id]="context().id + '-date'"
                 [value]="dateText()"
-                min="0001-01-01"
-                max="9999-12-31"
+                [min]="dateBounds().min"
+                [max]="dateBounds().max"
                 [disabled]="context().disabled"
                 [readOnly]="!!context().readOnly || !!context().selector?.busy"
                 [attr.aria-describedby]="context().describedBy?.join(' ') || null"
@@ -138,6 +138,7 @@ import type { ChoicePageDirection } from '../selector/choice-options.js';
 export class DocumentInput {
     readonly context = input.required<FieldRendererContext>();
     readonly date = input(false);
+    readonly dateBounds = computed(() => dateInputBounds(this.context().dateConstraints));
     readonly multiline = input(false);
     readonly boolean = input(false);
     readonly enumeration = input(false);

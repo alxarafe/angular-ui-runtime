@@ -482,3 +482,57 @@ test('DATE bindings retain exact header/keyed slots while the existing validator
         assert.equal(session.state, before);
     }
 });
+
+test('DATE bounds follow header and keyed row plans on refresh without editing stored inputs', () => {
+    const { session, options } = fixture();
+    const headerPath = path('empty'),
+        cellPath = [...path('rows'), rowKey('b'), prop('text')];
+    const input = { kind: 'raw', text: '2024-02-28' };
+    applyDocumentFieldIntent(session, { id: 'empty', path: headerPath, input });
+    applyDocumentCollectionIntent(session, {
+        collectionId: 'rows',
+        collectionPath: path('rows'),
+        key: 'b',
+        field: 'text',
+        path: cellPath,
+        input,
+    });
+    const before = session.state;
+    for (const [constraints, invalid] of [
+        [undefined, false],
+        [{ minimum: { value: '2024-02-29' } }, true],
+        [{ maximum: { value: '2024-02-27' } }, true],
+        [{ minimum: { value: '2024-02-28' }, maximum: { value: '2024-03-01' } }, false],
+        [
+            {
+                minimum: { value: '2024-02-28', exclusive: true },
+                maximum: { value: '2024-03-01', exclusive: true },
+            },
+            true,
+        ],
+        [undefined, false],
+    ]) {
+        const date = {
+            kind: 'field',
+            definition: {
+                type: 'DATE',
+                format: 'gregorian-date',
+                required: false,
+                nullable: true,
+                constraints,
+            },
+        };
+        options.plan.properties.empty = date;
+        options.plan.properties.rows.row.properties.text = date;
+        const bound = bindDocumentEditor(session, options);
+        for (const context of [
+            bound.contexts.empty,
+            bound.collectionContexts.rows.rows[1].contexts.text,
+        ]) {
+            assert.deepEqual(context.dateConstraints, constraints);
+            assert.deepEqual(context.documentInput, input);
+            assert.equal(!!context.invalid, invalid);
+        }
+        assert.equal(session.state, before);
+    }
+});

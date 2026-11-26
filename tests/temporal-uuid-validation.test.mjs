@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validateField } from '../out-tsc/tests/projects/ui-runtime/src/validation/validate-field.js';
-import { parseTemporal } from '../out-tsc/tests/projects/ui-runtime/src/validation/temporal-values.js';
+import {
+    dateInputBounds,
+    parseTemporal,
+} from '../out-tsc/tests/projects/ui-runtime/src/validation/temporal-values.js';
 import {
     createDocumentState,
     applyDocumentChange,
@@ -562,5 +565,66 @@ test('deterministic instant samples use independent day anchors and clock tick a
         const expected = (730176n + BigInt(dayIndex)) * 864000000000n + time - offset * 600000000n;
         assert.equal(parseTemporal(text, 'DATETIME', 7), expected);
         valid('DATETIME', text);
+    }
+});
+
+test('native DATE hints translate inclusive/exclusive bounds using the shared Gregorian domain', () => {
+    for (const [constraints, min, max] of [
+        [undefined, '0001-01-01', '9999-12-31'],
+        [{ minimum: { value: '2024-02-28' } }, '2024-02-28', '9999-12-31'],
+        [{ maximum: { value: '2024-03-01' } }, '0001-01-01', '2024-03-01'],
+        [
+            { minimum: { value: '2024-02-28' }, maximum: { value: '2024-03-01' } },
+            '2024-02-28',
+            '2024-03-01',
+        ],
+        [
+            {
+                minimum: { value: '2024-02-28', exclusive: true },
+                maximum: { value: '2024-03-01', exclusive: true },
+            },
+            '2024-02-29',
+            '2024-02-29',
+        ],
+        [
+            {
+                minimum: { value: '2025-02-28', exclusive: true },
+                maximum: { value: '2025-04-01', exclusive: true },
+            },
+            '2025-03-01',
+            '2025-03-31',
+        ],
+        [
+            {
+                minimum: { value: '2024-12-31', exclusive: true },
+                maximum: { value: '2026-01-01', exclusive: true },
+            },
+            '2025-01-01',
+            '2025-12-31',
+        ],
+        [
+            {
+                minimum: { value: '1900-02-28', exclusive: true },
+                maximum: { value: '2000-03-01', exclusive: true },
+            },
+            '1900-03-01',
+            '2000-02-29',
+        ],
+        [{ minimum: { value: '9999-12-31', exclusive: true } }, '9999-12-31', '0001-01-01'],
+        [{ maximum: { value: '0001-01-01', exclusive: true } }, '9999-12-31', '0001-01-01'],
+        [
+            { minimum: { value: '2024-03-01' }, maximum: { value: '2024-02-28' } },
+            '2024-03-01',
+            '2024-02-28',
+        ],
+        [
+            { minimum: { value: '2025-02-29' }, maximum: { value: 'bad' } },
+            '0001-01-01',
+            '9999-12-31',
+        ],
+    ]) {
+        const before = structuredClone(constraints);
+        assert.deepEqual(dateInputBounds(constraints), { min, max });
+        assert.deepEqual(constraints, before);
     }
 });

@@ -19,6 +19,7 @@ import { DocumentSession } from '../state/document-session.js';
 import {
     validateDocument,
     type ObjectValidationPlan,
+    type ValidationPlanNode,
     type DocumentValidationResult,
 } from '../validation/validate-document.js';
 
@@ -31,7 +32,7 @@ export interface DocumentBindingOptions {
     readonly definition: FormDefinition;
     readonly plan: ObjectValidationPlan;
     readonly fields: Readonly<
-        Record<string, Omit<FieldRendererContext, 'value' | 'documentInput'>>
+        Record<string, Omit<FieldRendererContext, 'value' | 'documentInput' | 'dateConstraints'>>
     >;
     readonly collections: Readonly<
         Record<
@@ -43,7 +44,10 @@ export interface DocumentBindingOptions {
                 readonly fields?: Readonly<
                     Record<
                         string,
-                        Omit<FieldRendererContext, 'id' | 'label' | 'value' | 'documentInput'>
+                        Omit<
+                            FieldRendererContext,
+                            'id' | 'label' | 'value' | 'documentInput' | 'dateConstraints'
+                        >
                     >
                 >;
             }
@@ -115,16 +119,27 @@ export function bindDocumentEditor(
     ]);
     function field(
         path: ValuePath,
-        base: Omit<FieldRendererContext, 'value' | 'documentInput'>,
+        base: Omit<FieldRendererContext, 'value' | 'documentInput' | 'dateConstraints'>,
     ): FieldRendererContext {
         const result = at(root, path);
         if (result.node.kind !== 'field') throw new Error('Binding requires a document field');
+        let plan: ValidationPlanNode | undefined = options.plan;
+        for (const segment of path)
+            plan =
+                plan?.kind === 'object' && segment.kind === 'property'
+                    ? plan.properties?.[segment.name]
+                    : plan?.kind === 'collection' && segment.kind === 'row'
+                      ? plan.row
+                      : undefined;
+        const definition = plan?.kind === 'field' ? plan.definition : undefined;
+        const dateConstraints = definition?.type === 'DATE' ? definition.constraints : undefined;
         const input = result.node.input;
         const messages = feedback.filter((item) => same(item.path, path));
         return Object.freeze({
             ...base,
             value: input.kind === 'raw' ? input.text : input.kind === 'value' ? input.value : '',
             documentInput: input,
+            dateConstraints,
             readOnly: !!base.readOnly || result.readOnly,
             disabled: session.locked || !!base.disabled || result.disabled,
             invalid: messages.some((item) => item.source !== 'deferred'),

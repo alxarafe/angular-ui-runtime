@@ -185,3 +185,62 @@ test('lossless DATE keeps raw drafts beside native selection, with one channel a
     await expect(cellText).toHaveValue('2024-02-');
     expect(errors).toEqual([]);
 });
+
+test('DATE native bounds follow changing field constraints without clamping header or keyed drafts', async ({
+    page,
+}) => {
+    await page.goto('/default-theme/?scenario=editor');
+    const text = page.getByLabel('Document date', { exact: true });
+    const native = page.getByLabel('Document date date selection', { exact: true });
+    await expect(native).toHaveAttribute('min', '2024-01-01');
+    await expect(native).toHaveAttribute('max', '2025-12-31');
+    await text.fill('2024-02-27');
+    await expect.poll(() => input(page)).toEqual({ kind: 'raw', text: '2024-02-27' });
+    await page.getByRole('tab', { name: 'Details', exact: true }).click();
+    await page.getByRole('button', { name: 'First section', exact: true }).click();
+    const cellText = page.getByLabel('Row date — Row a', { exact: true });
+    const cellNative = page.getByLabel('Row date — Row a date selection', { exact: true });
+    await cellText.fill('2024-03-02');
+    await expect
+        .poll(async () => (await events(page)).last.input)
+        .toEqual({ kind: 'raw', text: '2024-03-02' });
+    const before = await snapshot(page),
+        counts = await events(page);
+    const node = await cellNative.elementHandle();
+    for (const [button, min, max, underflow, overflow] of [
+        ['DATE no bounds', '0001-01-01', '9999-12-31', false, false],
+        ['DATE minimum only', '2024-02-28', '9999-12-31', true, false],
+        ['DATE maximum only', '0001-01-01', '2024-03-01', false, true],
+        ['DATE combined bounds', '2024-02-28', '2024-03-01', true, true],
+        ['DATE exclusive bounds', '2024-02-29', '2024-02-29', true, true],
+        ['DATE no bounds', '0001-01-01', '9999-12-31', false, false],
+    ]) {
+        await cellNative.focus();
+        await page.getByRole('button', { name: button, exact: true }).evaluate((el) => el.click());
+        for (const control of [native, cellNative]) {
+            await expect(control).toHaveAttribute('min', min);
+            await expect(control).toHaveAttribute('max', max);
+        }
+        expect(await native.evaluate((el) => el.validity.rangeUnderflow)).toBe(underflow);
+        expect(await cellNative.evaluate((el) => el.validity.rangeOverflow)).toBe(overflow);
+        await expect(cellNative).toBeFocused();
+        expect(await cellNative.evaluate((el, old) => el === old, node)).toBe(true);
+        await expect(text).toHaveValue('2024-02-27');
+        await expect(cellText).toHaveValue('2024-03-02');
+        expect(await snapshot(page)).toEqual(before);
+        expect(await events(page)).toEqual(counts);
+    }
+    await cellText.fill('2024-02-');
+    await page.getByRole('button', { name: 'DATE exclusive bounds', exact: true }).click();
+    await expect(cellNative).toHaveAttribute('min', '2024-02-29');
+    await expect(cellText).toHaveValue('2024-02-');
+    await expect(cellNative).toHaveValue('');
+    // Native hints do not replace validation or reject a retained out-of-range raw intent.
+    await cellNative.fill('2024-02-28');
+    await expect(cellText).toHaveValue('2024-02-28');
+    await expect(cellNative).toHaveAttribute('aria-invalid', 'true');
+    expect(await cellNative.evaluate((el) => el.validity.rangeUnderflow)).toBe(true);
+    await cellNative.fill('2024-02-29');
+    await expect(cellText).toHaveValue('2024-02-29');
+    await expect(cellNative).not.toHaveAttribute('aria-invalid', 'true');
+});

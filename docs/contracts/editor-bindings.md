@@ -16,7 +16,7 @@ presentation options (`collections`, keyed by collection ID, with label and colu
 Each collection may also supply `fields`, a per-property presentation map (for
 example `{status: {choices: ['', 'OPEN']}}`). These options reuse the field context
 ports for choices, feedback IDs and edit restrictions; they cannot supply identity,
-labels, values or document inputs. Session-derived identity, input and inherited
+labels, values, document inputs or session-derived DATE constraints. Session-derived identity, input and inherited
 restrictions remain authoritative. Choices are supplied by the consumer, not inferred
 from validation plans or metadata.
 It does not infer definitions, authorization, defaults or business rules.
@@ -329,9 +329,16 @@ timezone or locale conversion is applied to document data.
 
 The existing validator owns Gregorian validity and declared inclusive/exclusive
 bounds. A representable native selection may still violate declared bounds and
-then receives the existing feedback; the bridge does not infer native min/max
-attributes from a validation plan absent from its context. Its native min/max
-attributes cover only the intrinsic 0001–9999 year domain. Both inputs share
+then receives the existing feedback. `bindDocumentEditor` projects DATE constraints
+from the matching validation-plan field into `FieldRendererContext.dateConstraints`,
+including fields below keyed collection rows. Direct context owners may supply the
+same existing `DateFieldDefinition['constraints']` type. Native min/max use these
+bounds, falling back independently to 0001-01-01 and 9999-12-31 when absent.
+Exclusive bounds become the next/previous Gregorian day using the shared temporal
+helpers. An interval with no representable dates gives the native control an empty
+(reversed) range; invalid bound text falls back to the intrinsic endpoint while
+validator diagnostics remain authoritative. Changing constraints updates attributes
+and feedback without clamping or editing the stored value. Both inputs share
 readonly/disabled guards, invalid state, feedback associations and visible focus.
 Header and keyed detail-cell edits use the existing lossless intent adapters into
 `DocumentSession`, without legacy scalar events. Both controls retain DOM identity

@@ -1,3 +1,4 @@
+import type { DateFieldDefinition } from '../validation/validate-field.js';
 import type { EditingInput } from '../state/document-state.js';
 import type { ChoiceSelectorOptions } from '../selector/choice-options.js';
 /**
@@ -25,6 +26,8 @@ export interface FieldRendererContext {
     readonly describedBy?: readonly string[];
     /** Opt-in lossless document editing; value is only a legacy display projection. */
     readonly documentInput?: EditingInput;
+    /** Native DATE hints; validation remains authoritative. */
+    readonly dateConstraints?: DateFieldDefinition['constraints'];
     readonly invalid?: boolean;
     /** Host-rendered accessible messages; validation remains outside the renderer. */
     readonly feedback?: readonly string[];

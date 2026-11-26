@@ -1,4 +1,5 @@
 /** SPDX-License-Identifier: Apache-2.0 */
+import type { TemporalConstraints } from './validate-field.js';
 export type TemporalKind = 'DATE' | 'TIME' | 'DATETIME';
 const secondTicks = 10000000n;
 const dayTicks = 86400n * secondTicks;
@@ -91,4 +92,44 @@ export function canonicalUuid(text: string, casing: 'lower' | 'either'): boolean
             : /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
     ).exec(text);
     return !!match && match[0] === text;
+}
+
+/** Translate admitted DATE bounds to inclusive native hints without changing field values. */
+export function dateInputBounds(constraints?: TemporalConstraints): { min: string; max: string } {
+    const intrinsic = { min: '0001-01-01', max: '9999-12-31' };
+    function endpoint(
+        bound: TemporalConstraints['minimum'],
+        direction: 1 | -1,
+    ): string | undefined {
+        if (
+            !bound ||
+            typeof bound.value !== 'string' ||
+            parseTemporal(bound.value, 'DATE', 0) === undefined
+        )
+            return undefined;
+        if (!bound.exclusive) return bound.value;
+        let year = BigInt(bound.value.slice(0, 4)),
+            month = BigInt(bound.value.slice(5, 7)),
+            day = BigInt(bound.value.slice(8, 10)) + BigInt(direction);
+        if (day > monthDays(year, month)) {
+            day = 1n;
+            if (++month > 12n) {
+                month = 1n;
+                year++;
+            }
+        } else if (day < 1n) {
+            if (--month < 1n) {
+                month = 12n;
+                year--;
+            }
+            day = monthDays(year, month);
+        }
+        if (year < 1n || year > 9999n) return '';
+        return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+    const min = endpoint(constraints?.minimum, 1),
+        max = endpoint(constraints?.maximum, -1);
+    // A reversed range disables every native date when an exclusive endpoint exhausts the domain.
+    if (min === '' || max === '') return { min: intrinsic.max, max: intrinsic.min };
+    return { min: min ?? intrinsic.min, max: max ?? intrinsic.max };
 }
