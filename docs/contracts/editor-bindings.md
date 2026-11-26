@@ -188,3 +188,102 @@ This increment does not establish full FIELD/FORM/GRID/VISUAL acceptance. Remain
 gaps include semantic widget completeness, optional-control lossless capabilities,
 help/touched policies, hidden-column reveal, independent consumer/backend conformance,
 other browsers/assistive technology and human visual/accessibility certification.
+
+## Reusable summary and focus interaction (AUR-FEEDBACK-001)
+
+The audit found that `EditorFeedback`, field messages, validation, document sessions
+and keyed form/grid reveal already existed. The only summary was application markup
+in the QA editor, with no shared error/deferred grouping or first-focusable-error
+interaction. The boolean from form reveal reported recognition/scheduling, not
+successful DOM focus; disabled and unknown descendant targets could not reliably
+be skipped. This increment fills those presentation/focus gaps without another
+validator, document state model, message decoder or dialog framework.
+
+`FeedbackSummary` (`aur-feedback-summary`) consumes the existing readonly
+`EditorFeedback[]` through `[feedback]`. All non-deferred entries (`local`,
+`definition`, `server`) appear under Errors in input order, including multiple
+messages for the same path and root errors. Deferred entries have a separate
+Deferred checks section; they never become errors or a success indication.
+Messages render as Angular text, never HTML. The summary does not infer authorization
+or filter protected messages: the application supplies only appropriate feedback.
+
+```html
+<aur-feedback-summary [feedback]="editor.feedback" [reveal]="reveal"
+  [labelPath]="labelFeedbackPath" />
+<aur-form [definition]="definition" [contexts]="editor.contexts"
+  [collectionContexts]="editor.collectionContexts" />
+```
+
+```ts
+import { type FeedbackReveal, type ValuePath } from '@alxarafe/ui-runtime';
+// form is the application's viewChild(FormComposition) query.
+readonly reveal: FeedbackReveal = path => new Promise(resolve => {
+  const form = this.form();
+  if (form) form.revealPath(path, resolve);
+  else resolve(false);
+});
+readonly labelFeedbackPath = (path: ValuePath): string => /* application label */ '';
+```
+
+`[label]` defaults to Document feedback. Optional `[labelPath]` supplies accessible
+application labels; the default uses Document for root feedback and does not expose
+property names or opaque row keys. Without `[reveal]`, the component is a read-only
+summary. `FeedbackReveal` accepts a typed path and returns `boolean | Promise<boolean>`:
+true means focus actually reached the target. Applications can adapt other public
+focus ports; do not return true merely because navigation was scheduled.
+
+The native Focus first error button and public `focusFirstInvalid(): Promise<boolean>`
+try non-root error paths in order, once per distinct path, until one focuses. Root
+errors remain readable text rather than disabled pseudo-links. Deferred checks are
+excluded from first-error navigation but can be explicitly revealed. Individual
+path buttons and `focusFeedback(item)` attempt only that entry. Unknown, excluded,
+removed, disabled or otherwise unfocusable targets return false, preserving the
+initiator's focus and announcing a polite status when no target is found. Rejected
+callbacks report a generic reveal failure, without displaying exception details.
+Only a supplied entry can be activated. Pending requests ignore repeated activation;
+replaced feedback, changed reveal ports, destruction or independently moved focus
+stop subsequent attempts. Arbitrary application reveal callbacks must themselves
+respect owner lifetime and focus changes while awaiting their own work.
+
+`focus(): boolean` is an explicit application return target: it focuses the named
+summary region. Rendering or refreshing feedback never moves focus, marks touched,
+edits data or submits. The summary uses native type=button controls, semantic lists,
+named error/deferred sections, a named focusable region and a polite result status.
+It inherits typography/colors and provides visible focus and wrapping. Place it in
+existing theme content (for example `aur-theme-panel`) for themed typography,
+including High Contrast. No theme artifact, registry or dependency is added.
+
+`FormComposition.revealPath(path, completed?)` adds an optional completion callback.
+Its existing immediate boolean still means the path was recognized for scheduling;
+`completed(focused)` runs exactly once with the actual focus result, or false for
+unrecognized paths, destruction before rendering or focus moved elsewhere meanwhile.
+Inactive tabs and collapsed sections still open through existing visual state.
+Controlled visual state must be echoed by the application; if the target remains
+hidden, completion is false. `DetailGrid.revealPath` now verifies actual focus,
+including disabled controls, and row reveal tries columns in order until a control
+focuses. Collection reveal uses the existing scroll region. Unsupported/root paths
+never invent a field. Header/collection fallback and legacy reveal calls remain valid.
+Malformed typed paths still reject under the existing path contract.
+
+### Discard confirmation audit
+
+`DocumentSession.requestDiscard` already accepts asynchronous `ConfirmDiscard`,
+protects locked/reentrant/stale requests and delegates UI to the application.
+`NavigationProtection` and `protectBeforeUnload` remain unchanged. No missing MVP
+capability requires a new shared dialog primitive: the installed editor fixture now
+uses native `dialog.showModal()` for modality, initial focus and keyboard containment,
+handles Escape as cancellation, resolves the existing confirmation promise and
+returns focus to the connected invoker. Applications own dialog text, styling,
+lifetime, cancellation and routing. This is QA evidence, not a new public dialog API.
+
+`tests/feedback.test.mjs` and compile-time fixtures cover grouping, all sources,
+multiple messages, first-invalid skipping/deduplication, failed callbacks, concurrent
+requests, refresh/destruction and focus return. Installed APF Chromium
+`feedback.spec.mjs` exercises root/field/collection/keyed-row/cell errors, unknown and
+disabled paths, separate deferred checks, keyboard activation, inactive tabs/collapse,
+actual focus completion, no duplicate actions or edits, moved focus and destruction,
+five themes plus structural frames, High Contrast and desktop/mobile layouts.
+`editor.spec.mjs` consumes the shared summary and verifies native discard keyboard
+containment, Escape, promise cancellation/confirmation and focus return. Remaining
+MVP limits include application-specific labels/policy, arbitrary component focus ports,
+hidden columns, non-Chromium/assistive-technology certification and human visual review.

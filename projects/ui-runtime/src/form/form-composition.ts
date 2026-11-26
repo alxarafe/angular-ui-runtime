@@ -1,6 +1,7 @@
 /** SPDX-License-Identifier: Apache-2.0 */
 import {
     Component,
+    DestroyRef,
     ElementRef,
     Injector,
     afterNextRender,
@@ -344,6 +345,7 @@ export class FormComposition {
     private readonly state = computed(() => this.viewState() ?? this.localState());
     private readonly root = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly injector = inject(Injector);
+    private readonly destroyRef = inject(DestroyRef);
     readonly selectedTab = computed(
         () =>
             this.composition().tabs.find((tab) => tab.id === this.state().selectedTab)?.id ??
@@ -405,10 +407,13 @@ export class FormComposition {
     protected dispatch(action: ContextAction): void {
         if (action.enabled) this.actionSelected.emit(action.id);
     }
-    /** Reveal a header, keyed cell, row or collection, expanding its owning containers. */
-    revealPath(path: ValuePath): boolean {
-        if (!path.length) return false;
-        if (this.revealField(path)) return true;
+    /** Reveal a header, keyed cell, row or collection. Optional completion reports actual focus. */
+    revealPath(path: ValuePath, completed?: (focused: boolean) => void): boolean {
+        if (this.destroyRef.destroyed || !path.length) {
+            completed?.(false);
+            return false;
+        }
+        if (this.revealHeader(path, completed)) return true;
         const prefix = (base: ValuePath) =>
             base.length <= path.length &&
             formPathKey(path.slice(0, base.length)) === formPathKey(base);
@@ -416,23 +421,53 @@ export class FormComposition {
             .filter((item) => !item.excluded && prefix(item.path))
             .sort((a, b) => b.path.length - a.path.length);
         const collection = catalogue[0];
-        if (!collection) return false;
+        if (!collection) {
+            completed?.(false);
+            return false;
+        }
         for (const tab of this.composition().tabs)
             for (const section of tab.sections)
                 for (const group of section.groups)
                     if (group.collections.some((item) => item.id === collection.id))
                         this.expand(tab, section, false);
-        afterNextRender(
+        this.scheduleFocus(
             () =>
                 this.detailGrids()
                     .find((grid) => grid.context().id === collection.id)
-                    ?.revealPath(path),
-            { injector: this.injector },
+                    ?.revealPath(path) ?? false,
+            completed,
         );
         return true;
     }
     /** External validation/error hosts may reveal a path without importing a document engine. */
     revealField(path: ValuePath): boolean {
+        return this.revealHeader(path);
+    }
+    private scheduleFocus(focus: () => boolean, completed?: (focused: boolean) => void): void {
+        const document = this.root.nativeElement.ownerDocument;
+        const origin = document.activeElement;
+        let done = false;
+        const finish = (focused: boolean) => {
+            if (done) return;
+            done = true;
+            unregister();
+            completed?.(focused);
+        };
+        const unregister = this.destroyRef.onDestroy(() => {
+            if (!done) {
+                done = true;
+                completed?.(false);
+            }
+        });
+        afterNextRender(
+            () => {
+                const active = document.activeElement;
+                finish((active === origin || active === document.body) && focus());
+            },
+            { injector: this.injector },
+        );
+    }
+    private revealHeader(path: ValuePath, completed?: (focused: boolean) => void): boolean {
         const key = formPathKey(path),
             composition = this.composition();
         let match = composition.unplaced.find((field) => formPathKey(field.path) === key);
@@ -447,21 +482,18 @@ export class FormComposition {
                 }
         if (!match) return false;
         const fieldId = match.id;
-        afterNextRender(
-            () => {
-                const wrapper = [
-                    ...this.root.nativeElement.querySelectorAll<HTMLElement>(
-                        'aur-form-field[data-aur-form-field]',
-                    ),
-                ].find((node) => node.dataset['aurField'] === fieldId);
-                wrapper
-                    ?.querySelector<HTMLElement>(
-                        'input:not(:disabled),select:not(:disabled),textarea:not(:disabled),button:not(:disabled)',
-                    )
-                    ?.focus();
-            },
-            { injector: this.injector },
-        );
+        this.scheduleFocus(() => {
+            const wrapper = [
+                ...this.root.nativeElement.querySelectorAll<HTMLElement>(
+                    'aur-form-field[data-aur-form-field]',
+                ),
+            ].find((node) => node.dataset['aurField'] === fieldId);
+            const target = wrapper?.querySelector<HTMLElement>(
+                'input:not(:disabled),select:not(:disabled),textarea:not(:disabled),button:not(:disabled)',
+            );
+            target?.focus();
+            return !!target && target.ownerDocument.activeElement === target;
+        }, completed);
         return true;
     }
 }

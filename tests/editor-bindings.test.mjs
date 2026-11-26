@@ -326,16 +326,21 @@ test('feedback preserves local invalid and deferred evidence; accepted snapshots
 test('keyed reveal compares canonical typed paths; lossless cells emit one channel and honor locks', () => {
     const { session, options } = fixture();
     let focused = '';
+    const document = { activeElement: null };
     const cell = {
         id: 'aur-cell-' + encodeURIComponent(JSON.stringify(['rows', 'a', 'text'])),
+        ownerDocument: document,
         focus() {
+            document.activeElement = this;
             focused = 'cell';
         },
     };
     const root = {
         querySelector() {
             return {
+                ownerDocument: document,
                 focus() {
+                    document.activeElement = this;
                     focused = 'collection';
                 },
             };

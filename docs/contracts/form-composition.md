@@ -285,3 +285,16 @@ state and focus, contextual actions, readonly/disabled application bindings, tab
 keyboard navigation, collapse and all five themes plus structural frame replacement
 at desktop/mobile widths. Inspect `/default-theme/?scenario=form-slots` in the private
 testbed. Existing form/grid/editor suites cover consumers without slots.
+
+## Feedback navigation completion
+
+AUR-FEEDBACK-001 adds an optional callback to `revealPath(path, completed?)` while
+preserving its immediate recognition/scheduling boolean. `completed(focused)` reports
+actual DOM focus exactly once, including false for unknown/unfocusable targets,
+destruction before rendering or independently moved focus. Existing tab expansion,
+section collapse state and field/collection fallback remain the sole composition
+mechanism. Controlled view state must still be echoed before focus can succeed.
+Use the existing typed paths and the public `FeedbackSummary` to navigate the first
+focusable error, keeping root messages and deferred checks separate; see the
+[summary/focus contract and audit](editor-bindings.md#reusable-summary-and-focus-interaction-aur-feedback-001).
+No editing, touched state, validation or submission is triggered by feedback navigation.

@@ -1,9 +1,19 @@
 /** Integrated installed-package editor QA; synthetic adapter, no I/O or business policy. */
-import { Component, computed, inject, signal, viewChild, OnDestroy } from '@angular/core';
+import {
+    Component,
+    ElementRef,
+    computed,
+    effect,
+    inject,
+    signal,
+    viewChild,
+    OnDestroy,
+} from '@angular/core';
 import {
     DocumentSession,
     createDocumentState,
     FormComposition,
+    FeedbackSummary,
     ThemePanelOutlet,
     ThemeService,
     bindDocumentEditor,
@@ -158,7 +168,7 @@ const descriptors = [
 ] as const;
 @Component({
     selector: 'qa-testbed',
-    imports: [FormComposition, ThemePanelOutlet],
+    imports: [FormComposition, ThemePanelOutlet, FeedbackSummary],
     template: `<h1>Integrated document editor</h1>
         <div class="toolbar">
             @for (id of themes; track id) {
@@ -184,21 +194,11 @@ const descriptors = [
             data-testid="editor-dirty"
             >{{ session.state.dirty }}</output
         ><output data-testid="editor-validity">{{ binding().validation.state }}</output>
-        <section aria-label="Document feedback">
-            <h2>Document feedback</h2>
-            <ul>
-                @for (item of binding().feedback; track $index) {
-                    <li>
-                        <button
-                            [disabled]="!item.path.length"
-                            (click)="form()?.revealPath(item.path)"
-                        >
-                            {{ item.source }}: {{ label(item.path) }} — {{ item.message }}
-                        </button>
-                    </li>
-                }
-            </ul>
-        </section>
+        <aur-feedback-summary
+            [feedback]="binding().feedback"
+            [labelPath]="label"
+            [reveal]="reveal"
+        />
         <aur-theme-panel
             ><aur-form
                 [definition]="definition()"
@@ -210,12 +210,14 @@ const descriptors = [
                 (collectionEdit)="cell($event)"
                 (collectionChange)="structure($event)"
         /></aur-theme-panel>
-        @if (confirming()) {
-            <section role="dialog" aria-label="Discard changes">
-                <button (click)="answer(false)">Cancel discard</button
-                ><button (click)="answer(true)">Confirm discard</button>
-            </section>
-        }
+        <dialog
+            #discardDialog
+            aria-label="Discard changes"
+            (cancel)="$event.preventDefault(); answer(false)"
+        >
+            <button (click)="answer(false)">Cancel discard</button
+            ><button (click)="answer(true)">Confirm discard</button>
+        </dialog>
         <output data-testid="editor-snapshot">{{ encode(session.state.current) }}</output>
         <output data-testid="enum-events">{{
             encode({
@@ -259,7 +261,14 @@ export class EditorTestbed implements OnDestroy {
             input,
         });
     }
+    private readonly discardDialog = viewChild<ElementRef<HTMLDialogElement>>('discardDialog');
     readonly confirming = signal(false);
+    constructor() {
+        effect(() => {
+            const dialog = this.discardDialog()?.nativeElement;
+            if (dialog && this.confirming() && !dialog.open) dialog.showModal();
+        });
+    }
     private confirmation?: (confirmed: boolean) => void;
     private focus?: HTMLElement;
     private nextRow = 0;
@@ -420,6 +429,12 @@ export class EditorTestbed implements OnDestroy {
         ],
     };
     readonly encode = JSON.stringify;
+    readonly reveal = (path: ValuePath): Promise<boolean> =>
+        new Promise((resolve) => {
+            const form = this.form();
+            if (form) form.revealPath(path, resolve);
+            else resolve(false);
+        });
     label(path: ValuePath): string {
         return (
             path
@@ -501,7 +516,8 @@ export class EditorTestbed implements OnDestroy {
         this.confirmation?.(confirmed);
         this.confirmation = undefined;
         this.confirming.set(false);
-        this.focus?.focus();
+        this.discardDialog()?.nativeElement.close();
+        if (this.focus?.isConnected) this.focus.focus();
     }
     ngOnDestroy(): void {
         this.answer(false);
