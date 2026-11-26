@@ -6,14 +6,26 @@
     [disabled]="context().disabled || context().readOnly"
     [attr.aria-describedby]="context().describedBy?.join(' ') || null"
     [attr.aria-invalid]="context().invalid || null"
-    (change)="selectIndex(control.selectedIndex)"
+    [attr.aria-busy]="context().selector?.busy || null"
+    [attr.aria-disabled]="context().selector?.busy || null"
+    (change)="context().selector ? selectChoice(control) : selectIndex(control.selectedIndex)"
 >
     <option [selected]="context().value === null" [disabled]="!!context().documentInput">
         {{ placeholder() }}
     </option>
-    @for (choice of context().choices ?? []; track $index) {
+    @if (context().selector; as page) { @if (outside()) {
+    <option [value]="text()" [selected]="true" disabled>Current: {{ page.current?.label }}</option>
+    } @for (option of page.options; track option.value) {
+    <option
+        [value]="option.value"
+        [selected]="context().value === option.value"
+        [disabled]="!!page.busy"
+    >
+        {{ option.label }}
+    </option>
+    } } @else { @for (choice of context().choices ?? []; track $index) {
     <option [value]="choice" [selected]="choice === text() && context().value !== null">
         {{ choice === '' ? '(empty string)' : choice }}
     </option>
-    }
+    } }
 </select>

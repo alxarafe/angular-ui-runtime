@@ -104,6 +104,46 @@ test('lossless ENUM placeholder never emits and explicit indexed choices retain 
         injector.destroy();
     }
 });
+test('paged choices use exact IDs, ignore stale DOM options and suppress busy or blocked edits', () => {
+    const injector = Injector.create({ providers: [] });
+    try {
+        const renderer = runInInjectionContext(injector, () => new DefaultEnumRenderer());
+        const context = {
+            id: 'choice',
+            label: 'Choice',
+            value: '',
+            selector: {
+                options: [
+                    { value: '', label: 'Same' },
+                    { value: 'opaque /?#', label: 'Same' },
+                ],
+                previous: false,
+                next: true,
+            },
+        };
+        Object.defineProperty(renderer, 'context', { value: () => context });
+        const values = [];
+        renderer.valueChange.subscribe((value) => values.push(value));
+        const select = (value) => renderer.selectChoice({ selectedOptions: [{ value }] });
+        select('');
+        select('opaque /?#');
+        assert.deepEqual(values, ['', 'opaque /?#']);
+        context.selector = { ...context.selector, options: [{ value: 'new', label: 'New' }] };
+        select('opaque /?#');
+        context.selector.busy = true;
+        select('new');
+        context.selector.busy = false;
+        context.disabled = true;
+        select('new');
+        context.disabled = false;
+        context.readOnly = true;
+        select('new');
+        assert.equal(values.length, 2);
+        assert.equal(context.value, '');
+    } finally {
+        injector.destroy();
+    }
+});
 
 test('the canonical INTEGER renderer keeps exact strings and null without numeric coercion', () => {
     const injector = Injector.create({ providers: [] });

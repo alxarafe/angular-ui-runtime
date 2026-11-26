@@ -1,5 +1,7 @@
 import { documentNodeProblem } from '../state/document-state.js';
 import { DocumentInput } from '../editor/document-input.js';
+import { ChoiceSelector } from '../selector/choice-selector.js';
+import type { ChoicePageDirection } from '../selector/choice-options.js';
 import type { EditingInput } from '../state/document-state.js';
 /** SPDX-License-Identifier: Apache-2.0 */
 import {
@@ -28,6 +30,7 @@ import type {
     FormFieldDefinition,
     FormFieldChange,
     FormFieldEdit,
+    FormFieldPage,
     FormPresentationContext,
 } from './form-definition.js';
 
@@ -100,7 +103,7 @@ export class FormFrame {
 @Component({
     selector: 'aur-form-field',
     template: `<ng-container #target />
-        @if (context().feedback?.length) {
+        @if (context().feedback?.length && !context().selector) {
             <div [id]="context().id + '-feedback'" aria-live="polite">
                 @for (message of context().feedback; track $index) {
                     <p>{{ message }}</p>
@@ -119,6 +122,7 @@ export class FormFieldOutlet {
     readonly readOnly = input(false);
     readonly fieldChange = output<FormFieldChange>();
     readonly fieldEdit = output<FormFieldEdit>();
+    readonly fieldPage = output<FormFieldPage>();
     private readonly registry = inject(ThemeRegistry);
     private readonly binding = computed(() => {
         const context = {
@@ -129,6 +133,8 @@ export class FormFieldOutlet {
                 ...(this.context().feedback?.length ? [this.context().id + '-feedback'] : []),
             ],
         };
+        if (context.selector !== undefined && this.field().kind === 'control')
+            throw new Error('Choice selectors do not support optional-control fields');
         if (
             context.documentInput !== undefined &&
             (this.field().kind === 'control' ||
@@ -139,9 +145,11 @@ export class FormFieldOutlet {
                 }))
         )
             throw new Error('Unsupported document editing context');
-        return context.documentInput === undefined
-            ? resolveFormFieldRenderer(this.field(), context, this.registry, this.resolver)
-            : { component: DocumentInput, context };
+        return context.selector !== undefined
+            ? { component: ChoiceSelector, context }
+            : context.documentInput === undefined
+              ? resolveFormFieldRenderer(this.field(), context, this.registry, this.resolver)
+              : { component: DocumentInput, context };
     });
     private readonly boundContext = computed(() => this.binding().context);
     private readonly target = viewChild('target', { read: ViewContainerRef });
@@ -166,16 +174,8 @@ export class FormFieldOutlet {
             target.createComponent(component as Type<unknown>, {
                 bindings: [
                     inputBinding('context', this.boundContext),
-                    ...(component === DocumentInput
+                    ...(component === ChoiceSelector
                         ? [
-                              inputBinding(
-                                  'boolean',
-                                  () => this.field().artifact === 'field.BOOLEAN',
-                              ),
-                              inputBinding(
-                                  'enumeration',
-                                  () => this.field().artifact === 'field.ENUM',
-                              ),
                               outputBinding<EditingInput>('editChange', (input) => {
                                   if (
                                       !this.boundContext().disabled &&
@@ -187,21 +187,65 @@ export class FormFieldOutlet {
                                           input,
                                       });
                               }),
-                          ]
-                        : [
                               outputBinding<FieldValue>('valueChange', (value) => {
-                                  const field = this.field();
                                   if (
                                       !this.boundContext().disabled &&
                                       !this.boundContext().readOnly
                                   )
                                       this.fieldChange.emit({
-                                          id: field.id,
-                                          path: field.path,
+                                          id: this.field().id,
+                                          path: this.field().path,
                                           value,
                                       });
                               }),
-                          ]),
+                              outputBinding<ChoicePageDirection>('pageChange', (direction) => {
+                                  if (
+                                      !this.boundContext().disabled &&
+                                      !this.boundContext().readOnly
+                                  )
+                                      this.fieldPage.emit({
+                                          id: this.field().id,
+                                          path: this.field().path,
+                                          direction,
+                                      });
+                              }),
+                          ]
+                        : component === DocumentInput
+                          ? [
+                                inputBinding(
+                                    'boolean',
+                                    () => this.field().artifact === 'field.BOOLEAN',
+                                ),
+                                inputBinding(
+                                    'enumeration',
+                                    () => this.field().artifact === 'field.ENUM',
+                                ),
+                                outputBinding<EditingInput>('editChange', (input) => {
+                                    if (
+                                        !this.boundContext().disabled &&
+                                        !this.boundContext().readOnly
+                                    )
+                                        this.fieldEdit.emit({
+                                            id: this.field().id,
+                                            path: this.field().path,
+                                            input,
+                                        });
+                                }),
+                            ]
+                          : [
+                                outputBinding<FieldValue>('valueChange', (value) => {
+                                    const field = this.field();
+                                    if (
+                                        !this.boundContext().disabled &&
+                                        !this.boundContext().readOnly
+                                    )
+                                        this.fieldChange.emit({
+                                            id: field.id,
+                                            path: field.path,
+                                            value,
+                                        });
+                                }),
+                            ]),
                 ],
             });
             this.rendered = component;

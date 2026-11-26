@@ -86,6 +86,9 @@ export interface DetailGridEdit {
     readonly path: ValuePath;
     readonly input: EditingInput;
 }
+export interface DetailGridPage extends Omit<DetailGridEdit, 'input'> {
+    readonly direction: import('../selector/choice-options.js').ChoicePageDirection;
+}
 export function gridIdentity(value: unknown): asserts value is string {
     if (typeof value !== 'string' || !value.trim())
         throw new Error('Invalid grid identity or label');

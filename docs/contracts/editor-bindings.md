@@ -123,6 +123,16 @@ context to provide equivalent presentation; the bridge owns the outward lossless
 event channel. This increment does not redesign optional controls or complete the
 remaining semantic widget catalogue.
 
+### Paged choice selection
+
+Artifact fields may opt into `context.selector` using the public
+[neutral paged choice selector](choice-selector.md). Header and collection `fields`
+presentation options accept this port. Lossless and scalar edits retain their
+existing separate channels; new `fieldPage`/`collectionPage` outputs carry neutral
+page directions with field paths and stable row keys, without mutating the session.
+Applications own option loading, current labels, wire conversion and stale-response
+acceptance. Optional-control compatibility guards are unchanged.
+
 ## Validation, feedback and reveal
 
 `EditorFeedback` keeps typed paths, messages and sources separate: `local`,

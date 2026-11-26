@@ -164,3 +164,12 @@ export type {
 } from './editor/document-bindings.js';
 export type { FormFieldEdit } from './form/form-definition.js';
 export type { DetailGridEdit } from './grid/grid-definition.js';
+export { ChoiceSelector } from './selector/choice-selector.js';
+export type { ChoiceSelectorContext } from './selector/choice-selector.js';
+export type {
+    ChoiceOption,
+    ChoiceSelectorOptions,
+    ChoicePageDirection,
+} from './selector/choice-options.js';
+export type { FormFieldPage } from './form/form-definition.js';
+export type { DetailGridPage } from './grid/grid-definition.js';

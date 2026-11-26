@@ -1,4 +1,5 @@
 import type { EditingInput } from '../state/document-state.js';
+import type { ChoiceSelectorOptions } from '../selector/choice-options.js';
 /**
  * SPDX-License-Identifier: Apache-2.0
  * Extracted from alxarafe/erbas-client: app/src/app/core-fe/field-types/renderer-context.ts
@@ -18,6 +19,8 @@ export interface FieldRendererContext {
     readonly disabled?: boolean;
     readonly readOnly?: boolean;
     readonly choices?: readonly string[];
+    /** Opt-in neutral paged selector; not an optional-control domain or a loader. */
+    readonly selector?: ChoiceSelectorOptions;
     /** Optional instance domain/presentation used by an opt-in control host. */
     readonly control?: ControlRequest;
     /** Application-owned accessible feedback IDs; no validation semantics. */
