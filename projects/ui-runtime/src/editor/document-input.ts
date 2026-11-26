@@ -34,6 +34,16 @@ import type { ChoicePageDirection } from '../selector/choice-options.js';
                     [attr.aria-invalid]="context().invalid || null"
                     (change)="toggle($event)"
                 />
+            } @else if (multiline()) {
+                <textarea
+                    [id]="textId()"
+                    [value]="text()"
+                    [disabled]="context().disabled"
+                    [readOnly]="!!context().readOnly || !!context().selector?.busy"
+                    [attr.aria-describedby]="context().describedBy?.join(' ') || null"
+                    [attr.aria-invalid]="context().invalid || null"
+                    (input)="type($event)"
+                ></textarea>
             } @else {
                 <input
                     type="text"
@@ -106,11 +116,12 @@ import type { ChoicePageDirection } from '../selector/choice-options.js';
             Empty text
         </button>`,
     styles: [
-        ':host{display:block;min-width:0}label{display:block}input,button{font:inherit;max-width:100%;box-sizing:border-box}button{margin:.2rem;padding:.35rem}span{margin:.3rem}input:focus-visible,button:focus-visible{outline:3px solid currentColor;outline-offset:2px}',
+        ':host{display:block;min-width:0}label{display:block}input,textarea,button{font:inherit;max-width:100%;box-sizing:border-box}button{margin:.2rem;padding:.35rem}span{margin:.3rem}input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid currentColor;outline-offset:2px}',
     ],
 })
 export class DocumentInput {
     readonly context = input.required<FieldRendererContext>();
+    readonly multiline = input(false);
     readonly boolean = input(false);
     readonly enumeration = input(false);
     readonly legacy = input(false);
@@ -223,7 +234,10 @@ export class DocumentInput {
         if (!this.blocked()) this.editChange.emit(input);
     }
     type(event: Event): void {
-        this.emit({ kind: 'raw', text: (event.target as HTMLInputElement).value });
+        this.emit({
+            kind: 'raw',
+            text: (event.target as HTMLInputElement | HTMLTextAreaElement).value,
+        });
     }
     toggle(event: Event): void {
         this.emit({ kind: 'value', value: (event.target as HTMLInputElement).checked });

@@ -383,3 +383,120 @@ test('native discard confirmation traps keyboard focus, cancels with Escape and 
     await expect(discard).toBeFocused();
     await expect(page.getByTestId('editor-dirty')).toHaveText('false');
 });
+
+test('lossless TEXT textarea preserves multiline intents, states, permissions and retained focus', async ({
+    page,
+}) => {
+    await page.goto('/default-theme/?scenario=editor');
+    const notes = page.getByRole('textbox', { name: 'Notes', exact: true });
+    await expect(notes).toHaveJSProperty('tagName', 'TEXTAREA');
+    await expect(notes).toHaveValue(' Header\n e\u0301 é 😀 ');
+    await expect(page.getByRole('textbox', { name: 'Title', exact: true })).toHaveJSProperty(
+        'tagName',
+        'INPUT',
+    );
+    await expect(page.getByRole('textbox', { name: 'Exact count', exact: true })).toHaveJSProperty(
+        'tagName',
+        'INPUT',
+    );
+    expect(await enumEvents(page)).toEqual({ fields: 0, cells: 0, legacy: 0, last: null });
+    for (const [button, input] of [
+        ['Unset Notes', { kind: 'absent' }],
+        ['Set null Notes', { kind: 'value', value: null }],
+        ['Set empty text Notes', { kind: 'value', value: '' }],
+    ]) {
+        await page.getByRole('button', { name: button, exact: true }).click();
+        await expect.poll(async () => (await snapshot(page)).properties.notes.input).toEqual(input);
+        await expect(notes).toHaveValue('');
+    }
+    await expect(notes).toHaveAttribute('aria-invalid', 'true');
+    expect(
+        await notes.evaluate((el) =>
+            el
+                .getAttribute('aria-describedby')
+                .split(' ')
+                .every((id) => !!document.getElementById(id)),
+        ),
+    ).toBe(true);
+    const exact = ' \n e\u0301 é 😀\n last \n';
+    // Chromium may split a multiline Unicode fill into several native input events.
+    const countInputs = (control) =>
+        control.evaluate((el) => {
+            el.dataset.inputEvents = '0';
+            el.addEventListener('input', () => {
+                el.dataset.inputEvents = String(Number(el.dataset.inputEvents) + 1);
+            });
+        });
+    await countInputs(notes);
+    for (const theme of ['default', 'alternative', 'cyberpunk', 'vintage', 'high-contrast']) {
+        await notes.focus();
+        const node = await notes.elementHandle();
+        const before = await snapshot(page),
+            events = await enumEvents(page);
+        await page.getByRole('button', { name: theme, exact: true }).evaluate((el) => el.click());
+        await expect(notes).toBeFocused();
+        expect(await notes.evaluate((el, old) => el === old, node)).toBe(true);
+        expect(await snapshot(page)).toEqual(before);
+        expect(await enumEvents(page)).toEqual(events);
+        const inputs = Number(await notes.getAttribute('data-input-events'));
+        await notes.fill(exact);
+        await expect
+            .poll(async () => (await snapshot(page)).properties.notes.input)
+            .toEqual({ kind: 'raw', text: exact });
+        await expect
+            .poll(async () => (await enumEvents(page)).fields)
+            .toBe(events.fields + Number(await notes.getAttribute('data-input-events')) - inputs);
+        await expect(notes).toBeFocused();
+        expect(await notes.evaluate((el, old) => el === old, node)).toBe(true);
+        await notes.fill('');
+        await expect
+            .poll(async () => (await snapshot(page)).properties.notes.input)
+            .toEqual({ kind: 'raw', text: '' });
+    }
+    const before = await snapshot(page),
+        events = await enumEvents(page);
+    for (const name of ['Fixed notes', 'Disabled notes']) {
+        const control = page.getByRole('textbox', { name, exact: true });
+        await expect(control).toHaveJSProperty(
+            name === 'Fixed notes' ? 'readOnly' : 'disabled',
+            true,
+        );
+        await control.evaluate((el) => {
+            el.value = 'forbidden\nedit';
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    }
+    expect(await snapshot(page)).toEqual(before);
+    expect(await enumEvents(page)).toEqual(events);
+    await page.getByRole('tab', { name: 'Details', exact: true }).click();
+    await page.getByRole('button', { name: 'First section', exact: true }).click();
+    const cell = page.getByRole('textbox', { name: 'Row notes — Row a', exact: true });
+    await expect(cell).toHaveValue(' row\n notes ');
+    await countInputs(cell);
+    for (const theme of ['default', 'alternative', 'cyberpunk', 'vintage', 'high-contrast']) {
+        await cell.focus();
+        const node = await cell.elementHandle(),
+            events = await enumEvents(page);
+        await page.getByRole('button', { name: theme, exact: true }).evaluate((el) => el.click());
+        await expect(cell).toBeFocused();
+        expect(await cell.evaluate((el, old) => el === old, node)).toBe(true);
+        expect(await enumEvents(page)).toEqual(events);
+        const inputs = Number(await cell.getAttribute('data-input-events'));
+        await cell.fill(exact);
+        await expect
+            .poll(async () => (await enumEvents(page)).cells)
+            .toBe(events.cells + Number(await cell.getAttribute('data-input-events')) - inputs);
+        expect((await enumEvents(page)).last).toMatchObject({
+            collectionId: 'first',
+            key: 'a',
+            field: 'notes',
+            input: { kind: 'raw', text: exact },
+        });
+        expect((await enumEvents(page)).legacy).toBe(0);
+        await expect(cell).toBeFocused();
+        expect(await cell.evaluate((el, old) => el === old, node)).toBe(true);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+            true,
+        );
+    }
+});
