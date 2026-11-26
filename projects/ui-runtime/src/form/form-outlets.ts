@@ -103,7 +103,7 @@ export class FormFrame {
 @Component({
     selector: 'aur-form-field',
     template: `<ng-container #target />
-        @if (context().feedback?.length && !context().selector) {
+        @if (context().feedback?.length && (!context().selector || presentationOnly())) {
             <div [id]="context().id + '-feedback'" aria-live="polite">
                 @for (message of context().feedback; track $index) {
                     <p>{{ message }}</p>
@@ -113,10 +113,21 @@ export class FormFrame {
     host: {
         '[attr.data-aur-field]': 'field().id',
         role: 'group',
-        '[attr.aria-describedby]': 'context().describedBy?.join(" ") || null',
+        '[attr.aria-describedby]': 'description()',
     },
 })
 export class FormFieldOutlet {
+    /** Internal list query presentation: reuse scalar theme artifacts without document editing UI. */
+    readonly presentationOnly = input(false);
+    protected readonly description = computed(
+        () =>
+            [
+                ...(this.context().describedBy ?? []),
+                ...(this.presentationOnly() && this.context().feedback?.length
+                    ? [this.context().id + '-feedback']
+                    : []),
+            ].join(' ') || null,
+    );
     readonly field = input.required<FormFieldDefinition>();
     readonly context = input.required<FieldRendererContext>();
     readonly readOnly = input(false);
@@ -145,11 +156,13 @@ export class FormFieldOutlet {
                 }))
         )
             throw new Error('Unsupported document editing context');
-        return context.selector !== undefined
-            ? { component: ChoiceSelector, context }
-            : context.documentInput === undefined
-              ? resolveFormFieldRenderer(this.field(), context, this.registry, this.resolver)
-              : { component: DocumentInput, context };
+        return this.presentationOnly()
+            ? resolveFormFieldRenderer(this.field(), context, this.registry, this.resolver)
+            : context.selector !== undefined
+              ? { component: ChoiceSelector, context }
+              : context.documentInput === undefined
+                ? resolveFormFieldRenderer(this.field(), context, this.registry, this.resolver)
+                : { component: DocumentInput, context };
     });
     private readonly boundContext = computed(() => this.binding().context);
     private readonly target = viewChild('target', { read: ViewContainerRef });

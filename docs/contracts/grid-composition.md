@@ -149,3 +149,163 @@ STATE-001/STATE-002; validation and STATE-003–STATE-006 remain pending. A futu
 and `collectionChange` together, apply effective updates and coordinate one parent
 save/discard boundary. No independent row save or backend-generated identity policy
 is defined here.
+
+## Neutral list interaction ports (AUR-LIST-PORTS-001)
+
+### Audit and scope
+
+The baseline `ListGrid` already supplied keyed rows, duplicate-label disambiguation,
+exact read-only cells, a named horizontal scroll region, `rowSelected`, and retained
+theme frames. ERBAS's read-only reference files `resource-screen.ts`,
+`resource-screen.html`, `models.ts` and `resource-ui.spec.ts` show additional checkbox
+selection, primary/secondary sorting, search/filter inputs and offset paging. Its
+selection uses row references and clears on page load; query application interprets
+metadata types, nulls, AND operators and sort syntax, then fetches records. Those
+policies and the tested HTTP offset/limit protocol belong to ERBAS/adapters.
+
+The demonstrated AUR gaps were controlled multiple-key selection and list-local
+query/pager presentation. This increment adds those ports to the existing `ListGrid`;
+it does not replace ResourceScreen or import its metadata, scalar decoder, max
+selection rule, transport, authorization, action targets or query dialect. Existing
+consumers and `ListGridContext` literals need no changes. `DetailGrid` is unchanged.
+
+### Controlled selection and interaction locks
+
+Optional `[selectedKeys]: readonly string[]` enables a checkbox column in addition
+to any legacy single-selection buttons. Omit the input to retain the old layout.
+An empty array enables multiple selection with nothing selected. Keys are the same
+opaque, nonempty application identities as `GridRow.key`; duplicate selected keys
+reject. Row labels may repeat and use the existing presentation-only accessible
+suffixes; labels never become event identities.
+
+`selectionChange: ListSelectionChange` emits frozen `{key, selected: boolean}` for
+an explicit change on a current-page row. It never also emits `rowSelected`. The
+legacy selection button continues to emit exactly one opaque key through
+`rowSelected`, independently of multiple selection. Unchanged/unknown imperative
+targets do not emit. Applications accept or reject each intent and supply replacement
+`selectedKeys`; the checkbox restores the supplied state if the owner does not echo
+a change. No internal selected-row store or optimistic application update exists.
+
+Keys outside the current page remain in the supplied selection, with a readable
+selected/outside-page count. Page/context changes never clear, prune or select keys
+and emit no selection intents. There is no automatic select-all, selection limit,
+range selection, bulk action policy or persistence of row objects.
+
+New `[disabled]`, `[busy]` and `[readOnly]` boolean inputs default to false and block
+all list interaction intents, including synthetic events and legacy activation.
+Busy renders a loading status and aria-busy while retaining the supplied rows and
+controls. Readonly is a presentation interaction lock, not an authorization or row
+editing policy. Text query inputs stay readonly while busy/readonly; checkbox,
+choice and button controls use their existing native disabled semantics. Disabling
+a focused native control can move focus according to browser behavior.
+
+### Pager
+
+Optional `[paging]: ListPaging` supplies:
+
+```ts
+const paging: ListPaging = {
+  offset: 0, pageSize: 25, total: 102, previous: false, next: true,
+};
+```
+
+Offsets/totals must be nonnegative safe integers; pageSize must be a positive safe
+integer. `total` may be absent, including on an empty page. `previous`/`next` are
+explicit application availability flags. Previous also requires offset > 0; Next
+also respects a known total and safe offset arithmetic. No inference is made from
+current row count: a short or empty page can still have an available next page.
+An empty known-zero-total page has no next page. Out-of-range offsets are retained
+so applications can provide corrected paging after deletions or stale responses.
+
+`pageChange: ListPageChange` emits frozen `{direction, offset, pageSize}`, with
+`direction: 'previous' | 'next'` (the existing choice paging vocabulary), the requested
+offset and supplied size. Previous clamps only its requested offset to zero; Next
+adds pageSize. The component never changes its current page, fetches rows, resets a
+query or clears selection. Applications supply the resulting page and handle pending
+requests, errors, cancellation and stale response ordering. First/last boundaries
+are covered by the previous/next controls; arbitrary page jumps and page-size
+choosers are not justified by the current fixture and remain unimplemented.
+
+### Query presentation, not a query model
+
+Optional `[query]: ListQuery` supplies an ordered `inputs: readonly ListQueryInput[]`
+and optional `applyLabel`. Each input has a unique stable `id`, accessible `label`
+and exact string `value`, optional disabled/readOnly flags and optional plain-text
+`message`. These IDs identify presentation inputs, not backend properties or paths.
+Omit an input to omit a capability. Applications can supply independent primary and
+secondary sort inputs or separate filter field/operator/value controls as needed.
+AUR does not impose semantic roles or construct an expression tree.
+
+An input without `choices` reuses the existing themed STRING renderer. An input with
+`choices: readonly ChoiceOption[]` reuses the existing ENUM renderer and opaque
+value/label options used by selectors. Values are unique strings; labels may repeat.
+The current value must be explicitly supplied in choices, including a default/none
+option if desired. No first choice, nullable placeholder, null/absence buttons or
+paged-selector UI is invented. The internal form outlet mounts these scalar artifacts
+directly, retaining its existing theme/focus mechanism without creating a form or
+another document editing state. Third-party ENUM renderers must honor the existing
+documentInput placeholder and edit restrictions contract.
+
+```ts
+const query: ListQuery = {
+  inputs: [
+    { id: 'search', label: 'Search', value: '  exact text  ' },
+    { id: 'primary', label: 'Primary sort', value: '', choices: [
+      { value: '', label: 'Default order' },
+      { value: 'sort-token', label: 'Name ascending' },
+    ] },
+    { id: 'predicate', label: 'Filter text', value: '1e-' },
+  ],
+};
+```
+
+`queryChange: ListQueryChange` emits frozen `{id,value}` per actual user edit.
+Applications echo accepted edits into their query input snapshots; strings retain
+whitespace, empty text, numeric-looking drafts, opaque tokens and Unicode exactly.
+There is no Number/boolean/date conversion, trimming, backend operator mapping,
+implicit null rule or validation. Native single-line text controls retain their
+usual browser text-entry behavior. Unknown choices, non-string values and blocked
+input edits do not emit. Supplied messages are display evidence, not AUR validation.
+
+Only an explicit Apply query button activation or `applyQuery()` call emits
+`queryApply: readonly ListQueryChange[]`, an immutable snapshot of all supplied
+input IDs/values, including readonly/disabled inputs. The application decides which
+values participate in a request. Editing, mounting, context refresh and theme changes
+do not apply anything. Keyboard users Tab to Apply and activate with Enter/Space;
+there is no implicit text-input submission or debounce. No query intent automatically
+requests a new page or changes selected keys.
+
+```html
+<aur-list-grid [context]="list" [selectedKeys]="selectedKeys"
+  [paging]="paging" [query]="query" [busy]="loading"
+  (rowSelected)="openKey($event)" (selectionChange)="acceptSelection($event)"
+  (pageChange)="requestPage($event)" (queryChange)="updateQueryDraft($event)"
+  (queryApply)="applyApplicationQuery($event)" />
+```
+
+### Acceptance and limits
+
+Query views track stable input IDs; table views track stable row keys/column IDs.
+The existing retained projection/frame mechanism preserves nodes and focus through
+all five reference themes, structural grid frame replacement and unrelated context
+updates. Changing logical identities, input renderer kinds or removing a page row
+is an application lifecycle change; focus is not transferred automatically to a
+different row when the focused row leaves a page. Selection keys remain owner-held.
+Query labels wrap and wide tables remain inside the named keyboard-scrollable region.
+
+`tests/list-ports.test.mjs` and compile-time fixtures cover controlled/legacy channels,
+selection across pages, malformed data, immutable intents, offset boundaries/unknown
+totals, safe arithmetic, locks, exact text and explicit application. Installed APF
+`list-ports.spec.mjs` covers rejected/accepted checkbox intents, repeated labels,
+shared-key DOM retention across pages, empty pages, query drafts and application,
+synthetic suppression, no fetch/XHR, keyboard controls/scrolling, long labels,
+all five themes plus structural grid frames, High Contrast and desktop/mobile layouts.
+Inspect `/default-theme/?scenario=list-ports` in the private testbed. Existing list,
+form, grid, editor and selector tests continue to cover legacy consumers.
+
+Remaining MVP boundaries are deliberate: applications own query interpretation,
+filter validation/AND/null/operator semantics, sorting priorities, selected-key
+persistence, response acceptance and business actions. This is not complete ERBAS
+adoption, a data source/query engine, a general filter builder, virtualized table,
+select-all model, arbitrary pager or accessibility certification in other browsers
+and assistive technologies. No reference repository or wire contract is changed.

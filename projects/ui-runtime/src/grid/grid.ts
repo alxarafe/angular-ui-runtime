@@ -1,3 +1,14 @@
+import {
+    validateSelectedKeys,
+    validateListPaging,
+    snapshotListQuery,
+    type ListSelectionChange,
+    type ListPaging,
+    type ListPageChange,
+    type ListQuery,
+    type ListQueryInput,
+    type ListQueryChange,
+} from './list-ports.js';
 import { formPathKey } from '../form/value-path.js';
 /** SPDX-License-Identifier: Apache-2.0 */
 import { Component, ElementRef, computed, inject, input, output } from '@angular/core';
@@ -43,13 +54,40 @@ function rowLabels(rows: readonly GridRow[]): Map<string, string> {
 const styles = `:host, aur-form-frame { display:block; min-width:0; max-width:100%; } .scroll { overflow-x:auto; max-width:100%; padding:.25rem; } table { border-collapse:collapse; width:100%; } th,td { padding:.5rem; border:1px solid currentColor; text-align:start; } caption { text-align:start; font-weight:bold; padding:.5rem; } button { font:inherit; padding:.5rem; margin:.25rem; } :focus-visible { outline:3px solid currentColor; outline-offset:2px; } aur-form-field { display:block; min-width:12rem; }`;
 @Component({
     selector: 'aur-list-grid',
-    imports: [FormFrame],
-    styles: [styles],
-    host: { '[class]': 'theme.current().cssClass' },
+    imports: [FormFrame, FormFieldOutlet],
+    styles: [
+        styles,
+        '.query{display:flex;flex-wrap:wrap;gap:.75rem;min-width:0}.query aur-form-field{flex:1 1 14rem;min-width:0;max-width:100%}nav{display:flex;flex-wrap:wrap;align-items:center}button{max-width:100%;white-space:normal;overflow-wrap:anywhere}',
+    ],
+    host: { '[class]': 'theme.current().cssClass', '[attr.aria-busy]': 'busy()' },
     template: `<aur-form-frame
         presentation="listGrid"
         [context]="{ id: grid().id, label: grid().label }"
-        ><div class="scroll" role="region" [attr.aria-label]="grid().label" tabindex="0">
+    >
+        @if (queryContext(); as query) {
+            <div class="query" role="group" [attr.aria-label]="grid().label + ' query'">
+                @for (control of query.inputs; track control.id) {
+                    <aur-form-field
+                        [presentationOnly]="true"
+                        [field]="queryField(control)"
+                        [context]="queryContextFor(control)"
+                        (fieldChange)="editQuery(control.id, $event.value)"
+                    />
+                }
+                <button type="button" [disabled]="blocked()" (click)="applyQuery()">
+                    {{ query.applyLabel || 'Apply query' }}
+                </button>
+            </div>
+        }
+        @if (keys(); as selected) {
+            <p role="status">
+                {{ selected.length }} selected; {{ outsideCount() }} outside this page.
+            </p>
+        }
+        @if (busy()) {
+            <p role="status">Loading rows.</p>
+        }
+        <div class="scroll" role="region" [attr.aria-label]="grid().label" tabindex="0">
             <table>
                 <caption>
                     {{
@@ -60,6 +98,9 @@ const styles = `:host, aur-form-frame { display:block; min-width:0; max-width:10
                     <tr>
                         @for (column of grid().columns; track column.id) {
                             <th scope="col">{{ column.label }}</th>
+                        }
+                        @if (keys()) {
+                            <th scope="col">Multiple selection</th>
                         }
                         @if (grid().selectable) {
                             <th scope="col">Selection</th>
@@ -78,11 +119,23 @@ const styles = `:host, aur-form-frame { display:block; min-width:0; max-width:10
                                     }}
                                 </td>
                             }
+                            @if (keys()) {
+                                <td>
+                                    <input
+                                        type="checkbox"
+                                        [attr.aria-label]="'Include ' + rowLabel(row)"
+                                        [checked]="isSelected(row.key)"
+                                        [disabled]="blocked()"
+                                        (change)="selectionEvent(row.key, $event)"
+                                    />
+                                </td>
+                            }
                             @if (grid().selectable) {
                                 <td>
                                     <button
                                         type="button"
                                         (click)="select(row.key)"
+                                        [disabled]="blocked()"
                                         [attr.aria-label]="'Select ' + rowLabel(row)"
                                     >
                                         Select
@@ -93,7 +146,11 @@ const styles = `:host, aur-form-frame { display:block; min-width:0; max-width:10
                     } @empty {
                         <tr>
                             <td
-                                [attr.colspan]="grid().columns.length + (grid().selectable ? 1 : 0)"
+                                [attr.colspan]="
+                                    grid().columns.length +
+                                    (grid().selectable ? 1 : 0) +
+                                    (keys() ? 1 : 0)
+                                "
                             >
                                 {{ grid().emptyLabel || 'No rows.' }}
                             </td>
@@ -101,12 +158,151 @@ const styles = `:host, aur-form-frame { display:block; min-width:0; max-width:10
                     }
                 </tbody>
             </table>
-        </div></aur-form-frame
-    >`,
+        </div>
+        @if (page(); as page) {
+            <nav [attr.aria-label]="grid().label + ' pagination'">
+                <button
+                    type="button"
+                    [disabled]="blocked() || !canPage('previous')"
+                    (click)="requestPage('previous')"
+                >
+                    Previous page
+                </button>
+                <span
+                    >Offset {{ page.offset }} · Page size {{ page.pageSize }} · Total
+                    {{ page.total === undefined ? 'not supplied' : page.total }}</span
+                >
+                <button
+                    type="button"
+                    [disabled]="blocked() || !canPage('next')"
+                    (click)="requestPage('next')"
+                >
+                    Next page
+                </button>
+            </nav>
+        }
+    </aur-form-frame>`,
 })
 export class ListGrid {
     readonly context = input.required<ListGridContext>();
     readonly rowSelected = output<string>();
+    readonly selectedKeys = input<readonly string[]>();
+    readonly selectionChange = output<ListSelectionChange>();
+    readonly paging = input<ListPaging>();
+    readonly pageChange = output<ListPageChange>();
+    readonly query = input<ListQuery>();
+    readonly queryChange = output<ListQueryChange>();
+    readonly queryApply = output<readonly ListQueryChange[]>();
+    readonly disabled = input(false);
+    readonly readOnly = input(false);
+    readonly busy = input(false);
+    protected readonly blocked = computed(() => this.disabled() || this.readOnly() || this.busy());
+    protected readonly keys = computed(() => {
+        const keys = this.selectedKeys();
+        if (keys === undefined) return undefined;
+        validateSelectedKeys(keys);
+        return Object.freeze([...keys]);
+    });
+    protected readonly page = computed(() => {
+        const page = this.paging();
+        if (page === undefined) return undefined;
+        validateListPaging(page);
+        return Object.freeze({ ...page });
+    });
+    protected readonly queryContext = computed(() =>
+        this.query() === undefined ? undefined : snapshotListQuery(this.query()!),
+    );
+    protected readonly outsideCount = computed(
+        () =>
+            this.keys()?.filter((key) => !this.grid().rows.some((row) => row.key === key)).length ??
+            0,
+    );
+    protected isSelected(key: string): boolean {
+        return this.keys()?.includes(key) ?? false;
+    }
+    protected selectionEvent(key: string, event: Event): void {
+        const target = event.target as HTMLInputElement;
+        this.setSelected(key, target.checked);
+        target.checked = this.isSelected(key);
+    }
+    setSelected(key: string, selected: boolean): void {
+        if (
+            !this.blocked() &&
+            this.keys() &&
+            typeof selected === 'boolean' &&
+            this.grid().rows.some((row) => row.key === key) &&
+            selected !== this.isSelected(key)
+        )
+            this.selectionChange.emit(Object.freeze({ key, selected }));
+    }
+    protected canPage(direction: ChoicePageDirection): boolean {
+        const page = this.page();
+        if (!page) return false;
+        return direction === 'previous'
+            ? page.previous && page.offset > 0
+            : direction === 'next' &&
+                  page.next &&
+                  page.offset <= Number.MAX_SAFE_INTEGER - page.pageSize &&
+                  (page.total === undefined || page.offset + page.pageSize < page.total);
+    }
+    requestPage(direction: ChoicePageDirection): void {
+        const page = this.page();
+        if (this.blocked() || !page || !this.canPage(direction)) return;
+        this.pageChange.emit(
+            Object.freeze({
+                direction,
+                offset:
+                    direction === 'previous'
+                        ? Math.max(0, page.offset - page.pageSize)
+                        : page.offset + page.pageSize,
+                pageSize: page.pageSize,
+            }),
+        );
+    }
+    protected queryField(control: ListQueryInput): FormFieldDefinition {
+        return {
+            id: control.id,
+            path: [{ kind: 'property', name: control.id }],
+            artifact: control.choices ? 'field.ENUM' : 'field.STRING',
+        };
+    }
+    protected queryContextFor(control: ListQueryInput): FieldRendererContext {
+        return {
+            id:
+                'aur-list-query-' +
+                encodeURIComponent(JSON.stringify([this.grid().id, control.id])),
+            label: control.label,
+            value: control.value,
+            documentInput: { kind: 'value', value: control.value },
+            disabled: this.disabled() || control.disabled,
+            readOnly: this.readOnly() || this.busy() || control.readOnly,
+            ...(control.choices
+                ? { selector: { options: control.choices, previous: false, next: false } }
+                : {}),
+            ...(control.message ? { feedback: [control.message] } : {}),
+        };
+    }
+    editQuery(id: string, value: FieldValue): void {
+        const control = this.queryContext()?.inputs.find((control) => control.id === id);
+        if (
+            this.blocked() ||
+            !control ||
+            control.disabled ||
+            control.readOnly ||
+            typeof value !== 'string' ||
+            value === control.value ||
+            (control.choices && !control.choices.some((choice) => choice.value === value))
+        )
+            return;
+        this.queryChange.emit(Object.freeze({ id, value }));
+    }
+    applyQuery(): void {
+        const query = this.queryContext();
+        if (this.blocked() || !query) return;
+        this.queryApply.emit(
+            Object.freeze(query.inputs.map(({ id, value }) => Object.freeze({ id, value }))),
+        );
+    }
     protected readonly theme = inject(ThemeService);
     readonly grid = computed(() => {
         validateGrid(this.context());
@@ -117,7 +313,11 @@ export class ListGrid {
         return this.rowLabels().get(row.key)!;
     }
     select(key: string): void {
-        if (this.grid().selectable && this.grid().rows.some((row) => row.key === key))
+        if (
+            !this.blocked() &&
+            this.grid().selectable &&
+            this.grid().rows.some((row) => row.key === key)
+        )
             this.rowSelected.emit(key);
     }
 }

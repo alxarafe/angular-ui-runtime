@@ -180,3 +180,12 @@ export type { FormSlotReference } from './form/form-definition.js';
 
 export { FeedbackSummary } from './feedback/feedback-summary.js';
 export type { FeedbackReveal } from './feedback/feedback-summary.js';
+
+export type {
+    ListSelectionChange,
+    ListPaging,
+    ListPageChange,
+    ListQueryInput,
+    ListQuery,
+    ListQueryChange,
+} from './grid/list-ports.js';
