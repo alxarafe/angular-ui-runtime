@@ -15,7 +15,8 @@ import type {
     ValuePath,
 } from './form-definition.js';
 
-export interface ComposedGroup extends Omit<LayoutGroup, 'fields' | 'collections'> {
+export interface ComposedGroup extends Omit<LayoutGroup, 'fields' | 'collections' | 'slots'> {
+    readonly slots: readonly { readonly id: string }[];
     readonly fields: readonly FormFieldDefinition[];
     readonly collections: readonly FormCollection[];
 }
@@ -47,7 +48,18 @@ function distinct<T extends { readonly id: string }>(items: readonly T[]): void 
     }
 }
 /** First valid placement wins. Invalid references diagnose, never suppress fallback. */
-export function composeForm(definition: FormDefinition, layout?: FormLayout): FormComposition {
+export function composeForm(
+    definition: FormDefinition,
+    layout?: FormLayout,
+    slotIds: readonly string[] = [],
+): FormComposition {
+    const availableSlots = new Set<string>();
+    for (const id of slotIds) {
+        identity(id);
+        if (availableSlots.has(id)) throw new Error('Duplicate form slot identity');
+        availableSlots.add(id);
+    }
+    const placedSlots = new Set<string>();
     identity(definition.id);
     identity(definition.label);
     distinct(definition.fields);
@@ -173,6 +185,22 @@ export function composeForm(definition: FormDefinition, layout?: FormLayout): Fo
                     section.groups.map((group) =>
                         Object.freeze({
                             ...group,
+                            slots: Object.freeze(
+                                (group.slots ?? []).flatMap((ref) => {
+                                    identity(ref?.id);
+                                    const code = !availableSlots.has(ref.id)
+                                        ? 'unknown-slot'
+                                        : placedSlots.has(ref.id)
+                                          ? 'duplicate-slot'
+                                          : undefined;
+                                    if (code) {
+                                        diagnostics.push(Object.freeze({ code, id: ref.id }));
+                                        return [];
+                                    }
+                                    placedSlots.add(ref.id);
+                                    return [Object.freeze({ id: ref.id })];
+                                }),
+                            ),
                             fields: placeFields(group.fields),
                             collections: placeCollections(group.collections ?? []),
                         }),

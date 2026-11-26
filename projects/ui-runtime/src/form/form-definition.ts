@@ -44,7 +44,12 @@ export interface FormDefinition {
     readonly fields: readonly FormFieldDefinition[];
     readonly actions?: readonly ContextAction[];
 }
+/** Application template identities, rendered after fields and collections in this group. */
+export interface FormSlotReference {
+    readonly id: string;
+}
 export interface LayoutGroup {
+    readonly slots?: readonly FormSlotReference[];
     readonly collections?: readonly ValuePath[];
     readonly id: string;
     readonly label?: string;
@@ -70,6 +75,8 @@ export interface FormLayout {
 }
 export interface FormDiagnostic {
     readonly code:
+        | 'unknown-slot'
+        | 'duplicate-slot'
         | 'unknown-field'
         | 'duplicate-field'
         | 'excluded-field'

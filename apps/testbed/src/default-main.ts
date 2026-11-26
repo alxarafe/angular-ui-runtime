@@ -1,3 +1,4 @@
+import { FormSlotsTestbed } from './form-slots';
 import { EditorTestbed } from './editor';
 import { SelectorTestbed } from './selector';
 import { MenusTestbed, MENU_THEMES } from './menus';
@@ -23,40 +24,58 @@ const grid = new URLSearchParams(location.search).get('scenario') === 'grid';
 const menus = new URLSearchParams(location.search).get('scenario') === 'menus';
 const editor = new URLSearchParams(location.search).get('scenario') === 'editor';
 const selector = new URLSearchParams(location.search).get('scenario') === 'selector';
+const slots = new URLSearchParams(location.search).get('scenario') === 'form-slots';
 bootstrapApplication(
-    selector
-        ? SelectorTestbed
-        : editor
-          ? EditorTestbed
-          : menus
-            ? MenusTestbed
-            : new URLSearchParams(location.search).get('scenario') === 'document-protection'
-              ? DocumentProtectionTestbed
-              : save
-                ? DocumentSaveTestbed
-                : documentValidation
-                  ? DocumentValidationTestbed
-                  : validation
-                    ? ValidationTestbed
-                    : state
-                      ? StateTestbed
-                      : grid
-                        ? GridTestbed
-                        : form
-                          ? FormTestbed
-                          : new URLSearchParams(location.search).get('scenario') === 'navigation'
-                            ? NavigationTestbed
-                            : DefaultThemeTestbed,
+    slots
+        ? FormSlotsTestbed
+        : selector
+          ? SelectorTestbed
+          : editor
+            ? EditorTestbed
+            : menus
+              ? MenusTestbed
+              : new URLSearchParams(location.search).get('scenario') === 'document-protection'
+                ? DocumentProtectionTestbed
+                : save
+                  ? DocumentSaveTestbed
+                  : documentValidation
+                    ? DocumentValidationTestbed
+                    : validation
+                      ? ValidationTestbed
+                      : state
+                        ? StateTestbed
+                        : grid
+                          ? GridTestbed
+                          : form
+                            ? FormTestbed
+                            : new URLSearchParams(location.search).get('scenario') === 'navigation'
+                              ? NavigationTestbed
+                              : DefaultThemeTestbed,
     {
         providers: provideThemeRuntime(
             menus
                 ? MENU_THEMES
-                : grid || state || validation || documentValidation || save || editor || selector
+                : grid ||
+                    state ||
+                    validation ||
+                    documentValidation ||
+                    save ||
+                    editor ||
+                    selector ||
+                    slots
                   ? GRID_THEMES
                   : form
                     ? FORM_THEMES
                     : DEFAULT_PACKAGE_THEMES,
-            grid || form || state || validation || documentValidation || save || editor || selector
+            grid ||
+                form ||
+                state ||
+                validation ||
+                documentValidation ||
+                save ||
+                editor ||
+                selector ||
+                slots
                 ? FORM_CONTROLS
                 : [],
         ),
