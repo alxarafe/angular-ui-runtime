@@ -351,3 +351,35 @@ test('lossless themed ENUM keeps exact states, feedback and keyed intents throug
     ).toEqual(['b', 'a']);
     expect(errors).toEqual([]);
 });
+
+test('native discard confirmation traps keyboard focus, cancels with Escape and returns to its invoker', async ({
+    page,
+}) => {
+    await page.goto('/default-theme/?scenario=editor');
+    await page.getByRole('textbox', { name: 'Title', exact: true }).fill('Retained draft');
+    const before = await snapshot(page),
+        discard = page.getByRole('button', { name: 'Discard', exact: true });
+    await discard.focus();
+    await page.keyboard.press('Enter');
+    const dialog = page.getByRole('dialog', { name: 'Discard changes', exact: true });
+    const cancel = dialog.getByRole('button', { name: 'Cancel discard', exact: true });
+    const confirm = dialog.getByRole('button', { name: 'Confirm discard', exact: true });
+    await expect(cancel).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(confirm).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(cancel).toBeFocused();
+    await page.getByRole('button', { name: 'Save', exact: true }).evaluate((el) => el.focus());
+    await expect(cancel).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
+    await expect(discard).toBeFocused();
+    expect(await snapshot(page)).toEqual(before);
+    await page.keyboard.press('Enter');
+    await expect(cancel).toBeFocused();
+    await confirm.focus();
+    await page.keyboard.press('Enter');
+    await expect(dialog).not.toBeVisible();
+    await expect(discard).toBeFocused();
+    await expect(page.getByTestId('editor-dirty')).toHaveText('false');
+});

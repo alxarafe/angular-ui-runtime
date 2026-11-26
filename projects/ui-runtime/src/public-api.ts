@@ -177,3 +177,6 @@ export type { DetailGridPage } from './grid/grid-definition.js';
 export { FormSlot } from './form/form-slot.js';
 export type { FormSlotContext } from './form/form-slot.js';
 export type { FormSlotReference } from './form/form-definition.js';
+
+export { FeedbackSummary } from './feedback/feedback-summary.js';
+export type { FeedbackReveal } from './feedback/feedback-summary.js';

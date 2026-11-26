@@ -258,8 +258,9 @@ export class DetailGrid {
         const row = path[prefix.length],
             field = path[prefix.length + 1];
         if (path.length === prefix.length) {
-            root.querySelector<HTMLElement>('.scroll')?.focus();
-            return true;
+            const target = root.querySelector<HTMLElement>('.scroll');
+            target?.focus();
+            return !!target && target.ownerDocument.activeElement === target;
         }
         if (row?.kind !== 'row' || !this.grid().rows.some((item) => item.key === row.key))
             return false;
@@ -269,16 +270,18 @@ export class DetailGrid {
                 : undefined;
         if (field && !column) return false;
         if (path.length > prefix.length + 2) return false;
-        const id =
-            'aur-cell-' +
-            encodeURIComponent(
-                JSON.stringify([this.grid().id, row.key, (column ?? this.grid().columns[0]!).id]),
-            );
         const controls = [...root.querySelectorAll<HTMLElement>('input,select,textarea,button')];
-        const target = controls.find((item) => item.id === id);
-        target?.focus();
-        return !!target;
+        for (const candidate of column ? [column] : this.grid().columns) {
+            const id =
+                'aur-cell-' +
+                encodeURIComponent(JSON.stringify([this.grid().id, row.key, candidate.id]));
+            const target = controls.find((item) => item.id === id);
+            target?.focus();
+            if (target && target.ownerDocument.activeElement === target) return true;
+        }
+        return false;
     }
+
     private path(key: string, field: string): ValuePath {
         return Object.freeze([
             ...snapshotGridPath(this.grid().path),
