@@ -386,3 +386,33 @@ test('keyed reveal compares canonical typed paths; lossless cells emit one chann
         injector.destroy();
     }
 });
+
+test('TEXT header and keyed cell retain exact multiline slots without projection edits', () => {
+    const { session, options } = fixture();
+    options.definition.fields.find((f) => f.id === 'empty').artifact = 'field.TEXT';
+    options.collections.rows.columns[0].artifact = 'field.TEXT';
+    const cellPath = [...path('rows'), rowKey('b'), prop('text')];
+    for (const input of [
+        { kind: 'absent' },
+        { kind: 'value', value: null },
+        { kind: 'value', value: '' },
+        { kind: 'raw', text: '' },
+        { kind: 'value', value: ' \r\n e\u0301 é 😀\r end ' },
+        { kind: 'raw', text: ' \n e\u0301 é 😀\n end \n' },
+    ]) {
+        applyDocumentFieldIntent(session, { id: 'empty', path: path('empty'), input });
+        applyDocumentCollectionIntent(session, {
+            collectionId: 'rows',
+            collectionPath: path('rows'),
+            key: 'b',
+            field: 'text',
+            path: cellPath,
+            input,
+        });
+        const before = session.state;
+        const bound = bindDocumentEditor(session, options);
+        assert.deepEqual(bound.contexts.empty.documentInput, input);
+        assert.deepEqual(bound.collectionContexts.rows.rows[1].contexts.text.documentInput, input);
+        assert.equal(session.state, before);
+    }
+});

@@ -69,10 +69,14 @@ const row = (key: string, value = '1', children: readonly DocumentRow[] = []): D
     value: object({
         quantity: field(value, { type: 'INTEGER' }),
         choice: field('OPEN'),
+        notes: field(' row\n notes '),
         nested: collection(children),
     }),
 });
 const document = object({
+    notes: field(' Header\n e\u0301 é 😀 '),
+    textFixed: { ...field('fixed\ntext'), readOnly: true },
+    textDisabled: { ...field('disabled\ntext'), disabled: true },
     title: field(''),
     optional: { ...field(''), input: { kind: 'absent' } },
     nullable: field(null),
@@ -94,6 +98,15 @@ const stringDef = {
     kind: 'field' as const,
     definition: { type: 'STRING' as const, required: true, nullable: false },
 };
+const textDef = {
+    kind: 'field' as const,
+    definition: {
+        type: 'TEXT' as const,
+        required: false,
+        nullable: true,
+        constraints: { minimumLength: 1 },
+    },
+};
 const integerDef = {
     kind: 'field' as const,
     definition: {
@@ -106,6 +119,7 @@ const integerDef = {
 const leafRowPlan = {
     kind: 'object' as const,
     properties: {
+        notes: textDef,
         quantity: integerDef,
         choice: enumDef,
         nested: { kind: 'collection' as const, row: { kind: 'object' as const, properties: {} } },
@@ -114,6 +128,7 @@ const leafRowPlan = {
 const rowPlan = {
     kind: 'object' as const,
     properties: {
+        notes: textDef,
         quantity: integerDef,
         choice: enumDef,
         nested: { kind: 'collection' as const, row: leafRowPlan },
@@ -122,6 +137,9 @@ const rowPlan = {
 const plan: DocumentBindingOptions['plan'] = {
     kind: 'object',
     properties: {
+        notes: textDef,
+        textFixed: textDef,
+        textDisabled: textDef,
         title: {
             ...stringDef,
             definition: { ...stringDef.definition, constraints: { minimumLength: 1 } },
@@ -156,6 +174,9 @@ const plan: DocumentBindingOptions['plan'] = {
     },
 };
 const descriptors = [
+    ['notes', 'Notes', 'TEXT'],
+    ['textFixed', 'Fixed notes', 'TEXT'],
+    ['textDisabled', 'Disabled notes', 'TEXT'],
     ['title', 'Title', 'STRING'],
     ['optional', 'Optional text', 'STRING'],
     ['nullable', 'Nullable text', 'STRING'],
@@ -380,6 +401,7 @@ export class EditorTestbed implements OnDestroy {
                     label: 'First details',
                     fields: { choice: { choices: enumChoices } },
                     columns: [
+                        { id: 'notes', field: 'notes', label: 'Row notes', artifact: 'field.TEXT' },
                         {
                             id: 'quantity',
                             field: 'quantity',
@@ -437,6 +459,9 @@ export class EditorTestbed implements OnDestroy {
                             {
                                 id: 'header-values',
                                 fields: [
+                                    'notes',
+                                    'textFixed',
+                                    'textDisabled',
                                     'title',
                                     'optional',
                                     'nullable',

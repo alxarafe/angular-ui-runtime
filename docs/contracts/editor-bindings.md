@@ -287,3 +287,24 @@ five themes plus structural frames, High Contrast and desktop/mobile layouts.
 containment, Escape, promise cancellation/confirmation and focus return. Remaining
 MVP limits include application-specific labels/policy, arbitrary component focus ports,
 hidden columns, non-Chromium/assistive-technology certification and human visual review.
+
+### Lossless multiline TEXT (AUR-EDITOR-TEXT-001)
+
+Lossless `field.TEXT` uses a labelled native textarea in both header fields and
+keyed detail cells. Each explicit input event emits one raw `EditingInput` through
+the existing field/grid intent adapter into `DocumentSession`; it emits no legacy
+scalar event. LF line breaks, Unicode sequences and surrounding spaces are retained
+exactly. Absent, null, empty value and empty raw text remain distinct session slots.
+Rendering and context/theme refreshes do not edit the session. The textarea retains
+DOM identity and focus across ordinary context updates and all five reference themes.
+Readonly/disabled guards, feedback associations, invalid state and visible focus use
+the existing bridge behavior. STRING and other scalar controls remain unchanged.
+
+Native textarea DOM values normalize CR and CRLF to LF. Rendering does not normalize
+the application/session value; an explicit input event records the native DOM value.
+Exact preservation of original CR/CRLF spelling after a user edit is not provided.
+No rich text, autosizing, semantic widget catalogue expansion or legacy renderer
+behavior change is included. Installed APF Chromium tests cover header/keyed-cell
+editing, event counts, states, restrictions and retained focus at desktop/mobile
+widths across all five themes; non-Chromium and assistive-technology certification
+remain outside this evidence.

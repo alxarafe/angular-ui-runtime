@@ -226,6 +226,10 @@ export class FormFieldOutlet {
                         : component === DocumentInput
                           ? [
                                 inputBinding(
+                                    'multiline',
+                                    () => this.field().artifact === 'field.TEXT',
+                                ),
+                                inputBinding(
                                     'boolean',
                                     () => this.field().artifact === 'field.BOOLEAN',
                                 ),
