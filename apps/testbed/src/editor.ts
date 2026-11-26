@@ -69,11 +69,15 @@ const row = (key: string, value = '1', children: readonly DocumentRow[] = []): D
     value: object({
         quantity: field(value, { type: 'INTEGER' }),
         choice: field('OPEN'),
+        date: field('2024-02-29'),
         notes: field(' row\n notes '),
         nested: collection(children),
     }),
 });
 const document = object({
+    date: field('2024-02-29'),
+    dateFixed: { ...field('2024-02-29'), readOnly: true },
+    dateDisabled: { ...field('2024-02-29'), disabled: true },
     notes: field(' Header\n e\u0301 é 😀 '),
     textFixed: { ...field('fixed\ntext'), readOnly: true },
     textDisabled: { ...field('disabled\ntext'), disabled: true },
@@ -107,6 +111,16 @@ const textDef = {
         constraints: { minimumLength: 1 },
     },
 };
+const dateDef = {
+    kind: 'field' as const,
+    definition: {
+        type: 'DATE' as const,
+        required: false,
+        nullable: true,
+        format: 'gregorian-date' as const,
+        constraints: { minimum: { value: '2024-01-01' }, maximum: { value: '2025-12-31' } },
+    },
+};
 const integerDef = {
     kind: 'field' as const,
     definition: {
@@ -119,6 +133,7 @@ const integerDef = {
 const leafRowPlan = {
     kind: 'object' as const,
     properties: {
+        date: dateDef,
         notes: textDef,
         quantity: integerDef,
         choice: enumDef,
@@ -128,6 +143,7 @@ const leafRowPlan = {
 const rowPlan = {
     kind: 'object' as const,
     properties: {
+        date: dateDef,
         notes: textDef,
         quantity: integerDef,
         choice: enumDef,
@@ -137,6 +153,9 @@ const rowPlan = {
 const plan: DocumentBindingOptions['plan'] = {
     kind: 'object',
     properties: {
+        date: dateDef,
+        dateFixed: dateDef,
+        dateDisabled: dateDef,
         notes: textDef,
         textFixed: textDef,
         textDisabled: textDef,
@@ -174,6 +193,9 @@ const plan: DocumentBindingOptions['plan'] = {
     },
 };
 const descriptors = [
+    ['date', 'Document date', 'DATE'],
+    ['dateFixed', 'Fixed date', 'DATE'],
+    ['dateDisabled', 'Disabled date', 'DATE'],
     ['notes', 'Notes', 'TEXT'],
     ['textFixed', 'Fixed notes', 'TEXT'],
     ['textDisabled', 'Disabled notes', 'TEXT'],
@@ -216,6 +238,12 @@ const descriptors = [
             ><button (click)="commit()">Committed</button
             ><button (click)="accept()">Accept authoritative</button
             ><button (click)="discard()">Discard</button>
+            <button (click)="dateInput({ kind: 'value', value: '2025-02-29' })">
+                Use invalid DATE
+            </button>
+            <button (click)="dateInput({ kind: 'value', value: false })">
+                Use unsupported DATE
+            </button>
             <button (click)="enumInput({ kind: 'value', value: 'UNKNOWN' })">
                 Use unknown ENUM
             </button>
@@ -330,6 +358,14 @@ export class EditorTestbed implements OnDestroy {
     legacy(): void {
         this.legacyEdits.update((n) => n + 1);
     }
+    dateInput(input: EditingInput): void {
+        this.session.change({ kind: 'field', path: path('date'), input });
+        this.session.change({
+            kind: 'field',
+            path: [...first, key('a'), property('date')],
+            input,
+        });
+    }
     enumInput(input: EditingInput): void {
         this.session.change({ kind: 'field', path: path('choice'), input });
         this.session.change({
@@ -401,6 +437,7 @@ export class EditorTestbed implements OnDestroy {
                     label: 'First details',
                     fields: { choice: { choices: enumChoices } },
                     columns: [
+                        { id: 'date', field: 'date', label: 'Row date', artifact: 'field.DATE' },
                         { id: 'notes', field: 'notes', label: 'Row notes', artifact: 'field.TEXT' },
                         {
                             id: 'quantity',
@@ -459,6 +496,9 @@ export class EditorTestbed implements OnDestroy {
                             {
                                 id: 'header-values',
                                 fields: [
+                                    'date',
+                                    'dateFixed',
+                                    'dateDisabled',
                                     'notes',
                                     'textFixed',
                                     'textDisabled',

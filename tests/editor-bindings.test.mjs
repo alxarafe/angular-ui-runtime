@@ -416,3 +416,69 @@ test('TEXT header and keyed cell retain exact multiline slots without projection
         assert.equal(session.state, before);
     }
 });
+
+test('DATE bindings retain exact header/keyed slots while the existing validator owns calendar and bounds', () => {
+    const { session, options } = fixture();
+    const date = {
+        kind: 'field',
+        definition: {
+            type: 'DATE',
+            required: false,
+            nullable: true,
+            format: 'gregorian-date',
+            constraints: { minimum: { value: '2024-01-01' }, maximum: { value: '2025-12-31' } },
+        },
+    };
+    options.definition.fields.find((f) => f.id === 'empty').artifact = 'field.DATE';
+    options.plan.properties.empty = date;
+    options.collections.rows.columns[0].artifact = 'field.DATE';
+    options.plan.properties.rows.row.properties.text = date;
+    const cellPath = [...path('rows'), rowKey('b'), prop('text')];
+    const cases = [
+        [{ kind: 'absent' }, false],
+        [{ kind: 'value', value: null }, false],
+        [{ kind: 'value', value: '' }, true],
+        [{ kind: 'raw', text: '' }, true],
+        [{ kind: 'value', value: false }, true],
+        ...['2024-02-29', '2025-02-28'].flatMap((text) => [
+            [{ kind: 'value', value: text }, false],
+            [{ kind: 'raw', text }, false],
+        ]),
+        ...[
+            '1900-02-29',
+            '2025-02-29',
+            '2024-02-',
+            '2024-2-09',
+            ' 2024-02-29 ',
+            '2024-02-29\n',
+            '２０２４-02-29',
+            '0000-01-01',
+            '10000-01-01',
+            '2023-12-31',
+            '2026-01-01',
+        ].flatMap((text) => [
+            [{ kind: 'value', value: text }, true],
+            [{ kind: 'raw', text }, true],
+        ]),
+    ];
+    for (const [input, invalid] of cases) {
+        applyDocumentFieldIntent(session, { id: 'empty', path: path('empty'), input });
+        applyDocumentCollectionIntent(session, {
+            collectionId: 'rows',
+            collectionPath: path('rows'),
+            key: 'b',
+            field: 'text',
+            path: cellPath,
+            input,
+        });
+        const before = session.state,
+            bound = bindDocumentEditor(session, options);
+        const header = bound.contexts.empty;
+        const cell = bound.collectionContexts.rows.rows[1].contexts.text;
+        for (const context of [header, cell]) {
+            assert.deepEqual(context.documentInput, input);
+            assert.equal(!!context.invalid, invalid);
+        }
+        assert.equal(session.state, before);
+    }
+});
