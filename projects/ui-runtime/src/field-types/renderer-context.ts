@@ -2,9 +2,7 @@ import type { EditingInput } from '../state/document-state.js';
 import type { ChoiceSelectorOptions } from '../selector/choice-options.js';
 /**
  * SPDX-License-Identifier: Apache-2.0
- * Extracted from alxarafe/erbas-client: app/src/app/core-fe/field-types/renderer-context.ts
- * Source revision: cb7ca1682cdb8c6b253cf038e9daaf1898e02107
- * Modified for the reusable package; see NOTICE for provenance and changes.
+ * Modified for AUR; see NOTICE for provenance and changes.
  */
 import type { ControlRequest } from '../theme/optional-controls.js';
 import { InputSignal, OutputEmitterRef } from '@angular/core';
