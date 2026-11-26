@@ -1,5 +1,5 @@
 /** SPDX-License-Identifier: Apache-2.0
- * Adapted from alxarafe/erbas-client theme-runtime.spec.ts; see NOTICE.
+ * Modified for AUR; see NOTICE for provenance and changes.
  */
 import assert from 'node:assert/strict';
 import test from 'node:test';

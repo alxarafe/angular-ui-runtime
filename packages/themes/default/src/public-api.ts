@@ -1,4 +1,4 @@
-/** SPDX-License-Identifier: Apache-2.0; adapted from ERBAS artifact mapping; see NOTICE. */
+/** SPDX-License-Identifier: Apache-2.0; Modified for AUR; see NOTICE for provenance and changes. */
 import {
     ThemeArtifact,
     ThemeId,

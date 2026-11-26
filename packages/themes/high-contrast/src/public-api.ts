@@ -1,4 +1,4 @@
-/** SPDX-License-Identifier: Apache-2.0; adapted from ERBAS; see NOTICE. */
+/** SPDX-License-Identifier: Apache-2.0; Modified for AUR; see NOTICE for provenance and changes. */
 import { Component } from '@angular/core';
 import { ThemeArtifact, type ThemeDefinition } from '@alxarafe/ui-runtime';
 

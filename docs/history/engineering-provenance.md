@@ -5,8 +5,10 @@ are attribution and design evidence, not normative consumer dependencies, build
 inputs, integration certification or claims of implemented UI Runtime 1.0 features.
 AUR is an independent Angular library distributed in Angular Package Format (APF).
 Active integration obligations use the metadata CRUD and complex document profiles.
-NOTICE, PROVENANCE.json, licenses and source attribution headers remain authoritative
-and unchanged. No reference repository is modified by library validation.
+NOTICE, PROVENANCE.json and licenses remain authoritative and unchanged.
+AUR-PROVENANCE-001 simplified routine source headers while retaining SPDX identifiers,
+modification notices and references to NOTICE for provenance and changes.
+No reference repository is modified by library validation.
 
 ## Contract source inspection
 

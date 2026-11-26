@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: Apache-2.0; generic ERBAS presentation adapted; see NOTICE.
+/* SPDX-License-Identifier: Apache-2.0; Modified for AUR; see NOTICE for provenance and changes.
    Deliberately no body/html, consumer-resource, login, or unscoped control rules. */
 .aur-default-shell {
     --theme-background: #f3f6fa;

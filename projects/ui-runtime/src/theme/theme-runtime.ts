@@ -1,8 +1,6 @@
 /**
  * SPDX-License-Identifier: Apache-2.0
- * Extracted from alxarafe/erbas-client: app/src/app/core-fe/theme/theme-runtime.ts
- * Source revision: cb7ca1682cdb8c6b253cf038e9daaf1898e02107
- * Modified for the reusable package; see NOTICE for provenance and changes.
+ * Modified for AUR; see NOTICE for provenance and changes.
  */
 import { Injectable, Provider, Type, inject, reflectComponentType, signal } from '@angular/core';
 import {
