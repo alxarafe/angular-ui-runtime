@@ -117,7 +117,7 @@ Both the QA app and browser runner have private manifests and independent lockfi
 
 ## Human visual inspection (no automatic baseline approval)
 
-1. Run `./bin/check` and confirm all sixty-eight browser tests and earlier phases passed.
+1. Run `./bin/check` and confirm the complete applicable Chromium suite and earlier phases passed.
    Preserve the revision, tarball digest, image digest, actual browser version,
    results and screenshots together. Passing assertions alone are insufficient.
 2. Open all four viewport captures at 100% size and their full-page companions.
@@ -274,3 +274,13 @@ theme switching, validation/transport/conflict feedback, stale attempts and lock
 committed/uncertain/incomplete acceptance with authoritative recovery. Desktop and
 mobile cases run in the normal Docker Chromium workflow. No external application,
 HTTP call, persistence, discard/route guard or visual certification is introduced.
+
+## Integrated MVP composition
+
+`/default-theme/?scenario=integrated` combines the installed public shell/menu ports,
+a three-tab editor, retained custom content, shared document feedback/session and a
+separate controlled list view. It reuses the existing private editor/list fixtures;
+no permanent demo, API expansion or backend is added. See the scoped
+[acceptance matrix, execution evidence and remaining MVP gaps](integrated-mvp.md).
+That report distinguishes actual verification from missing/out-of-scope behavior;
+it is not a release-readiness declaration.

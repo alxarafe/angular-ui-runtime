@@ -1,5 +1,5 @@
 /** Installed-APF list interaction probes; local application state, no data source or transport. */
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import {
     ListGrid,
     ThemePanelOutlet,
@@ -28,8 +28,10 @@ const choices = [
     imports: [ListGrid, ThemePanelOutlet],
     template: `<h1>Neutral list ports</h1>
         <div class="toolbar">
-            @for (id of themes; track id) {
-                <button (click)="theme.activate(id)">{{ id }}</button>
+            @if (!embedded()) {
+                @for (id of themes; track id) {
+                    <button (click)="theme.activate(id)">{{ id }}</button>
+                }
             }
             <button (click)="mode.set('a')">Supply page A</button
             ><button (click)="mode.set('b')">Supply page B</button>
@@ -78,6 +80,7 @@ const choices = [
     ],
 })
 export class ListPortsTestbed {
+    readonly embedded = input(false);
     readonly theme = inject(ThemeService);
     readonly themes = [
         'default',

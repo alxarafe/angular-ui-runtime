@@ -9,8 +9,10 @@ exist yet. Status describes implementation and required QA coverage, not a test 
 `implemented` means present in the inspected baseline with existing coverage;
 `partial` means only some behavior exists; `missing` means no library implementation.
 Source references in the contract establish design provenance only. Existing tests
-are not proof of future suites passing. Browser evidence is limited to the
-synthetic foundation in E-QA-001. Approved
+are not proof of future suites passing. Browser evidence is scoped to the named
+evidence sections and the
+[integrated MVP acceptance report](../qa/integrated-mvp.md); it does not establish
+complete coverage of every mandatory row. Approved
 visual baselines and cross-consumer evidence do not yet exist. These checks do not
 satisfy the 1.0 release gate.
 Task-level execution of today's checks is reported with the local commit; it must
@@ -457,3 +459,23 @@ from missing to partial; other affected FIELD/FORM/GRID/VALID/THEME rows remain 
 No blanket FIELD, FORM, GRID or VISUAL completion is claimed. Semantic widget coverage,
 optional-control lossless support, hidden columns, human visual/accessibility approval
 and independent consumer/backend integration remain open.
+
+## E-QA-COMPOSITION-001 — Integrated MVP acceptance
+
+On 2026-11-26 the private installed-APF consumer combined a common themed shell,
+typed/legacy menu switching, a three-tab editor (General, Details, Additional),
+two independent keyed detail collections, nested reveal, retained application
+content, feedback/session/save/discard and a separate controlled list view.
+`./bin/test` passed 329 tests and the full Docker `./bin/check` passed 168 Chromium
+cases, including 14 integrated cases at desktop/mobile sizes. Five reference themes
+were exercised; save/rejection/conflict/reconciliation/discard ran per theme.
+
+The [scoped matrix and limitations](../qa/integrated-mvp.md) report 20 PASS, 0 FAIL
+and 5 NOT COVERED rows, the isolated corrected QA expectation, archive/browser
+evidence and candidate capture locations. No library implementation/public API or
+package version changes are part of this acceptance task. Existing mandatory row
+statuses remain scoped/partial where their full contract is not demonstrated.
+Optional-control lossless editing, hidden columns, complete specialized FIELD
+widgets, independent consumer/backend conformance and human accessibility/visual
+approval remain unestablished. Passing this suite does not declare AUR 0.9.0 or
+1.0 ready for release.
