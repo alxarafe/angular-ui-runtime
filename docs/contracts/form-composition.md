@@ -213,3 +213,75 @@ HTTP endpoint, document persistence, business rule, editable grid, version or pa
 publication changes are part of AUR-FORM-001. Full field validation, help/error
 wrappers and summaries, immutable-on-update policy, document editing state, grids,
 consumer adoption and comprehensive accessibility approval remain future work.
+
+## Retained application content (AUR-FORM-SLOTS-001)
+
+Import `FormSlot` alongside `FormComposition` to declare locally compiled templates
+as direct children of `aur-form`. The optional `LayoutGroup.slots` list contains
+`FormSlotReference` objects (`{id: string}`). Slots live within the group's existing
+section and tab; no additional composition or theme engine is involved.
+
+```html
+<aur-form [definition]="definition" [contexts]="contexts" [layout]="layout"
+  [readOnly]="readOnly">
+  <ng-template aurFormSlot="extension" let-readOnly="readOnly">
+    <app-extension [readOnly]="readOnly" [record]="record"
+      (changed)="handleExtensionChange($event)" />
+  </ng-template>
+</aur-form>
+```
+
+```ts
+// Inside an existing LayoutSection.groups entry:
+const group: LayoutGroup = {
+  id: 'extension-group', label: 'Extension', fields: [],
+  slots: [{ id: 'extension' }],
+};
+```
+
+A group renders fields, then collections, then slots, preserving order within each
+list. Use consecutive groups to interleave custom content and standard content.
+Existing root/tab/section contextual actions retain their positions and policy.
+No `FormDefinition` changes are required. Templates are not field descriptors,
+collection contexts or document paths; they cannot capture field/collection fallback.
+
+`composeForm(definition, layout?, slotIds?)` accepts the available template identities
+as an optional third argument. `FormComposition` derives them from its direct
+`FormSlot` children. First valid placement wins across the entire form. Missing
+identities diagnose `unknown-slot`; later references diagnose `duplicate-slot`;
+both are skipped without user-visible diagnostic markup. Duplicate template
+declarations, empty/non-string identities and malformed references reject with an
+error. Identities are exact, case-sensitive strings. Declared but unreferenced
+and missing templates are not rendered; there is no implicit custom fallback.
+Only `ng-template[aurFormSlot]` declarations are supported, not component classes,
+HTML strings, backend executable templates or dynamic compilation. Place nested
+application components inside a supported template instead.
+
+Each placed template has one Angular embedded view. Tab/section hiding keeps it
+mounted; context refreshes update bindings without creating another component.
+The existing retained form frame projects these same nodes through theme changes,
+including structural frame replacement, preserving local state, DOM identity and
+focus on surviving controls. Hidden controls leave the keyboard/accessibility tree;
+showing a panel does not automatically return focus to a previously hidden control.
+Changing/removing the template, its group/container identities or its placement is
+an application lifecycle change and may recreate its view. This guarantee covers
+stable layout/template identities, not arbitrary layout rearrangement.
+
+`FormSlotContext` exposes only `readOnly: boolean`, derived from the form input.
+Applications explicitly pass it to their components and enforce editing rules.
+AUR does not intercept their events, rewrite inputs, disable an entire subtree or
+infer document-session flags. Application-owned disabled states, authorization,
+inputs/outputs, routing, loading, validation and persistence remain application
+responsibilities. Readonly does not disable contextual actions. Existing field and
+grid restrictions remain unchanged. Custom controls need their own labels, keyboard
+behavior, responsive sizing and theme-compatible styles (prefer inherited typography
+and current colors, including High Contrast); AUR provides the retained layout
+container, not certification of arbitrary application content.
+
+Unit/type probes cover deterministic placement, unsupported references and legacy
+fallbacks. Installed-APF Chromium probes in `form-slots.spec.mjs` cover mixed fields,
+grids and custom components, multiple slots, ordering, single construction, retained
+state and focus, contextual actions, readonly/disabled application bindings, tab
+keyboard navigation, collapse and all five themes plus structural frame replacement
+at desktop/mobile widths. Inspect `/default-theme/?scenario=form-slots` in the private
+testbed. Existing form/grid/editor suites cover consumers without slots.

@@ -173,3 +173,7 @@ export type {
 } from './selector/choice-options.js';
 export type { FormFieldPage } from './form/form-definition.js';
 export type { DetailGridPage } from './grid/grid-definition.js';
+
+export { FormSlot } from './form/form-slot.js';
+export type { FormSlotContext } from './form/form-slot.js';
+export type { FormSlotReference } from './form/form-definition.js';

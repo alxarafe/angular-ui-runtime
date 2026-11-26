@@ -5,6 +5,7 @@ import {
     Injector,
     afterNextRender,
     computed,
+    contentChildren,
     inject,
     input,
     output,
@@ -12,6 +13,7 @@ import {
     viewChild,
     viewChildren,
 } from '@angular/core';
+import { FormSlot, FormSlotOutlet } from './form-slot.js';
 import { ThemeService } from '../theme/theme-runtime.js';
 import { validateFormContexts } from './form-contexts.js';
 import {
@@ -44,7 +46,7 @@ import {
 /** Application data is input/output only; the host owns solely visual navigation state. */
 @Component({
     selector: 'aur-form',
-    imports: [FormFrame, FormFieldOutlet, DetailGrid],
+    imports: [FormFrame, FormFieldOutlet, DetailGrid, FormSlotOutlet],
     host: { '[class]': 'theme.current().cssClass' },
     template: `
         <aur-form-frame [context]="{ id: definition().id, label: definition().label }">
@@ -175,7 +177,16 @@ import {
                                                         (gridPage)="collectionPage.emit($event)"
                                                     />
                                                 }
+                                                @for (slot of group.slots; track slot.id) {
+                                                    <aur-form-slot
+                                                        data-aur-form-slot
+                                                        [attr.data-aur-slot]="slot.id"
+                                                        [template]="slotTemplates().get(slot.id)!"
+                                                        [readOnly]="readOnly()"
+                                                    />
+                                                }
                                                 @if (
+                                                    !group.slots.length &&
                                                     !group.fields.length &&
                                                     !group.collections.length
                                                 ) {
@@ -309,7 +320,20 @@ export class FormComposition {
     readonly fieldPage = output<FormFieldPage>();
     readonly collectionPage = output<DetailGridPage>();
     readonly actionSelected = output<string>();
-    readonly composition = computed(() => composeForm(this.definition(), this.layout()));
+    private readonly slots = contentChildren(FormSlot);
+    protected readonly slotTemplates = computed(() => {
+        const templates = new Map<string, FormSlot['template']>();
+        for (const slot of this.slots()) {
+            const id = slot.aurFormSlot();
+            if (typeof id !== 'string' || !id.trim()) throw new Error('Invalid form slot identity');
+            if (templates.has(id)) throw new Error('Duplicate form slot identity');
+            templates.set(id, slot.template);
+        }
+        return templates;
+    });
+    readonly composition = computed(() =>
+        composeForm(this.definition(), this.layout(), [...this.slotTemplates().keys()]),
+    );
     protected readonly boundContexts = computed(() => {
         validateFormContexts(this.definition(), this.contexts());
         return this.contexts();
