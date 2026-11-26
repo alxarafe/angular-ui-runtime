@@ -129,9 +129,33 @@ test('list duplicate selection names avoid suffix collisions and follow stable k
     ).not.toEqual(expect.arrayContaining([expect.stringContaining('private-')]));
     await select('Repeated (row 1) (row 1)').click();
     await expect(selection).toHaveText('private-a');
+    const rows = list.locator('tbody tr');
+    await expect(rows).toHaveCount(3);
+    const originalRows = await rows.elementHandles();
     await first(page)
         .getByRole('button', { name: 'Move up Repeated (row 2)', exact: true })
         .click();
+    // Position-based labels exist before and after the move; wait for retained rows to reorder.
+    await expect
+        .poll(() =>
+            rows.evaluateAll(
+                (nodes, originals) => ({
+                    order: nodes.map((node) => originals.indexOf(node)),
+                    labels: nodes.map((node) =>
+                        node.querySelector('button')?.getAttribute('aria-label'),
+                    ),
+                }),
+                originalRows,
+            ),
+        )
+        .toEqual({
+            order: [1, 0, 2],
+            labels: [
+                'Select Repeated (row 1) (row 1)',
+                'Select Repeated (row 2)',
+                'Select Repeated (row 1)',
+            ],
+        });
     await select('Repeated (row 2)').click();
     await expect(selection).toHaveText('private-a');
     await select('Repeated (row 1) (row 1)').click();

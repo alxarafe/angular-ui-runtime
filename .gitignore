@@ -153,3 +153,6 @@ vite.config.ts.timestamp-*
 .angular/
 out-tsc/
 artifacts/
+
+# Local editor workspace
+.openidea/
