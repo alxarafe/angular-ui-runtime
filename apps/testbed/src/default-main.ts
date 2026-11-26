@@ -1,3 +1,4 @@
+import { ListPortsTestbed } from './list-ports';
 import { FeedbackTestbed } from './feedback';
 import { FormSlotsTestbed } from './form-slots';
 import { EditorTestbed } from './editor';
@@ -27,35 +28,38 @@ const editor = new URLSearchParams(location.search).get('scenario') === 'editor'
 const selector = new URLSearchParams(location.search).get('scenario') === 'selector';
 const slots = new URLSearchParams(location.search).get('scenario') === 'form-slots';
 const feedback = new URLSearchParams(location.search).get('scenario') === 'feedback';
+const listPorts = new URLSearchParams(location.search).get('scenario') === 'list-ports';
 bootstrapApplication(
-    feedback
-        ? FeedbackTestbed
-        : slots
-          ? FormSlotsTestbed
-          : selector
-            ? SelectorTestbed
-            : editor
-              ? EditorTestbed
-              : menus
-                ? MenusTestbed
-                : new URLSearchParams(location.search).get('scenario') === 'document-protection'
-                  ? DocumentProtectionTestbed
-                  : save
-                    ? DocumentSaveTestbed
-                    : documentValidation
-                      ? DocumentValidationTestbed
-                      : validation
-                        ? ValidationTestbed
-                        : state
-                          ? StateTestbed
-                          : grid
-                            ? GridTestbed
-                            : form
-                              ? FormTestbed
-                              : new URLSearchParams(location.search).get('scenario') ===
-                                  'navigation'
-                                ? NavigationTestbed
-                                : DefaultThemeTestbed,
+    listPorts
+        ? ListPortsTestbed
+        : feedback
+          ? FeedbackTestbed
+          : slots
+            ? FormSlotsTestbed
+            : selector
+              ? SelectorTestbed
+              : editor
+                ? EditorTestbed
+                : menus
+                  ? MenusTestbed
+                  : new URLSearchParams(location.search).get('scenario') === 'document-protection'
+                    ? DocumentProtectionTestbed
+                    : save
+                      ? DocumentSaveTestbed
+                      : documentValidation
+                        ? DocumentValidationTestbed
+                        : validation
+                          ? ValidationTestbed
+                          : state
+                            ? StateTestbed
+                            : grid
+                              ? GridTestbed
+                              : form
+                                ? FormTestbed
+                                : new URLSearchParams(location.search).get('scenario') ===
+                                    'navigation'
+                                  ? NavigationTestbed
+                                  : DefaultThemeTestbed,
     {
         providers: provideThemeRuntime(
             menus
@@ -68,7 +72,8 @@ bootstrapApplication(
                     editor ||
                     selector ||
                     slots ||
-                    feedback
+                    feedback ||
+                    listPorts
                   ? GRID_THEMES
                   : form
                     ? FORM_THEMES
@@ -82,7 +87,8 @@ bootstrapApplication(
                 editor ||
                 selector ||
                 slots ||
-                feedback
+                feedback ||
+                listPorts
                 ? FORM_CONTROLS
                 : [],
         ),
