@@ -410,3 +410,20 @@ fraction spelling, invalid drafts, exact bounds, metadata changes, permissions,
 associated feedback, keyed reorder, single-channel events and focus/DOM identity
 across five themes. Other browsers and assistive-technology certification remain
 outside this evidence.
+
+### Lossless UUID text (AUR-EDITOR-FIELDS-001)
+
+`field.UUID` reuses the existing lossless text editor without an extra component.
+The existing UUID validator owns `casing: 'lower' | 'either'` and the canonical
+hyphenated grammar. Lowercase, uppercase and mixed-case text retain their original
+spelling; a lower-only policy reports uppercase text as invalid rather than fixing
+it. Incomplete UUIDs, invalid characters, compact/braced/whitespace forms and
+unsupported scalar slots remain editable and session-owned. No UUID generation,
+case normalization or automatic choice occurs. Absent, null, empty value and raw
+drafts remain distinct; text edits use the existing raw intent channel exclusively.
+
+Focused units and installed-APF Chromium desktop/mobile tests cover both casing
+policies, exact header/keyed-row slots, invalid drafts, metadata refresh without
+mutation, permissions, feedback associations and focus/DOM identity through five
+themes. UUID editing is complete for the existing validation profile. Other browsers
+and assistive-technology certification remain outside this evidence.

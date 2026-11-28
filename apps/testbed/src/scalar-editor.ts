@@ -20,6 +20,10 @@ import {
 
 const cases: Record<string, { definition: FieldValidationRequest['definition']; initial: string }> =
     {
+        uuid: {
+            definition: { type: 'UUID', required: false, nullable: true, casing: 'either' },
+            initial: '123e4567-e89b-12d3-a456-426614174000',
+        },
         datetime: {
             definition: {
                 type: 'DATETIME',
@@ -77,6 +81,10 @@ const field = (input: EditingInput): DocumentField => ({
             <button (click)="precision.set(7)">DATETIME seven fraction digits</button>
             <button (click)="limited.set(!limited())">Toggle instant bounds</button>
         }
+        @if (selected.definition.type === 'UUID') {
+            <button (click)="casing.set('lower')">Lower UUID casing</button>
+            <button (click)="casing.set('either')">Either UUID casing</button>
+        }
         <button (click)="replace({ kind: 'value', value: false })">Use unsupported scalar</button>
         <button (click)="reorder()">Reorder scalar rows</button>
         <aur-theme-panel
@@ -104,6 +112,7 @@ export class ScalarEditorTestbed {
     readonly themes = ['default', 'alternative', 'cyberpunk', 'vintage', 'high-contrast'];
     readonly precision = signal(selected.definition.type === 'DATETIME' ? 7 : 0);
     readonly limited = signal(true);
+    readonly casing = signal<'lower' | 'either'>('either');
     readonly tick = signal(0);
     readonly fields = signal(0);
     readonly cells = signal(0);
@@ -155,7 +164,9 @@ export class ScalarEditorTestbed {
                   fractionalDigits: this.precision(),
                   constraints: this.limited() ? definition.constraints : undefined,
               }
-            : definition;
+            : definition.type === 'UUID'
+              ? { ...definition, casing: this.casing() }
+              : definition;
     });
     readonly binding = computed(() => {
         this.tick();
