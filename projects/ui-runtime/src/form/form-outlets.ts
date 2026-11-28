@@ -226,6 +226,7 @@ export class FormFieldOutlet {
                         : component === DocumentInput
                           ? [
                                 inputBinding('date', () => this.field().artifact === 'field.DATE'),
+                                inputBinding('time', () => this.field().artifact === 'field.TIME'),
                                 inputBinding(
                                     'multiline',
                                     () => this.field().artifact === 'field.TEXT',

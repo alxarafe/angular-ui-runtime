@@ -1,3 +1,4 @@
+import { ScalarEditorTestbed } from './scalar-editor';
 import { IntegratedTestbed } from './integrated';
 import { ListPortsTestbed } from './list-ports';
 import { FeedbackTestbed } from './feedback';
@@ -30,6 +31,7 @@ const selector = new URLSearchParams(location.search).get('scenario') === 'selec
 const slots = new URLSearchParams(location.search).get('scenario') === 'form-slots';
 const feedback = new URLSearchParams(location.search).get('scenario') === 'feedback';
 const listPorts = new URLSearchParams(location.search).get('scenario') === 'list-ports';
+const scalarEditor = new URLSearchParams(location.search).get('scenario') === 'scalar-editor';
 const integrated = new URLSearchParams(location.search).get('scenario') === 'integrated';
 bootstrapApplication(
     integrated
@@ -42,8 +44,10 @@ bootstrapApplication(
               ? FormSlotsTestbed
               : selector
                 ? SelectorTestbed
-                : editor
-                  ? EditorTestbed
+                : editor || scalarEditor
+                  ? scalarEditor
+                      ? ScalarEditorTestbed
+                      : EditorTestbed
                   : menus
                     ? MenusTestbed
                     : new URLSearchParams(location.search).get('scenario') === 'document-protection'
@@ -78,7 +82,8 @@ bootstrapApplication(
                     slots ||
                     feedback ||
                     listPorts ||
-                    integrated
+                    integrated ||
+                    scalarEditor
                   ? GRID_THEMES
                   : form
                     ? FORM_THEMES
@@ -94,7 +99,8 @@ bootstrapApplication(
                 slots ||
                 feedback ||
                 listPorts ||
-                integrated
+                integrated ||
+                scalarEditor
                 ? FORM_CONTROLS
                 : [],
         ),

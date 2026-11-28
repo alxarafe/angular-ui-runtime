@@ -1,4 +1,4 @@
-import type { DateFieldDefinition } from '../validation/validate-field.js';
+import type { DateFieldDefinition, TimeFieldDefinition } from '../validation/validate-field.js';
 import type { EditingInput } from '../state/document-state.js';
 import type { ChoiceSelectorOptions } from '../selector/choice-options.js';
 /**
@@ -28,6 +28,8 @@ export interface FieldRendererContext {
     readonly documentInput?: EditingInput;
     /** Native DATE hints; validation remains authoritative. */
     readonly dateConstraints?: DateFieldDefinition['constraints'];
+    /** Native TIME assistance uses the existing definition, never separate validation rules. */
+    readonly timeDefinition?: TimeFieldDefinition;
     readonly invalid?: boolean;
     /** Host-rendered accessible messages; validation remains outside the renderer. */
     readonly feedback?: readonly string[];

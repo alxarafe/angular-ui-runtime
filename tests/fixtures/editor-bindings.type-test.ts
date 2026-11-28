@@ -50,6 +50,10 @@ const invalidCollection: DocumentBindingOptions['collections'][string] = {
     // @ts-expect-error Collection presentation must not supply another mutable document input.
     fields: { status: { documentInput: { kind: 'raw', text: 'draft' } } },
 };
+const invalidTimePresentation: DocumentBindingOptions['fields'] = {
+    // @ts-expect-error TIME assistance derives from the validation plan, not presentation metadata.
+    clock: { id: 'clock', label: 'Clock', timeDefinition: { type: 'TIME' } },
+};
 void [
     legacy,
     lossless,
@@ -61,6 +65,7 @@ void [
     input,
     enumCollection,
     invalidCollection,
+    invalidTimePresentation,
     bindDocumentEditor,
     applyDocumentFieldIntent,
     applyDocumentCollectionIntent,

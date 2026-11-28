@@ -352,3 +352,36 @@ locale-dependent display and popup interaction are browser-owned; automated evid
 covers the native input's value/event interface, not OS calendar-popup operation.
 Non-Chromium and assistive-technology certification remain unverified. Native partial
 segments are not durable drafts; use the text input for incomplete editing.
+
+### Lossless TIME interaction (AUR-EDITOR-FIELDS-001)
+
+`field.TIME` retains the same authoritative text path for `HH:mm:ss` and optional
+fractions of one through seven digits. Original lexical width, incomplete drafts,
+unsupported scalar slots and invalid values remain session-owned. The existing
+TIME definition and validator own precision, clock validity and inclusive/exclusive
+bounds. Rendering, theme changes and metadata refreshes never edit the document.
+
+`bindDocumentEditor` derives `FieldRendererContext.timeDefinition` from the matching
+header or keyed-row validation plan. Direct context owners may supply the existing
+`TimeFieldDefinition` type. Only an admitted whole-second definition
+(`fractionalDigits: 0`) enables a separately labelled native time assistant.
+Native `step=1` and min/max hints use that exact grid; exclusive endpoints advance
+by one second without rounding or clamping any stored value. A malformed or empty
+definition interval disables the assistant rather than inventing usable bounds.
+Fields permitting fractions stay text-only: native assistance for fractional
+precision and lexical width is deliberately not claimed.
+
+One explicit native input selection emits one raw intent. A native `HH:mm` choice
+explicitly selects `HH:mm:00`; this maps native minute syntax to the existing
+required-seconds contract and never rewrites an existing draft during rendering.
+Native empty, malformed, fractional or blocked events emit nothing and restore the
+same DOM input from the current document projection. Native change events emit
+nothing. Native choices outside declared bounds retain their exact selected time
+and receive ordinary validation feedback. Use text or the existing explicit state
+buttons for empty drafts, absence and null. No timezone or Date conversion is used.
+
+Whole-second selection, ignored events, all fractional widths, constraints, keyed
+cells, permissions, feedback, single-channel events and DOM/focus across five themes
+are covered by unit and installed-APF Chromium desktop/mobile tests. Native picker
+popup behavior, other browsers and assistive-technology certification remain outside
+this evidence. DATE behavior and its regression tests are unchanged.
