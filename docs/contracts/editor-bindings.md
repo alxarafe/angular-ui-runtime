@@ -16,7 +16,7 @@ presentation options (`collections`, keyed by collection ID, with label and colu
 Each collection may also supply `fields`, a per-property presentation map (for
 example `{status: {choices: ['', 'OPEN']}}`). These options reuse the field context
 ports for choices, feedback IDs and edit restrictions; they cannot supply identity,
-labels, values or document inputs. Session-derived identity, input and inherited
+labels, values, document inputs or session-derived DATE constraints. Session-derived identity, input and inherited
 restrictions remain authoritative. Choices are supplied by the consumer, not inferred
 from validation plans or metadata.
 It does not infer definitions, authorization, defaults or business rules.
@@ -308,3 +308,47 @@ behavior change is included. Installed APF Chromium tests cover header/keyed-cel
 editing, event counts, states, restrictions and retained focus at desktop/mobile
 widths across all five themes; non-Chromium and assistive-technology certification
 remain outside this evidence.
+
+### Lossless DATE interaction (AUR-EDITOR-DATE-001)
+
+Lossless `field.DATE` keeps the existing labelled text input and adds a separately
+labelled native date selection input. Both derive from the same session slot;
+there is no second draft. The text input remains available for invalid/incomplete
+text, unsupported scalar values, surrounding spaces and empty drafts. Rendering
+never emits an edit or changes absent, null, empty value or raw distinctions.
+
+The native control projects only exact `yyyy-MM-dd` Gregorian dates in years
+0001–9999, using the existing temporal parser. Invalid or unsupported values leave
+that control blank while the text input and session retain the original input.
+One explicit native input event with a representable date emits one raw
+`EditingInput`; the native change event emits nothing. Empty/incomplete native
+events are ignored because the browser cannot distinguish them safely from clearing
+an invalid draft. Use the text input or the explicit Unset, Set null and Empty text
+buttons for those intents. No today's-date default, rollover, JavaScript Date,
+timezone or locale conversion is applied to document data.
+
+The existing validator owns Gregorian validity and declared inclusive/exclusive
+bounds. A representable native selection may still violate declared bounds and
+then receives the existing feedback. `bindDocumentEditor` projects DATE constraints
+from the matching validation-plan field into `FieldRendererContext.dateConstraints`,
+including fields below keyed collection rows. Direct context owners may supply the
+same existing `DateFieldDefinition['constraints']` type. Native min/max use these
+bounds, falling back independently to 0001-01-01 and 9999-12-31 when absent.
+Exclusive bounds become the next/previous Gregorian day using the shared temporal
+helpers. An interval with no representable dates gives the native control an empty
+(reversed) range; invalid bound text falls back to the intrinsic endpoint while
+validator diagnostics remain authoritative. Changing constraints updates attributes
+and feedback without clamping or editing the stored value. Both inputs share
+readonly/disabled guards, invalid state, feedback associations and visible focus.
+Header and keyed detail-cell edits use the existing lossless intent adapters into
+`DocumentSession`, without legacy scalar events. Both controls retain DOM identity
+and focus through ordinary context and theme updates.
+
+Installed APF Chromium tests cover text drafts, leap/non-leap dates, lexical/state
+retention, native input/change event counts, bounds feedback, restrictions, keyed
+cells and focus across five themes at desktop/mobile sizes. STRING, TEXT and ENUM
+regressions remain covered by the existing editor suite. Native picker appearance,
+locale-dependent display and popup interaction are browser-owned; automated evidence
+covers the native input's value/event interface, not OS calendar-popup operation.
+Non-Chromium and assistive-technology certification remain unverified. Native partial
+segments are not durable drafts; use the text input for incomplete editing.
