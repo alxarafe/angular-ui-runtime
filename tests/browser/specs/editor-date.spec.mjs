@@ -113,10 +113,14 @@ test('lossless DATE keeps raw drafts beside native selection, with one channel a
         await expect(native).toBeFocused();
         const unchanged = await snapshot(page),
             counts = await events(page);
+        const nativeNode = await native.elementHandle();
         await native.fill('');
         expect(await snapshot(page)).toEqual(unchanged);
         expect(await events(page)).toEqual(counts);
         await expect(text).toHaveValue('2024-03-01');
+        await expect(native).toHaveValue('2024-03-01');
+        await expect(native).toBeFocused();
+        expect(await native.evaluate((el, old) => el === old, nativeNode)).toBe(true);
     }
     // The validator reports declared bounds; the native chooser does not invent a bound contract.
     await native.fill('2026-01-01');

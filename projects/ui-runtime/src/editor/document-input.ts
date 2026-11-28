@@ -262,9 +262,16 @@ export class DocumentInput {
         return parseTemporal(text, 'DATE', 0) === undefined ? '' : text;
     }
     selectDate(event: Event): void {
-        const text = (event.target as HTMLInputElement).value;
-        // Native clearing/incomplete segments must not erase the session's raw draft.
-        if (parseTemporal(text, 'DATE', 0) !== undefined) this.emit({ kind: 'raw', text });
+        const control = event.target as HTMLInputElement;
+        const text = control.value;
+
+        if (parseTemporal(text, 'DATE', 0) === undefined) {
+            // Ignored native edits still change the DOM; restore it from the document.
+            control.value = this.dateText();
+            return;
+        }
+
+        this.emit({ kind: 'raw', text });
     }
     toggle(event: Event): void {
         this.emit({ kind: 'value', value: (event.target as HTMLInputElement).checked });
