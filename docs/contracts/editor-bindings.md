@@ -352,3 +352,107 @@ locale-dependent display and popup interaction are browser-owned; automated evid
 covers the native input's value/event interface, not OS calendar-popup operation.
 Non-Chromium and assistive-technology certification remain unverified. Native partial
 segments are not durable drafts; use the text input for incomplete editing.
+
+### Lossless TIME interaction (AUR-EDITOR-FIELDS-001)
+
+`field.TIME` retains the same authoritative text path for `HH:mm:ss` and optional
+fractions of one through seven digits. Original lexical width, incomplete drafts,
+unsupported scalar slots and invalid values remain session-owned. The existing
+TIME definition and validator own precision, clock validity and inclusive/exclusive
+bounds. Rendering, theme changes and metadata refreshes never edit the document.
+
+`bindDocumentEditor` derives `FieldRendererContext.timeDefinition` from the matching
+header or keyed-row validation plan. Direct context owners may supply the existing
+`TimeFieldDefinition` type. Only an admitted whole-second definition
+(`fractionalDigits: 0`) enables a separately labelled native time assistant.
+Native `step=1` and min/max hints use that exact grid; exclusive endpoints advance
+by one second without rounding or clamping any stored value. A malformed or empty
+definition interval disables the assistant rather than inventing usable bounds.
+Fields permitting fractions stay text-only: native assistance for fractional
+precision and lexical width is deliberately not claimed.
+
+One explicit native input selection emits one raw intent. A native `HH:mm` choice
+explicitly selects `HH:mm:00`; this maps native minute syntax to the existing
+required-seconds contract and never rewrites an existing draft during rendering.
+Native empty, malformed, fractional or blocked events emit nothing and restore the
+same DOM input from the current document projection. Native change events emit
+nothing. Native choices outside declared bounds retain their exact selected time
+and receive ordinary validation feedback. Use text or the existing explicit state
+buttons for empty drafts, absence and null. No timezone or Date conversion is used.
+
+Whole-second selection, ignored events, all fractional widths, constraints, keyed
+cells, permissions, feedback, single-channel events and DOM/focus across five themes
+are covered by unit and installed-APF Chromium desktop/mobile tests. Native picker
+popup behavior, other browsers and assistive-technology certification remain outside
+this evidence. DATE behavior and its regression tests are unchanged.
+
+### Lossless offset DATETIME (AUR-EDITOR-FIELDS-001)
+
+`field.DATETIME` uses the existing lossless text input, in headers and keyed detail
+cells. It preserves `Z`, explicit positive/negative offsets (including signed zero),
+fraction widths of one through seven digits, trailing zeros and original lexical
+form. Partial offsets, missing zones, invalid clocks, unsupported scalar slots and
+empty drafts stay editable and remain unchanged in the session. Only an explicit
+text input emits a raw intent; there is no legacy scalar event or second draft.
+
+The existing offset-instant validator remains authoritative for declared precision,
+offset/year limits and inclusive/exclusive instant comparisons. Equal instants with
+different spellings remain distinct editing values; exact 100 ns bounds do not
+rewrite either spelling. Metadata, feedback and theme refreshes do not mutate state
+or steal focus. DATETIME deliberately has no native assistant: `datetime-local`
+does not represent offsets, and no native control is asserted to preserve this
+complete contract. No implicit local/UTC conversion, timezone inference or Date API
+is introduced. The text editor capability is complete for the supported profile;
+native offset-aware assistance remains unavailable.
+
+Focused units and installed-APF Chromium desktop/mobile tests cover offset and
+fraction spelling, invalid drafts, exact bounds, metadata changes, permissions,
+associated feedback, keyed reorder, single-channel events and focus/DOM identity
+across five themes. Other browsers and assistive-technology certification remain
+outside this evidence.
+
+### Lossless UUID text (AUR-EDITOR-FIELDS-001)
+
+`field.UUID` reuses the existing lossless text editor without an extra component.
+The existing UUID validator owns `casing: 'lower' | 'either'` and the canonical
+hyphenated grammar. Lowercase, uppercase and mixed-case text retain their original
+spelling; a lower-only policy reports uppercase text as invalid rather than fixing
+it. Incomplete UUIDs, invalid characters, compact/braced/whitespace forms and
+unsupported scalar slots remain editable and session-owned. No UUID generation,
+case normalization or automatic choice occurs. Absent, null, empty value and raw
+drafts remain distinct; text edits use the existing raw intent channel exclusively.
+
+Focused units and installed-APF Chromium desktop/mobile tests cover both casing
+policies, exact header/keyed-row slots, invalid drafts, metadata refresh without
+mutation, permissions, feedback associations and focus/DOM identity through five
+themes. UUID editing is complete for the existing validation profile. Other browsers
+and assistive-technology certification remain outside this evidence.
+
+### Lossless BINARY Base64 text (AUR-EDITOR-FIELDS-001)
+
+`field.BINARY` reuses the existing labelled textarea so invalid LF-delimited or
+wrapped Base64 drafts remain visible and editable instead of being stripped by a
+single-line input. No new component, upload control, decoded buffer, file contract
+or binary conversion is introduced. Text edits produce raw `EditingInput` through
+the same header/keyed-cell adapters. Absent, null, empty value, empty raw, canonical
+value and invalid/unsupported slots retain their distinct session envelopes.
+
+The existing `format: 'base64'` validator alone checks canonical RFC 4648 text,
+including padding and unused pad bits. Whitespace, incomplete padding, Base64url
+and other unsupported forms remain in the document and receive feedback; they are
+never trimmed, decoded, repaired or silently accepted. Empty Base64 is valid under
+the existing profile; required/nullable policies remain independent. Changing these
+policies or rendering feedback does not edit the document.
+
+Canonical Base64 editing and LF draft preservation are complete for the supported
+profile. As with TEXT, native textarea display folds CR/CRLF to LF. The session
+retains original CR/CRLF exactly through rendering, theme and metadata refreshes;
+an explicit user input records the native textarea value. Exact original CR/CRLF
+spelling after an edit remains a limitation, not a binary-conversion contract.
+
+Focused units and installed-APF Chromium desktop/mobile tests cover canonical and
+noncanonical text, all slot distinctions, unsupported scalar values, presence-policy
+refresh, CRLF session retention, readonly/disabled controls, feedback, keyed reorder,
+single-channel events and focus/DOM identity through five themes. File uploads,
+other encoding profiles, other browsers and assistive-technology certification are
+outside this capability.

@@ -32,7 +32,13 @@ export interface DocumentBindingOptions {
     readonly definition: FormDefinition;
     readonly plan: ObjectValidationPlan;
     readonly fields: Readonly<
-        Record<string, Omit<FieldRendererContext, 'value' | 'documentInput' | 'dateConstraints'>>
+        Record<
+            string,
+            Omit<
+                FieldRendererContext,
+                'value' | 'documentInput' | 'dateConstraints' | 'timeDefinition'
+            >
+        >
     >;
     readonly collections: Readonly<
         Record<
@@ -46,7 +52,12 @@ export interface DocumentBindingOptions {
                         string,
                         Omit<
                             FieldRendererContext,
-                            'id' | 'label' | 'value' | 'documentInput' | 'dateConstraints'
+                            | 'id'
+                            | 'label'
+                            | 'value'
+                            | 'documentInput'
+                            | 'dateConstraints'
+                            | 'timeDefinition'
                         >
                     >
                 >;
@@ -119,7 +130,10 @@ export function bindDocumentEditor(
     ]);
     function field(
         path: ValuePath,
-        base: Omit<FieldRendererContext, 'value' | 'documentInput' | 'dateConstraints'>,
+        base: Omit<
+            FieldRendererContext,
+            'value' | 'documentInput' | 'dateConstraints' | 'timeDefinition'
+        >,
     ): FieldRendererContext {
         const result = at(root, path);
         if (result.node.kind !== 'field') throw new Error('Binding requires a document field');
@@ -140,6 +154,7 @@ export function bindDocumentEditor(
             value: input.kind === 'raw' ? input.text : input.kind === 'value' ? input.value : '',
             documentInput: input,
             dateConstraints,
+            timeDefinition: definition?.type === 'TIME' ? definition : undefined,
             readOnly: !!base.readOnly || result.readOnly,
             disabled: session.locked || !!base.disabled || result.disabled,
             invalid: messages.some((item) => item.source !== 'deferred'),

@@ -16,6 +16,7 @@ import { ThemeResolver } from '../theme/theme-runtime.js';
 import type { EditingInput } from '../state/document-state.js';
 import { dateInputBounds, parseTemporal } from '../validation/temporal-values.js';
 import type { ChoicePageDirection } from '../selector/choice-options.js';
+import { selectedTime, timeInputBounds } from './native-time.js';
 
 /** Lossless opt-in bridge; legacy renderers and valueChange remain unchanged. */
 @Component({
@@ -71,6 +72,22 @@ import type { ChoicePageDirection } from '../selector/choice-options.js';
                 [attr.aria-describedby]="context().describedBy?.join(' ') || null"
                 [attr.aria-invalid]="context().invalid || null"
                 (input)="selectDate($event)"
+            />
+        }
+        @if (time() && timeBounds(); as bounds) {
+            <label [for]="context().id + '-time'">{{ context().label + ' time selection' }}</label>
+            <input
+                type="time"
+                [id]="context().id + '-time'"
+                [value]="timeText()"
+                [min]="bounds.min"
+                [max]="bounds.max"
+                step="1"
+                [disabled]="context().disabled"
+                [readOnly]="!!context().readOnly || !!context().selector?.busy"
+                [attr.aria-describedby]="context().describedBy?.join(' ') || null"
+                [attr.aria-invalid]="context().invalid || null"
+                (input)="selectTime($event)"
             />
         }
         <span>{{ status() }}</span>
@@ -139,6 +156,8 @@ export class DocumentInput {
     readonly context = input.required<FieldRendererContext>();
     readonly date = input(false);
     readonly dateBounds = computed(() => dateInputBounds(this.context().dateConstraints));
+    readonly time = input(false);
+    readonly timeBounds = computed(() => timeInputBounds(this.context().timeDefinition));
     readonly multiline = input(false);
     readonly boolean = input(false);
     readonly enumeration = input(false);
@@ -275,5 +294,18 @@ export class DocumentInput {
     }
     toggle(event: Event): void {
         this.emit({ kind: 'value', value: (event.target as HTMLInputElement).checked });
+    }
+    timeText(): string {
+        const text = this.text();
+        return parseTemporal(text, 'TIME', 0) === undefined ? '' : text;
+    }
+    selectTime(event: Event): void {
+        const control = event.target as HTMLInputElement;
+        const text = selectedTime(control.value);
+        if (this.blocked() || !this.timeBounds() || text === undefined) {
+            control.value = this.timeText();
+            return;
+        }
+        this.emit({ kind: 'raw', text });
     }
 }
