@@ -32,6 +32,12 @@ export interface ControlResolution {
     readonly control: string;
     readonly theme: string;
 }
+/** Internal distinction between unavailable presentation and malformed requests/capabilities. */
+export class OptionalControlUnavailableError extends Error {
+    constructor() {
+        super('No compatible optional control representation');
+    }
+}
 
 export function snapshotDomain(domain: ControlDomain): ControlDomain {
     if (

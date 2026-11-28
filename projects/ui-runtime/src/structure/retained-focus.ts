@@ -9,6 +9,11 @@ import {
 // Keep only one pending restoration for that node, without extending its lifetime.
 const pending = new WeakMap<HTMLElement, AfterRenderRef>();
 
+/** A parent may already have detached an owned view before a nested renderer is replaced. */
+export function retainedFocusWithin(root: HTMLElement): HTMLElement | undefined {
+    return [root, ...root.querySelectorAll<HTMLElement>('*')].find((node) => pending.has(node));
+}
+
 /** Internal native-node policy; never maps focus to a replacement control. */
 export function captureRetainedFocus(
     target: ViewContainerRef,

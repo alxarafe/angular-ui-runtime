@@ -59,7 +59,7 @@ presentation or catalogue changes. Standalone session use is unchanged.
 
 ## Lossless backward-compatible editing channel
 
-`FieldRendererContext.documentInput?: EditingInput` explicitly opts an artifact field
+`FieldRendererContext.documentInput?: EditingInput` explicitly opts a field
 into the core lossless editing bridge. It takes precedence over legacy `value`.
 The required legacy value is only a presentation projection: a raw input projects
 its text, and absence projects empty text for compatibility. This **never** writes
@@ -81,11 +81,10 @@ New outputs keep legacy types intact:
 One edit emits exactly one channel. Opted-in fields do not also emit scalar
 `fieldChange`/cell `gridChange`. Structural intents still use the existing channel.
 Without `documentInput`, existing renderers, valueChange, contexts and form/grid
-scalar event types remain unchanged. Optional-control fields do not currently
-support this opt-in bridge and reject it explicitly; legacy optional controls still
-work unchanged. Apart from ENUM below, the bridge currently uses neutral
-text/checkbox controls rather than semantic-specific widgets; it is not full FIELD
-catalogue widget acceptance.
+scalar event types remain unchanged. Optional-control fields use the scalar adapter
+described below; legacy optional controls still work unchanged. The bridge also
+provides the scalar interactions documented below; this is not full FIELD catalogue
+widget acceptance.
 Theme CSS and structural frames remain effective. Non-ENUM legacy field renderers
 are not asked to represent states their scalar port cannot express. No new mandatory
 theme artifact or peer dependency is introduced.
@@ -185,7 +184,7 @@ theme focus retention at both widths. Unit/type probes cover the optional collec
 presentation map and its session-owned input boundary.
 
 This increment does not establish full FIELD/FORM/GRID/VISUAL acceptance. Remaining
-gaps include semantic widget completeness, optional-control lossless capabilities,
+gaps include semantic widget completeness,
 help/touched policies, hidden-column reveal, independent consumer/backend conformance,
 other browsers/assistive technology and human visual/accessibility certification.
 
@@ -456,3 +455,63 @@ refresh, CRLF session retention, readonly/disabled controls, feedback, keyed reo
 single-channel events and focus/DOM identity through five themes. File uploads,
 other encoding profiles, other browsers and assistive-technology certification are
 outside this capability.
+
+### Lossless optional controls (AUR-EDITOR-OPTIONAL-001)
+
+`kind: 'control'` fields with `controlId` may now supply `documentInput` in the
+existing renderer context. Header fields and keyed detail columns use the same
+adapter, `DocumentSession` and field/grid intent channels. `ControlRequest`,
+`ThemeRegistry`, `ThemeResolver`, alternative ordering, capability negotiation and
+presentation checks retain their existing meanings. No registry, validator,
+document envelope or third-party control API is added.
+
+The adapter mounts the resolved scalar control only for a `value` slot whose
+primitive value occurs exactly in the effective requested domain. Strings,
+booleans and null retain their types and lexical forms. Null and empty string are
+passed only when explicitly included in that domain. The control receives the
+effective scalar `context.value` and request, permissions and feedback context,
+with `documentInput` removed. Existing third-party controls therefore need no
+knowledge of `EditingInput` and keep their scalar `valueChange` contract.
+
+Absent, unknown and raw inputs never become a first option or a fabricated null
+value. Even raw text exactly matching a declared option remains raw. These states,
+and a valid request with no compatible representation, use an accessible neutral
+fallback instead of mounting a scalar control with an unrepresentable value.
+Its indexed selector offers the exact requested domain, with a disabled placeholder
+when there is no current value match. Type-labelled options distinguish boolean
+false, text "false", null and empty text. Selection explicitly emits a value slot;
+an incompatible presentation does not change the selected value or bypass the
+resolver by mounting an incompatible implementation. Malformed requests, unknown
+control identities, semantic mismatches and capability errors still reject.
+Choice-selector/optional-control combinations remain rejected.
+
+A labelled draft textarea is always available, including beside a compatible
+scalar control. It uses the existing lossless input implementation and keeps
+unsupported, invalid and incomplete text editable. Unset, Set null and Empty text
+retain their distinct intents, even when outside the control domain or invalid
+under the independent validation plan. The existing validator alone owns feedback
+and submission admissibility; a control domain is not a new validation rule.
+
+One scalar output or fallback selection emits one `EditingInput` through
+`FormFieldEdit`/`DetailGridEdit`, with no matching legacy scalar event. Out-of-domain
+outputs, retired renderer outputs and readonly/disabled edits are suppressed.
+Ignored fallback placeholder events restore its current display without emitting.
+Rendering, resolution, theme changes and request/domain/presentation changes never
+edit the session. Scalar implementations retain their ordinary responsibility to
+emit `valueChange` for user edits, respect their advertised capabilities and render
+the supplied scalar/permission/accessibility context correctly.
+
+An unchanged resolved component retains its instance and DOM during context
+updates. Changing implementation recreates that implementation's DOM; the adapter
+restores logical focus after rendering when focus was inside and has not moved
+elsewhere. Draft textarea identity survives scalar/fallback and theme changes.
+Replacement cannot preserve implementation-specific popup or caret state. Textarea
+CR/CRLF display follows the existing TEXT limitation: rendering retains the exact
+session slot, while an explicit edit records the native textarea value.
+
+Focused units and installed-APF Chromium desktop/mobile tests cover exact domains,
+raw/unknown/absent/null/empty states, capability fallback, request/presentation/domain
+refresh, single-channel outputs, permissions, feedback, keyed reorder, focus and
+five themes. Existing scalar editor and legacy optional-control suites remain
+mandatory. Other browsers, arbitrary third-party implementation behavior and human
+assistive-technology certification remain outside this evidence.

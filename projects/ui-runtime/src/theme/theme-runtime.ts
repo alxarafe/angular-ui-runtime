@@ -19,6 +19,7 @@ import {
     snapshotRequest,
     snapshotDomain,
     covers,
+    OptionalControlUnavailableError,
 } from './optional-controls.js';
 
 import { DefaultFormPresentation } from '../form/default-form-presentation.js';
@@ -222,7 +223,7 @@ export class ThemeResolver {
                     });
             }
         }
-        throw new Error('No compatible optional control representation');
+        throw new OptionalControlUnavailableError();
     }
     resolve<K extends ThemeArtifact>(artifact: K): ThemeArtifacts[K] {
         if (!THEME_ARTIFACTS.includes(artifact)) throw new Error('Unknown theme artifact');

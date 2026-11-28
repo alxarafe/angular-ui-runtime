@@ -21,6 +21,8 @@ export class FieldProbe implements FieldRenderer {
     readonly context = input<FieldRendererContext>(EXACT_CONTEXT);
     readonly valueChange = output<FieldValue>();
 }
+@Component({ selector: 'aur-test-optional-alternative', standalone: true, template: '' })
+export class OptionalAlternativeProbe extends FieldProbe {}
 @Component({ selector: 'aur-test-missing-output-probe', standalone: true, template: '' })
 export class MissingOutputProbe {
     readonly context = input.required<FieldRendererContext>();
