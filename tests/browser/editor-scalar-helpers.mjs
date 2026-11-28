@@ -30,13 +30,19 @@ export async function retained(page, controls) {
         }
     }
 }
-export async function scalarContract(page, type, cases, setup = async () => {}) {
+export async function scalarContract(
+    page,
+    type,
+    cases,
+    setup = async () => {},
+    nativeType = 'text',
+) {
     await page.goto(`/default-theme/?scenario=scalar-editor&type=${type}`);
     await setup(page);
     const text = page.getByLabel('Scalar value', { exact: true });
     const row = page.getByLabel('Row scalar — Row a', { exact: true });
     expect(await events(page)).toEqual({ fields: 0, cells: 0, legacy: 0, last: null });
-    await expect(text).toHaveAttribute('type', 'text');
+    await expect(text).toHaveJSProperty('type', nativeType);
     for (const [button, slot] of [
         ['Unset Scalar value', { kind: 'absent' }],
         ['Set null Scalar value', { kind: 'value', value: null }],

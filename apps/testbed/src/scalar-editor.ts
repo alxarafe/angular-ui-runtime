@@ -20,6 +20,10 @@ import {
 
 const cases: Record<string, { definition: FieldValidationRequest['definition']; initial: string }> =
     {
+        binary: {
+            definition: { type: 'BINARY', required: false, nullable: true, format: 'base64' },
+            initial: 'Zg==',
+        },
         uuid: {
             definition: { type: 'UUID', required: false, nullable: true, casing: 'either' },
             initial: '123e4567-e89b-12d3-a456-426614174000',
@@ -85,6 +89,11 @@ const field = (input: EditingInput): DocumentField => ({
             <button (click)="casing.set('lower')">Lower UUID casing</button>
             <button (click)="casing.set('either')">Either UUID casing</button>
         }
+        @if (selected.definition.type === 'BINARY') {
+            <button (click)="required.set(!required())">Toggle BINARY required</button>
+            <button (click)="nullable.set(!nullable())">Toggle BINARY nullable</button>
+            <button (click)="useCrlf()">Use CRLF Base64 draft</button>
+        }
         <button (click)="replace({ kind: 'value', value: false })">Use unsupported scalar</button>
         <button (click)="reorder()">Reorder scalar rows</button>
         <aur-theme-panel
@@ -113,6 +122,8 @@ export class ScalarEditorTestbed {
     readonly precision = signal(selected.definition.type === 'DATETIME' ? 7 : 0);
     readonly limited = signal(true);
     readonly casing = signal<'lower' | 'either'>('either');
+    readonly required = signal(false);
+    readonly nullable = signal(true);
     readonly tick = signal(0);
     readonly fields = signal(0);
     readonly cells = signal(0);
@@ -166,7 +177,9 @@ export class ScalarEditorTestbed {
               }
             : definition.type === 'UUID'
               ? { ...definition, casing: this.casing() }
-              : definition;
+              : definition.type === 'BINARY'
+                ? { ...definition, required: this.required(), nullable: this.nullable() }
+                : definition;
     });
     readonly binding = computed(() => {
         this.tick();
@@ -222,6 +235,9 @@ export class ScalarEditorTestbed {
     replace(input: EditingInput): void {
         this.session.change({ kind: 'field', path: [prop('main')], input });
         this.tick.update(this.increment);
+    }
+    useCrlf(): void {
+        this.replace({ kind: 'raw', text: 'Zg==\r\n' });
     }
     reorder(): void {
         this.session.change({ kind: 'move-row', path: [prop('rows')], key: 'b', before: 'a' });

@@ -427,3 +427,32 @@ policies, exact header/keyed-row slots, invalid drafts, metadata refresh without
 mutation, permissions, feedback associations and focus/DOM identity through five
 themes. UUID editing is complete for the existing validation profile. Other browsers
 and assistive-technology certification remain outside this evidence.
+
+### Lossless BINARY Base64 text (AUR-EDITOR-FIELDS-001)
+
+`field.BINARY` reuses the existing labelled textarea so invalid LF-delimited or
+wrapped Base64 drafts remain visible and editable instead of being stripped by a
+single-line input. No new component, upload control, decoded buffer, file contract
+or binary conversion is introduced. Text edits produce raw `EditingInput` through
+the same header/keyed-cell adapters. Absent, null, empty value, empty raw, canonical
+value and invalid/unsupported slots retain their distinct session envelopes.
+
+The existing `format: 'base64'` validator alone checks canonical RFC 4648 text,
+including padding and unused pad bits. Whitespace, incomplete padding, Base64url
+and other unsupported forms remain in the document and receive feedback; they are
+never trimmed, decoded, repaired or silently accepted. Empty Base64 is valid under
+the existing profile; required/nullable policies remain independent. Changing these
+policies or rendering feedback does not edit the document.
+
+Canonical Base64 editing and LF draft preservation are complete for the supported
+profile. As with TEXT, native textarea display folds CR/CRLF to LF. The session
+retains original CR/CRLF exactly through rendering, theme and metadata refreshes;
+an explicit user input records the native textarea value. Exact original CR/CRLF
+spelling after an edit remains a limitation, not a binary-conversion contract.
+
+Focused units and installed-APF Chromium desktop/mobile tests cover canonical and
+noncanonical text, all slot distinctions, unsupported scalar values, presence-policy
+refresh, CRLF session retention, readonly/disabled controls, feedback, keyed reorder,
+single-channel events and focus/DOM identity through five themes. File uploads,
+other encoding profiles, other browsers and assistive-technology certification are
+outside this capability.
