@@ -20,6 +20,20 @@ import {
 
 const cases: Record<string, { definition: FieldValidationRequest['definition']; initial: string }> =
     {
+        datetime: {
+            definition: {
+                type: 'DATETIME',
+                required: false,
+                nullable: true,
+                format: 'offset-instant',
+                fractionalDigits: 7,
+                constraints: {
+                    minimum: { value: '2024-03-01T12:30:00.1234567Z', exclusive: true },
+                    maximum: { value: '2024-03-01T12:30:00.1234569Z', exclusive: true },
+                },
+            },
+            initial: '2024-03-01T13:30:00.1234568+01:00',
+        },
         time: {
             definition: {
                 type: 'TIME',
@@ -58,6 +72,11 @@ const field = (input: EditingInput): DocumentField => ({
             <button (click)="precision.set(7)">Seven fraction digits</button>
             <button (click)="limited.set(!limited())">Toggle time bounds</button>
         }
+        @if (selected.definition.type === 'DATETIME') {
+            <button (click)="precision.set(0)">DATETIME whole seconds</button>
+            <button (click)="precision.set(7)">DATETIME seven fraction digits</button>
+            <button (click)="limited.set(!limited())">Toggle instant bounds</button>
+        }
         <button (click)="replace({ kind: 'value', value: false })">Use unsupported scalar</button>
         <button (click)="reorder()">Reorder scalar rows</button>
         <aur-theme-panel
@@ -83,7 +102,7 @@ export class ScalarEditorTestbed {
     readonly selected = selected;
     readonly theme = inject(ThemeService);
     readonly themes = ['default', 'alternative', 'cyberpunk', 'vintage', 'high-contrast'];
-    readonly precision = signal(0);
+    readonly precision = signal(selected.definition.type === 'DATETIME' ? 7 : 0);
     readonly limited = signal(true);
     readonly tick = signal(0);
     readonly fields = signal(0);
@@ -130,7 +149,7 @@ export class ScalarEditorTestbed {
     };
     readonly definition = computed(() => {
         const definition = selected.definition;
-        return definition.type === 'TIME'
+        return definition.type === 'TIME' || definition.type === 'DATETIME'
             ? {
                   ...definition,
                   fractionalDigits: this.precision(),

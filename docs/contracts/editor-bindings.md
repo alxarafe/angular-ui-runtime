@@ -385,3 +385,28 @@ cells, permissions, feedback, single-channel events and DOM/focus across five th
 are covered by unit and installed-APF Chromium desktop/mobile tests. Native picker
 popup behavior, other browsers and assistive-technology certification remain outside
 this evidence. DATE behavior and its regression tests are unchanged.
+
+### Lossless offset DATETIME (AUR-EDITOR-FIELDS-001)
+
+`field.DATETIME` uses the existing lossless text input, in headers and keyed detail
+cells. It preserves `Z`, explicit positive/negative offsets (including signed zero),
+fraction widths of one through seven digits, trailing zeros and original lexical
+form. Partial offsets, missing zones, invalid clocks, unsupported scalar slots and
+empty drafts stay editable and remain unchanged in the session. Only an explicit
+text input emits a raw intent; there is no legacy scalar event or second draft.
+
+The existing offset-instant validator remains authoritative for declared precision,
+offset/year limits and inclusive/exclusive instant comparisons. Equal instants with
+different spellings remain distinct editing values; exact 100 ns bounds do not
+rewrite either spelling. Metadata, feedback and theme refreshes do not mutate state
+or steal focus. DATETIME deliberately has no native assistant: `datetime-local`
+does not represent offsets, and no native control is asserted to preserve this
+complete contract. No implicit local/UTC conversion, timezone inference or Date API
+is introduced. The text editor capability is complete for the supported profile;
+native offset-aware assistance remains unavailable.
+
+Focused units and installed-APF Chromium desktop/mobile tests cover offset and
+fraction spelling, invalid drafts, exact bounds, metadata changes, permissions,
+associated feedback, keyed reorder, single-channel events and focus/DOM identity
+across five themes. Other browsers and assistive-technology certification remain
+outside this evidence.
