@@ -24,7 +24,7 @@ import { selectedTime, timeInputBounds } from './native-time.js';
     template: `<ng-container #selection />
         @if (!enumeration() || draft()) {
             <label [for]="textId()">{{
-                enumeration() ? context().label + ' draft' : context().label
+                enumeration() || draftLabel() ? context().label + ' draft' : context().label
             }}</label>
             @if (checkbox()) {
                 <input
@@ -161,6 +161,7 @@ export class DocumentInput {
     readonly multiline = input(false);
     readonly boolean = input(false);
     readonly enumeration = input(false);
+    readonly draftLabel = input(false);
     readonly legacy = input(false);
     readonly editChange = output<EditingInput>();
     readonly pageChange = output<ChoicePageDirection>();
@@ -221,7 +222,7 @@ export class DocumentInput {
             : !!context.choices?.includes(value);
     }
     textId(): string {
-        return this.context().id + (this.enumeration() ? '-draft' : '');
+        return this.context().id + (this.enumeration() || this.draftLabel() ? '-draft' : '');
     }
     checked(): boolean {
         const input = this.context().documentInput;

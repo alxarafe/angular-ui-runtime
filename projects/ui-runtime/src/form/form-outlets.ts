@@ -1,4 +1,5 @@
 import { documentNodeProblem } from '../state/document-state.js';
+import { DocumentControl } from '../editor/document-control.js';
 import { DocumentInput } from '../editor/document-input.js';
 import { ChoiceSelector } from '../selector/choice-selector.js';
 import type { ChoicePageDirection } from '../selector/choice-options.js';
@@ -148,21 +149,22 @@ export class FormFieldOutlet {
             throw new Error('Choice selectors do not support optional-control fields');
         if (
             context.documentInput !== undefined &&
-            (this.field().kind === 'control' ||
-                documentNodeProblem({
-                    kind: 'field',
-                    equality: { type: 'exact' },
-                    input: context.documentInput,
-                }))
+            documentNodeProblem({
+                kind: 'field',
+                equality: { type: 'exact' },
+                input: context.documentInput,
+            })
         )
             throw new Error('Unsupported document editing context');
-        return this.presentationOnly()
-            ? resolveFormFieldRenderer(this.field(), context, this.registry, this.resolver)
-            : context.selector !== undefined
-              ? { component: ChoiceSelector, context }
-              : context.documentInput === undefined
-                ? resolveFormFieldRenderer(this.field(), context, this.registry, this.resolver)
-                : { component: DocumentInput, context };
+        return context.documentInput !== undefined && this.field().kind === 'control'
+            ? { component: DocumentControl, context }
+            : this.presentationOnly()
+              ? resolveFormFieldRenderer(this.field(), context, this.registry, this.resolver)
+              : context.selector !== undefined
+                ? { component: ChoiceSelector, context }
+                : context.documentInput === undefined
+                  ? resolveFormFieldRenderer(this.field(), context, this.registry, this.resolver)
+                  : { component: DocumentInput, context };
     });
     private readonly boundContext = computed(() => this.binding().context);
     private readonly target = viewChild('target', { read: ViewContainerRef });
@@ -223,23 +225,33 @@ export class FormFieldOutlet {
                                       });
                               }),
                           ]
-                        : component === DocumentInput
+                        : component === DocumentInput || component === DocumentControl
                           ? [
-                                inputBinding('date', () => this.field().artifact === 'field.DATE'),
-                                inputBinding('time', () => this.field().artifact === 'field.TIME'),
-                                inputBinding('multiline', () =>
-                                    ['field.TEXT', 'field.BINARY'].includes(
-                                        this.field().artifact ?? '',
-                                    ),
-                                ),
-                                inputBinding(
-                                    'boolean',
-                                    () => this.field().artifact === 'field.BOOLEAN',
-                                ),
-                                inputBinding(
-                                    'enumeration',
-                                    () => this.field().artifact === 'field.ENUM',
-                                ),
+                                ...(component === DocumentControl
+                                    ? [inputBinding('field', this.field)]
+                                    : [
+                                          inputBinding(
+                                              'date',
+                                              () => this.field().artifact === 'field.DATE',
+                                          ),
+                                          inputBinding(
+                                              'time',
+                                              () => this.field().artifact === 'field.TIME',
+                                          ),
+                                          inputBinding('multiline', () =>
+                                              ['field.TEXT', 'field.BINARY'].includes(
+                                                  this.field().artifact ?? '',
+                                              ),
+                                          ),
+                                          inputBinding(
+                                              'boolean',
+                                              () => this.field().artifact === 'field.BOOLEAN',
+                                          ),
+                                          inputBinding(
+                                              'enumeration',
+                                              () => this.field().artifact === 'field.ENUM',
+                                          ),
+                                      ]),
                                 outputBinding<EditingInput>('editChange', (input) => {
                                     if (
                                         !this.boundContext().disabled &&

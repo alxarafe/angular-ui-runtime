@@ -1,3 +1,8 @@
+import {
+    OptionalEditorTestbed,
+    OPTIONAL_EDITOR_THEMES,
+    OPTIONAL_EDITOR_CONTROLS,
+} from './optional-editor';
 import { ScalarEditorTestbed } from './scalar-editor';
 import { IntegratedTestbed } from './integrated';
 import { ListPortsTestbed } from './list-ports';
@@ -31,6 +36,7 @@ const selector = new URLSearchParams(location.search).get('scenario') === 'selec
 const slots = new URLSearchParams(location.search).get('scenario') === 'form-slots';
 const feedback = new URLSearchParams(location.search).get('scenario') === 'feedback';
 const listPorts = new URLSearchParams(location.search).get('scenario') === 'list-ports';
+const optionalEditor = new URLSearchParams(location.search).get('scenario') === 'optional-editor';
 const scalarEditor = new URLSearchParams(location.search).get('scenario') === 'scalar-editor';
 const integrated = new URLSearchParams(location.search).get('scenario') === 'integrated';
 bootstrapApplication(
@@ -44,10 +50,12 @@ bootstrapApplication(
               ? FormSlotsTestbed
               : selector
                 ? SelectorTestbed
-                : editor || scalarEditor
-                  ? scalarEditor
-                      ? ScalarEditorTestbed
-                      : EditorTestbed
+                : editor || scalarEditor || optionalEditor
+                  ? optionalEditor
+                      ? OptionalEditorTestbed
+                      : scalarEditor
+                        ? ScalarEditorTestbed
+                        : EditorTestbed
                   : menus
                     ? MenusTestbed
                     : new URLSearchParams(location.search).get('scenario') === 'document-protection'
@@ -70,9 +78,30 @@ bootstrapApplication(
                                     : DefaultThemeTestbed,
     {
         providers: provideThemeRuntime(
-            menus
-                ? MENU_THEMES
+            optionalEditor
+                ? OPTIONAL_EDITOR_THEMES
+                : menus
+                  ? MENU_THEMES
+                  : grid ||
+                      state ||
+                      validation ||
+                      documentValidation ||
+                      save ||
+                      editor ||
+                      selector ||
+                      slots ||
+                      feedback ||
+                      listPorts ||
+                      integrated ||
+                      scalarEditor
+                    ? GRID_THEMES
+                    : form
+                      ? FORM_THEMES
+                      : DEFAULT_PACKAGE_THEMES,
+            optionalEditor
+                ? OPTIONAL_EDITOR_CONTROLS
                 : grid ||
+                    form ||
                     state ||
                     validation ||
                     documentValidation ||
@@ -84,25 +113,8 @@ bootstrapApplication(
                     listPorts ||
                     integrated ||
                     scalarEditor
-                  ? GRID_THEMES
-                  : form
-                    ? FORM_THEMES
-                    : DEFAULT_PACKAGE_THEMES,
-            grid ||
-                form ||
-                state ||
-                validation ||
-                documentValidation ||
-                save ||
-                editor ||
-                selector ||
-                slots ||
-                feedback ||
-                listPorts ||
-                integrated ||
-                scalarEditor
-                ? FORM_CONTROLS
-                : [],
+                  ? FORM_CONTROLS
+                  : [],
         ),
     },
 ).catch((error) => {
